@@ -10,7 +10,6 @@ Nach dem Start ist die Anwendung unter [http://localhost:3000](http://localhost:
 Die Seite wird bei gespeicherte Änderungen neu geladen und vorgenommene Änderungen werden direkt angezeigt. 
 
 
-
 ## structure
     frontend 
     ├── public/                 # Statistische Dateien (HTML, Bilder, Icons, etc.)
