@@ -1,0 +1,14 @@
+/* import the nexessary Bootstrap files */
+@import "../node_modules/bootstrap/scss/functions";
+@import "../node_modules/bootstrap/scss/variables";
+
+$custom-colors: (
+  "logoBlue": #15406e,
+  "logoGold": #ab8d51,
+  "logoGrey": #707474
+);
+
+$theme-colors: map-merge($theme-colors , $custom-colors);
+
+// include Bootstrap
+@import "../node_modules/bootstrap/scss/bootstrap.scss";
