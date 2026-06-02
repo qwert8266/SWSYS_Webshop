@@ -89,29 +89,29 @@ function Navbar() {
 
           
           {/* Bedienelemente */}
-          <div className="collapse navbar-collapse" id="navbarContent">  {/*justify-content-end*/}
+          <div className="collapse navbar-collapse" id="navbarContent">
             <ul className="navbar-nav mb-2 mb-lg-0 me-4">
               <li className="nav-item">
-                <NavLink className="nav-link active" to="/">
-                  Home  
+                <NavLink className="nav-link" to="/home">
+                  <a href="/#">Home</a>
                 </NavLink>
               </li>
               
               <li className='nav-item'>
-                <NavLink className="nav-link" to="/">
-                  Sortiment
+                <NavLink className="nav-link" to="/sortiment">
+                  <a href="/#">Sortiment</a>
                 </NavLink>
               </li>
               
               <li className='nav-item'>
-                <NavLink className="nav-link" to="/">
-                  placeholder
+                <NavLink className="nav-link" to="/placeholder">
+                  <a href="/#">placeholder</a>
                 </NavLink>
               </li>
               
               <li className='nav-item'>
-                <NavLink className="nav-link" to="/">
-                  Kontakt
+                <NavLink className="nav-link" to="/kontakt">
+                  <a href="/#">Kontakt</a>
                 </NavLink>
               </li>
             </ul>
@@ -145,7 +145,7 @@ function Navbar() {
             >
               <img
                 className="navbar-icon"
-                src="/img/cart-icon.png"
+                src="/img/cart-icon.png" 
                 alt="warenkorb icon"
               />
               {/*TODO: Anzahl Produkte im Warenkorb */}
