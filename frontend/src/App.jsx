@@ -10,9 +10,7 @@ import Navbar from './components/navbar';
 function App() {
   return (
     <>
-      <BrowserRouter>
         <Navbar />
-      </BrowserRouter>
       <Routes>
         <Route path="/register" element={<Register />} />
       </Routes>
