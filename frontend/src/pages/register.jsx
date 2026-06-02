@@ -1,11 +1,16 @@
 
 import { useState } from 'react';
-import { Link, NavLink } from "react-router-dom"
+import { Link, NavLink, useNavigate } from "react-router-dom"
 
+import { EMAIL_REGEX } from "../constants/validation";
+import { ERROR_INVALID_EMAIL } from "../constants/errorMessages";
 import "../App.css";
 
 function Register() {
+  const navigate = useNavigate();
   const [customerType, setCustomerType] = useState("private");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState("");
 
   const [formData, setFormData] = useState({
     email: "",
@@ -29,12 +34,37 @@ function Register() {
   });
 
   const handleChange = (event) => {
-    setFormData({
-      ...formData,
-      [event.target.name]: event.target.value
-    });
+    const { name, value } = event.target;
+
+    setFormData((prevFromData => ({
+      ...prevFromData,
+      [name]: value
+    })));
   };
   
+  async function handleSubmit(event) {
+    event.preventDefault();
+    setError("");
+    setIsSubmitting(false);
+
+    const trimmedEmail = formData.email.trim().toLowerCase();
+    if (!EMAIL_REGEX.test(trimmedEmail)) {
+      setError(ERROR_INVALID_EMAIL);
+      setIsSubmitting(false);
+      return;
+    }
+
+    try {
+      await Register(trimmedEmail, formData.password);
+      navigate("/account");
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsSubmitting(false);
+    }
+    
+
+  }
 
   return (
     <main className="auth-page">
@@ -43,137 +73,235 @@ function Register() {
       </NavLink>
 
   
-    <form className="registerform">
+    <form className="registerform card shadow-sm border-0" onSubmit={handleSubmit}>
       <div className="tab-header">
-        <div className="active">Privatkunde</div>
-        <div>Geschäftskunde</div>
+
+        {/* check which form is selected */}
+        <div 
+          className={customerType === "private" ? "active" : ""}
+          onClick={() => setCustomerType("private")}
+        >
+          Privatkunde
+        </div>
+        <div 
+          className={customerType === "business" ? "active" : ""}
+          onClick={() => setCustomerType("business")}
+        >
+          Geschäftskunde
+          </div>
       </div>
+
       <div className="registerform-body">
-        <div className="priv active">
-          <h2>Privatkunde</h2>
-          <div className="registerform-input">
+        
+        <div className={`priv ${customerType === "private" ? "active" : ""}`}>
+          <h2 className="h4 mb-3">Privatkonto</h2>
+
+          <div className="registerform-input row g-2">
             
-            <label>
-              Anrede
-              <select name="anrede" size="1">
-                <option></option>
-                <option>Herr</option>
-                <option>Frau</option>
-                <option>Divers</option>
-              </select>
-            </label>
-            
-            <label>
-              Vorname
-              <input
-                type="text"
-                value={formData.firstName}
-                onChange={handleChange}
-                placeholder=''
-                required
-              />
-            </label>
-            <label>
-              Nachname
-              <input
-                type="text"
-                value={formData.lastName}
-                onChange={handleChange}
-                placeholder=''
-                required
-              />
-            </label>
-            <label>
-              Geburtstag
-              <input
-                type="date"
-                max = {new Date().toISOString().split("T")[0]}
-                value={formData.birthDate}
-                onChange={handleChange}
-                placeholder=''
-                required
-              />
-            </label>
-            <label>
-              Tel.
-              <input
-                type="text"
-                value={formData.phone}
-                onChange={handleChange}
-                placeholder='0172 1234567'
-              />
-            </label>
-            <label>
-              Adresse
-              <div className="adress-row">
+            <div className="row align-items-center mb-0">
+              <label className="col-sm-3 col-form-label">
+                Anrede
+              </label>
+              <div className="col-sm-3">
+                <select 
+                  className="form-select"
+                  name="salutation" 
+                  size="1"
+                  value={formData.salutation}
+                  onChange={handleChange}  
+                >
+                  <option></option>
+                  <option>Herr</option>
+                  <option>Frau</option>
+                  <option>Divers</option>
+                </select>
+              </div>
+            </div>
+              
+            <div className="row align-items-center mb-1">
+              <label className="col-sm-3 col-form-label">
+                Vorname
+              </label>
+              <div className="col-sm-6">
                 <input
+                  className="form-control"
                   type="text"
+                  name="firstName"
+                  value={formData.firstName}
+                  onChange={handleChange}
+                  placeholder=''
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="row align-items-center mb-1">
+              <label className="col-sm-3 col-form-label">
+                Nachname
+              </label>
+              <div className="col-sm-6">
+                <input
+                  className="form-control"
+                  type="text"
+                  name="lastName"
+                  value={formData.lastName}
+                  onChange={handleChange}
+                  placeholder=''
+                  required
+                />
+              </div>
+            </div>
+            
+
+            <div className="row align-items-center mb-1">
+              <label className="col-sm-3 col-form-label">
+                Geburtstag
+              </label>
+              <div className="col-sm-4">
+                <input
+                  className="form-control"
+                  type="date"
+                  name="birthDate"
+                  max = {new Date().toISOString().split("T")[0]}
+                  value={formData.birthDate}
+                  onChange={handleChange}
+                  placeholder=''
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="row align-items-center mb-2">
+              <label className="col-sm-3 col-form-label">
+                Tel.
+              </label>
+              <div className="col-sm-6">
+                <input
+                  className="form-control"
+                  type="text"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  placeholder='0172 1234567'
+                />
+              </div>
+            </div>
+
+            <hr className="my-2 mb-1" /> {/* Trennlinie */}
+            <h3 className="h5 mb-1">Adresse</h3>
+            
+            <div className='row g-1 mb-0'>
+              <div className="col-md-9">
+                <input
+                  className="form-control"
+                  type="text"
+                  name="street"
                   value={formData.street}
                   onChange={handleChange}
                   placeholder='Straße'
                   required
                 />
+              </div>
+                  
+              <div className="col-md-2">
                 <input
+                  className='form-control'
                   type="text"
+                  name="houseNumber"
                   value={formData.houseNumber}
                   onChange={handleChange}
                   placeholder='Nr'
                   required
                 />
+              </div>
+            </div>
+
+            <div className='row g-2 mb-2'>
+              <div className="col-md-2">
+                  <input
+                    className='form-control'
+                    type="text"
+                    name="zipCode"
+                    value={formData.zipCode}
+                    onChange={handleChange}
+                    placeholder='PLZ'
+                    required
+                  />
+              </div>
+              <div className="col-md-5">
+                  <input
+                    className='form-control'
+                    type="text"
+                    name="city"
+                    value={formData.city}
+                    onChange={handleChange}
+                    placeholder='Stadt'
+                    required
+                  />
+              </div>
+              <div className="col-md-4">
                 <input
+                  className='form-control'
                   type="text"
-                  value={formData.zipCode}
-                  onChange={handleChange}
-                  placeholder='PLZ'
-                  required
-                />
-                <input
-                  type="text"
-                  value={formData.city}
-                  onChange={handleChange}
-                  placeholder='Stadt'
-                  required
-                />
-                <input
-                  type="text"
+                  name="country"
                   value={formData.country}
                   onChange={handleChange}
                   placeholder='Deutschland'
                   required
                 />
-              </div>
-            </label>
-            <label>
+              </div>  
+            </div>
+            
+
+            <hr className="my-2" /> {/* Trennlinie */}
+            <h3 className="h5 mb-3">Zugangsdaten</h3>
+            
+            <label className="col-sm-2 col-form-label">
               E-Mail
+            </label>
+            <div className="col-sm-9">
               <input
+                className='form-control'
                 type="email"
+                name="email"
                 value={formData.email}
                 onChange={handleChange}
                 autoComplete='email'
+                placeholder=' schmidt@t-online.de'
                 required
               />
-            </label>
-            <label>
-              Passwort
-              <input
-                type="password"
-                value={formData.password}
-                onChange={handleChange}
-                autoComplete='new-password'
-                minLength={8}
-                required
-              />
-            </label>
+            </div>
 
-
+              <label className="col-sm-2 col-form-label">
+                Passwort
+              </label>
+              <div className="col-sm-9">
+                <input
+                  className='form-control'
+                  type="password"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  autoComplete='new-password'
+                  minLength={8}
+                  required
+                />
+              </div>
+            
+            </div>
           </div>
-        </div>
-        <div className="company">
+          
+      
+        <div className={`company ${customerType === "business" ? "active" : ""}`}>
+          <h2>Geschäftskonto</h2>
+          <div className="registerform-input">
+
           
           <label>
-              Unternehmensname
+              Unternehmen
               <input
                 type="text"
+                name="companyName"
                 value={formData.companyName}
                 onChange={handleChange}
                 placeholder=''
@@ -184,6 +312,7 @@ function Register() {
               Tel.
               <input
                 type="text"
+                name="phone"
                 value={formData.phone}
                 onChange={handleChange}
                 placeholder='0172 1234567'
@@ -194,6 +323,7 @@ function Register() {
               <div className="adress-row">
                 <input
                   type="text"
+                  name="street"
                   value={formData.street}
                   onChange={handleChange}
                   placeholder='Straße'
@@ -201,6 +331,7 @@ function Register() {
                 />
                 <input
                   type="text"
+                  name="houseNumber"
                   value={formData.houseNumber}
                   onChange={handleChange}
                   placeholder='Nr'
@@ -208,6 +339,7 @@ function Register() {
                 />
                 <input
                   type="text"
+                  name="zipCode"
                   value={formData.zipCode}
                   onChange={handleChange}
                   placeholder='PLZ'
@@ -215,6 +347,7 @@ function Register() {
                 />
                 <input
                   type="text"
+                  name="city"
                   value={formData.city}
                   onChange={handleChange}
                   placeholder='Stadt'
@@ -222,6 +355,7 @@ function Register() {
                 />
                 <input
                   type="text"
+                  name="country"
                   value={formData.country}
                   onChange={handleChange}
                   placeholder='Deutschland'
@@ -233,6 +367,7 @@ function Register() {
               E-Mail
               <input
                 type="email"
+                name="email"
                 value={formData.email}
                 onChange={handleChange}
                 autoComplete='email'
@@ -243,6 +378,7 @@ function Register() {
               Passwort
               <input
                 type="password"
+                name="password"
                 value={formData.password}
                 onChange={handleChange}
                 autoComplete='new-password'
@@ -250,7 +386,8 @@ function Register() {
                 required
               />
             </label>
-
+          </div>
+        
         </div>
 
       
