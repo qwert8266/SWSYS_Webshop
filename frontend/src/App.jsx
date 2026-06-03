@@ -7,11 +7,15 @@ import { Routes, Route } from 'react-router-dom';
 import Register from "./pages/register";
 import Login from "./pages/login"
 import Navbar from './components/navbar';
+import HideNavbar from './components/hideNavbar';
 
 function App() {
   return (
     <>
+      <HideNavbar>
         <Navbar />
+      </HideNavbar>
+      
       <Routes>
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login />}/>
