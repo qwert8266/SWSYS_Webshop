@@ -36,10 +36,10 @@ function Register() {
   const handleChange = (event) => {
     const { name, value } = event.target;
 
-    setFormData((prevFromData => ({
-      ...prevFromData,
+    setFormData({
+      ...formData,
       [name]: value
-    })));
+    });
   };
   
   async function handleSubmit(event) {
