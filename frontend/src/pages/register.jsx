@@ -62,29 +62,28 @@ function Register() {
     } finally {
       setIsSubmitting(false);
     }
-    
-
   }
+
 
   return (
     <main className="auth-page">
       <NavLink to="/">
         <img src="/img/nav_logo.svg" alt="logo" />
       </NavLink>
-
   
     <form className="registerform card shadow-sm border-0" onSubmit={handleSubmit}>
-      <div className="tab-header">
-
+      {error && <p className="auth-error">{error}</p>}
+      
+      <div className="customer-type-tabs">
         {/* check which form is selected */}
         <div 
-          className={customerType === "private" ? "active" : ""}
+          className={`customer-type-tab ${customerType === "private" ? "active" : ""}`}
           onClick={() => setCustomerType("private")}
         >
           Privatkunde
         </div>
         <div 
-          className={customerType === "business" ? "active" : ""}
+          className={`customer-type-tab ${customerType === "business" ? "active" : ""}`}
           onClick={() => setCustomerType("business")}
         >
           Geschäftskunde
@@ -93,22 +92,25 @@ function Register() {
 
       <div className="registerform-body">
         
-        <div className={`priv ${customerType === "private" ? "active" : ""}`}>
-          <h2 className="h4 mb-3">Privatkonto</h2>
-
+        {/*<div className={`priv ${customerType === "private" ? "active" : ""}`}>*/}
+        {customerType === "private" && (
+          <>
           <div className="registerform-input row g-2">
-            
+            <h2 className="h4 mb-3">Privatkonto</h2>
+
             <div className="row align-items-center mb-0">
               <label className="col-sm-3 col-form-label">
                 Anrede
               </label>
               <div className="col-sm-3">
                 <select 
-                  className="form-select"
+                  className="form-select lh-1"
                   name="salutation" 
                   size="1"
                   value={formData.salutation}
                   onChange={handleChange}  
+                  required={customerType === "private"}
+                  disabled={customerType !== "private"}
                 >
                   <option></option>
                   <option>Herr</option>
@@ -129,8 +131,8 @@ function Register() {
                   name="firstName"
                   value={formData.firstName}
                   onChange={handleChange}
-                  placeholder=''
-                  required
+                  required={customerType === "private"}
+                  disabled={customerType !== "private"}
                 />
               </div>
             </div>
@@ -146,8 +148,8 @@ function Register() {
                   name="lastName"
                   value={formData.lastName}
                   onChange={handleChange}
-                  placeholder=''
-                  required
+                  required={customerType === "private"}
+                  disabled={customerType !== "private"}
                 />
               </div>
             </div>
@@ -165,13 +167,13 @@ function Register() {
                   max = {new Date().toISOString().split("T")[0]}
                   value={formData.birthDate}
                   onChange={handleChange}
-                  placeholder=''
-                  required
+                  required={customerType === "private"}
+                  disabled={customerType !== "private"}
                 />
               </div>
             </div>
 
-            <div className="row align-items-center mb-2">
+            <div className="row align-items-center mb-3">
               <label className="col-sm-3 col-form-label">
                 Tel.
               </label>
@@ -199,7 +201,8 @@ function Register() {
                   value={formData.street}
                   onChange={handleChange}
                   placeholder='Straße'
-                  required
+                  required={customerType === "private"}
+                  disabled={customerType !== "private"}
                 />
               </div>
                   
@@ -211,12 +214,13 @@ function Register() {
                   value={formData.houseNumber}
                   onChange={handleChange}
                   placeholder='Nr'
-                  required
+                  required={customerType === "private"}
+                  disabled={customerType !== "private"}
                 />
               </div>
             </div>
 
-            <div className='row g-2 mb-2'>
+            <div className='row g-1 mb-2'>
               <div className="col-md-2">
                   <input
                     className='form-control'
@@ -225,7 +229,8 @@ function Register() {
                     value={formData.zipCode}
                     onChange={handleChange}
                     placeholder='PLZ'
-                    required
+                    required={customerType === "private"}
+                  disabled={customerType !== "private"}
                   />
               </div>
               <div className="col-md-5">
@@ -236,7 +241,8 @@ function Register() {
                     value={formData.city}
                     onChange={handleChange}
                     placeholder='Stadt'
-                    required
+                    required={customerType === "private"}
+                  disabled={customerType !== "private"}
                   />
               </div>
               <div className="col-md-4">
@@ -246,8 +252,8 @@ function Register() {
                   name="country"
                   value={formData.country}
                   onChange={handleChange}
-                  placeholder='Deutschland'
-                  required
+                  required={customerType === "private"}
+                  disabled={customerType !== "private"}
                 />
               </div>  
             </div>
@@ -268,7 +274,8 @@ function Register() {
                 onChange={handleChange}
                 autoComplete='email'
                 placeholder=' schmidt@t-online.de'
-                required
+                required={customerType === "private"}
+                disabled={customerType !== "private"}
               />
             </div>
 
@@ -284,120 +291,231 @@ function Register() {
                   onChange={handleChange}
                   autoComplete='new-password'
                   minLength={8}
-                  required
+                  required={customerType === "private"}
+                  disabled={customerType !== "private"}
                 />
               </div>
             
             </div>
-          </div>
-          
+          </>
+        )}
       
-        <div className={`company ${customerType === "business" ? "active" : ""}`}>
-          <h2>Geschäftskonto</h2>
-          <div className="registerform-input">
-
-          
-          <label>
-              Unternehmen
-              <input
-                type="text"
-                name="companyName"
-                value={formData.companyName}
-                onChange={handleChange}
-                placeholder=''
-                required
-              />
-            </label>
-          <label>
-              Tel.
-              <input
-                type="text"
-                name="phone"
-                value={formData.phone}
-                onChange={handleChange}
-                placeholder='0172 1234567'
-              />
-            </label>
-            <label>
-              Adresse
-              <div className="adress-row">
+        {/*<div className={`company ${customerType === "business" ? "active" : ""}`}>*/}
+        {customerType === "business" && (
+          <>         
+          <div className="registerform-input row g-2">
+            <h2 className="h4 mb-3 pl-2">Geschäftskonto</h2>
+            
+            <div className="row align-items-center mb-3">
+              <label className="col-sm-3 col-form-label">
+                Unternehmen
+              </label>
+              <div className="col-sm-5">
                 <input
+                  className="form-control"
+                  type="text"
+                  name="companyName"
+                  value={formData.companyName}
+                  onChange={handleChange}
+                  placeholder=''
+                  required={customerType === "business"}
+                  disabled={customerType !== "business"}
+                />
+              </div>
+            </div>
+
+            <div className="row align-items-center mb-0">
+              <label className="col-sm-3 col-form-label">
+                Anrede
+              </label>
+              <div className="col-sm-3">
+                <select 
+                  className="form-select lh-1"
+                  name="salutation" 
+                  size="1"
+                  value={formData.salutation}
+                  onChange={handleChange}
+                  required={customerType === "business"}
+                  disabled={customerType !== "business"}  
+                >
+                  <option></option>
+                  <option>Herr</option>
+                  <option>Frau</option>
+                  <option>Divers</option>
+                </select>
+              </div>
+            </div>
+              
+            <div className="row align-items-center mb-1">
+              <label className="col-sm-3 col-form-label">
+                Vorname
+              </label>
+              <div className="col-sm-6">
+                <input
+                  className="form-control"
+                  type="text"
+                  name="firstName"
+                  value={formData.firstName}
+                  onChange={handleChange}
+                  required={customerType === "business"}
+                  disabled={customerType !== "business"}
+                />
+              </div>
+            </div>
+
+            <div className="row align-items-center mb-1">
+              <label className="col-sm-3 col-form-label">
+                Nachname
+              </label>
+              <div className="col-sm-6">
+                <input
+                  className="form-control"
+                  type="text"
+                  name="lastName"
+                  value={formData.lastName}
+                  onChange={handleChange}
+                  required={customerType === "business"}
+                  disabled={customerType !== "business"}
+                />
+              </div>
+            </div>
+
+            <div className="row align-items-center mb-2">
+              <label className="col-sm-3 col-form-label">
+                Tel.
+              </label>
+              <div className="col-sm-5">
+                <input
+                  className="form-control"
+                  type="text"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  placeholder='0172 1234567'
+                />
+              </div>
+            </div>
+            
+            <hr className="my-2 mb-1" /> {/* Trennlinie */}
+            <h3 className="h5 mb-1">Adresse</h3>
+            
+            <div className='row g-1 mb-0'>
+              <div className="col-md-9">
+                <input
+                  className="form-control"
                   type="text"
                   name="street"
                   value={formData.street}
                   onChange={handleChange}
                   placeholder='Straße'
-                  required
+                  required={customerType === "business"}
+                  disabled={customerType !== "business"}
                 />
+              </div>
+              <div className="col-md-2">
                 <input
+                  className="form-control"
                   type="text"
                   name="houseNumber"
                   value={formData.houseNumber}
                   onChange={handleChange}
                   placeholder='Nr'
-                  required
+                  required={customerType === "business"}
+                  disabled={customerType !== "business"}
                 />
+              </div>
+            </div>
+
+            <div className='row g-1 mb-2'>
+              <div className="col-md-2">
                 <input
+                  className="form-control"
                   type="text"
                   name="zipCode"
                   value={formData.zipCode}
                   onChange={handleChange}
                   placeholder='PLZ'
-                  required
+                  required={customerType === "business"}
+                  disabled={customerType !== "business"}
                 />
+              </div>
+              <div className="col-md-5">
                 <input
+                  className="form-control"
                   type="text"
                   name="city"
                   value={formData.city}
                   onChange={handleChange}
                   placeholder='Stadt'
-                  required
+                  required={customerType === "business"}
+                  disabled={customerType !== "business"}
                 />
+              </div>
+              <div className="col-md-4">
                 <input
+                  className="form-control"
                   type="text"
                   name="country"
                   value={formData.country}
                   onChange={handleChange}
                   placeholder='Deutschland'
-                  required
+                  required={customerType === "business"}
+                  disabled={customerType !== "business"}
                 />
               </div>
-            </label>
-            <label>
+            </div>
+            
+            <hr className="my-2" /> {/* Trennlinie */}
+            <h3 className="h5 mb-3">Zugangsdaten</h3>
+
+            <label className="col-sm-2 col-form-label">
               E-Mail
+            </label>
+            <div className="col-sm-9">
               <input
+                className="form-control"
                 type="email"
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
                 autoComplete='email'
-                required
+                placeholder=' schmidt@t-online.de'
+                required={customerType === "business"}
+                disabled={customerType !== "business"}
               />
-            </label>
-            <label>
+            </div>
+
+            <label className="col-sm-2 col-form-label">
               Passwort
+            </label>
+            <div className="col-sm-9">
               <input
+                className="form-control"
                 type="password"
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
                 autoComplete='new-password'
                 minLength={8}
-                required
+                required={customerType === "business"}
+                disabled={customerType !== "business"}
               />
-            </label>
-          </div>
-        
-        </div>
+            </div>
 
-      
+          </div>
+          </>
+        )}
       </div>
 
-      <button className="btn btn-primary" type="submit">
-          Registrieren
-        </button>
+      <button 
+        className="btn btn-primary btn-lg submit-register-btn" 
+        type="submit"
+        disabled={isSubmitting}  
+      >
+        {isSubmitting ? "Registrierung läuft..." : "Registrieren"}
+      </button>
       <p>
-        Bereits registriert? {/* <Link to="/register">Anmelden</Link> */}
+        Bereits registriert?  <Link to="/register">Anmelden</Link> 
       </p>
 
     </form>
