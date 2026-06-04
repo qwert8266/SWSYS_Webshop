@@ -1,15 +1,14 @@
 package main
 
 import (
-	"context"
 	"fmt"
-	"log"
 	"net/http"
 	"time"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/qwert8266/SWSYS_Webshop/server/config"
+	"github.com/qwert8266/SWSYS_Webshop/server/handlers"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
@@ -24,6 +23,9 @@ func main() {
 
 	DB = config.ConnectDB()
 	server := gin.Default()
+
+	users := config.NewUserCollection(DB)
+	products := config.NewProductCollection(DB)
 
 	server.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"http://localhost:3001"},
