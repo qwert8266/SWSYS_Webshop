@@ -3,6 +3,7 @@ package handlers
 import (
 	"errors"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -10,6 +11,7 @@ import (
 	"github.com/qwert8266/SWSYS_Webshop/server/models"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
+	"golang.org/x/crypto/bcrypt"
 )
 
 var users = config.NewUserCollection(config.DB)
@@ -52,7 +54,9 @@ func GetUserByID(c *gin.Context) {
 }
 
 func AddNewUser(c *gin.Context) {
-	var incomingUserData models.User
+	var incomingUserData models.RegisterRequest
+
+	normalizedEmail := strings.ToLower(strings.TrimSpace(incomingUserData.Email))
 
 	// the incoming JSON is parsed into newUser
 	if err := c.BindJSON(&incomingUserData); err != nil {
@@ -60,13 +64,31 @@ func AddNewUser(c *gin.Context) {
 		return
 	}
 
+	passwordHash, err := bcrypt.GenerateFromPassword([]byte(incomingUserData.Password), bcrypt.DefaultCost)
+	if err != nil {
+		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": "Password konnte nicht verarbeitet werden."})
+	}
+
 	// a new UUID is created for the new user
 	newUser := models.User{
-		ID:        uuid.New(),
-		FirstName: incomingUserData.FirstName,
-		LastName:  incomingUserData.LastName,
-		Email:     incomingUserData.Email,
-		Address:   incomingUserData.Address,
+		ID:           uuid.New(),
+		CustomerType: incomingUserData.CustomerType,
+		Salutation:   strings.TrimSpace(incomingUserData.Salutation),
+		FirstName:    strings.TrimSpace(incomingUserData.FirstName),
+		LastName:     strings.TrimSpace(incomingUserData.LastName),
+		BirthDate:    strings.TrimSpace(incomingUserData.BirthDate),
+		Phone:        strings.TrimSpace(incomingUserData.Phone),
+		CompanyName:  strings.TrimSpace(incomingUserData.CompanyName),
+
+		Email:        normalizedEmail,
+		PasswordHash: string(passwordHash),
+		Address: models.Address{
+			Street:      strings.TrimSpace(incomingUserData.Street),
+			HouseNumber: strings.TrimSpace(incomingUserData.HouseNumber),
+			ZipCode:     strings.TrimSpace(incomingUserData.ZipCode),
+			City:        strings.TrimSpace(incomingUserData.City),
+			Country:     strings.TrimSpace(incomingUserData.Country),
+		},
 	}
 
 	// the new movie is added to the list of movies

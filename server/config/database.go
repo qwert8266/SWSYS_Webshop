@@ -3,7 +3,6 @@ package config
 import (
 	"context"
 	"log"
-	"os"
 
 	"github.com/joho/godotenv"
 	"go.mongodb.org/mongo-driver/v2/mongo"
@@ -22,11 +21,11 @@ func LoadEnv() {
 
 // ConnectDB initializing the connection to the mongo database
 func ConnectDB() *mongo.Client {
-	uri := os.Getenv("MONGODB_URI")
+	//uri := os.Getenv("MONGODB_URI")
 
 	// Connects to MongoDB
 	serverAPI := options.ServerAPI(options.ServerAPIVersion1)
-	opts := options.Client().ApplyURI(uri).SetServerAPIOptions(serverAPI)
+	opts := options.Client().ApplyURI("mongodb://db:27017").SetServerAPIOptions(serverAPI)
 
 	client, err := mongo.Connect(opts)
 	if err != nil {

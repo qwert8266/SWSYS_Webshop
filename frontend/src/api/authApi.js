@@ -1,4 +1,4 @@
-const API_BASE_URL = ProcessingInstruction.env.REACT_BASE_URL || "http://localhost:3000";
+const API_BASE_URL = "http://localhost:3001"; //ProcessingInstruction.env.REACT_BASE_URL || 
 
 export class AuthApiError extends Error {
   constructor(message, status, payload) {
