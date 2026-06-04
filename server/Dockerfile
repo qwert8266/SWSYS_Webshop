@@ -9,13 +9,10 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 # Copying all the files
-COPY *.go ./
-
-# build the server
-RUN CGO_ENABLED=0 GOOS=linux go build -o /docker-gs-ping
+COPY . .
 
 # Exposing server port
-EXPOSE 8080
+EXPOSE 3001
 
 # Starting our application
 CMD ["go", "run", "main.go"]
