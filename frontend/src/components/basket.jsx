@@ -18,12 +18,23 @@ function ShoppingCart() {
   /** Wenn sich noch keine Produkte im Warenkorb befinden */
   if (items.length === 0) {
     return (
-      <section className="cart-card empty-cart">
-        <h1>Warenkorb</h1>
-        <p>Dein warenkorb ist noch leer.</p>
-        <Link className="btn btn-primary" to="/sortiment">
-          Produkte ansehen
-        </Link>
+      <section className="container-xl my-4">
+        <div class="row g-4">
+        {/* Linke Seite <Warenkorb-Produkte> */}
+          <div className="col-12 col-lg-8">
+            <div className="card border rounded-4 shadow-sm p-4 bg-white">
+              <div className="d-flex justify-content-between align-items-start mb-4">
+                <div>
+                  <h1>Warenkorb</h1>
+                  <p>Dein warenkorb ist noch leer.</p>
+                  <Link className="btn btn-primary" to="/sortiment">
+                  Produkte ansehen
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>  
       </section>
     );
   }
