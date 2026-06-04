@@ -38,6 +38,12 @@ func main() {
 
 	server.GET("/health", healthCheck)
 
+	server.GET("/products", func(c *gin.Context) { handlers.GetProducts(c, products) })
+	server.GET("/products/:id", func(c *gin.Context) { handlers.GetProductByID(c, products) })
+
+	server.GET("/users", func(c *gin.Context) { handlers.GetUsers(c, users) })
+	server.GET("/users/:id", func(c *gin.Context) { handlers.GetUserByID(c, users) })
+
 	// the addr is explicitly 0.0.0.0 because if the application is running inside a container,
 	//it must handle requests from outside the container.
 	err := server.Run("0.0.0.0:8080")
@@ -46,8 +52,6 @@ func main() {
 	}
 
 	defer func() {
-		if err := DB.Disconnect(context.TODO()); err != nil {
-			log.Fatal("database disconnect failed", err)
-		}
+		config.DisconnectDB(DB)
 	}()
 }
