@@ -6,13 +6,16 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/qwert8266/SWSYS_Webshop/server/config"
 	"github.com/qwert8266/SWSYS_Webshop/server/models"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
-func GetUsers(c *gin.Context, collection *mongo.Collection) {
-	cursor, err := collection.Find(c.Request.Context(), bson.M{})
+var users = config.NewUserCollection(config.DB)
+
+func GetUsers(c *gin.Context) {
+	cursor, err := users.Find(c.Request.Context(), bson.M{})
 	if err != nil {
 		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -27,7 +30,7 @@ func GetUsers(c *gin.Context, collection *mongo.Collection) {
 	c.IndentedJSON(http.StatusOK, users)
 }
 
-func GetUserByID(c *gin.Context, collection *mongo.Collection) {
+func GetUserByID(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "the requested uuid is not a valid uuid"})
@@ -36,7 +39,7 @@ func GetUserByID(c *gin.Context, collection *mongo.Collection) {
 
 	var user models.User
 
-	err = collection.FindOne(c.Request.Context(), bson.M{"id": id}).Decode(&user)
+	err = users.FindOne(c.Request.Context(), bson.M{"id": id}).Decode(&user)
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			c.IndentedJSON(http.StatusNotFound, gin.H{"message": "requested user not found"})
@@ -48,7 +51,7 @@ func GetUserByID(c *gin.Context, collection *mongo.Collection) {
 	c.IndentedJSON(http.StatusOK, user)
 }
 
-func AddNewUser(c *gin.Context, collection *mongo.Collection) {
+func AddNewUser(c *gin.Context) {
 	var incomingUserData models.User
 
 	// the incoming JSON is parsed into newUser
@@ -67,7 +70,7 @@ func AddNewUser(c *gin.Context, collection *mongo.Collection) {
 	}
 
 	// the new movie is added to the list of movies
-	if _, err := collection.InsertOne(c.Request.Context(), newUser); err != nil {
+	if _, err := users.InsertOne(c.Request.Context(), newUser); err != nil {
 		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -75,13 +78,13 @@ func AddNewUser(c *gin.Context, collection *mongo.Collection) {
 	c.IndentedJSON(http.StatusCreated, newUser.ID)
 }
 
-func DeleteUser(c *gin.Context, collection *mongo.Collection) {
+func DeleteUser(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		c.IndentedJSON(http.StatusBadRequest, gin.H{"error parsing user id": err.Error()})
 	}
 
-	result, err := collection.DeleteOne(c.Request.Context(), bson.M{"id": id})
+	result, err := users.DeleteOne(c.Request.Context(), bson.M{"id": id})
 	if err != nil {
 		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 	} else if result.DeletedCount == 0 {

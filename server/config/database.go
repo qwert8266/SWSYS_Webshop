@@ -10,6 +10,8 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
+var DB = ConnectDB()
+
 // LoadEnv loading enviroment variables from .env file.
 func LoadEnv() {
 	err := godotenv.Load()
