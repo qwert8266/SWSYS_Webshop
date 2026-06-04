@@ -44,6 +44,9 @@ func main() {
 	server.GET("/users", func(c *gin.Context) { handlers.GetUsers(c, users) })
 	server.GET("/users/:id", func(c *gin.Context) { handlers.GetUserByID(c, users) })
 
+	server.POST("/users", func(c *gin.Context) { handlers.AddNewUser(c, users) })
+	server.DELETE("/users/:id", func(c *gin.Context) { handlers.DeleteUser(c, users) })
+
 	// the addr is explicitly 0.0.0.0 because if the application is running inside a container,
 	//it must handle requests from outside the container.
 	err := server.Run("0.0.0.0:3001")

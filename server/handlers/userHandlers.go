@@ -46,5 +46,47 @@ func GetUserByID(c *gin.Context, collection *mongo.Collection) {
 		return
 	}
 	c.IndentedJSON(http.StatusOK, user)
+}
 
+func AddNewUser(c *gin.Context, collection *mongo.Collection) {
+	var incomingUserData models.User
+
+	// the incoming JSON is parsed into newUser
+	if err := c.BindJSON(&incomingUserData); err != nil {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error parsing user data": err.Error()})
+		return
+	}
+
+	// a new UUID is created for the new user
+	newUser := models.User{
+		ID:        uuid.New(),
+		FirstName: incomingUserData.FirstName,
+		LastName:  incomingUserData.LastName,
+		Email:     incomingUserData.Email,
+		Address:   incomingUserData.Address,
+	}
+
+	// the new movie is added to the list of movies
+	if _, err := collection.InsertOne(c.Request.Context(), newUser); err != nil {
+		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.IndentedJSON(http.StatusCreated, newUser.ID)
+}
+
+func DeleteUser(c *gin.Context, collection *mongo.Collection) {
+	id, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error parsing user id": err.Error()})
+	}
+
+	result, err := collection.DeleteOne(c.Request.Context(), bson.M{"id": id})
+	if err != nil {
+		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	} else if result.DeletedCount == 0 {
+		c.IndentedJSON(http.StatusNotFound, gin.H{"message": "user not found"})
+	} else {
+		c.IndentedJSON(http.StatusNoContent, nil)
+	}
 }
