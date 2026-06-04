@@ -1,0 +1,45 @@
+.footer{
+    display: flex;
+    gap: 120px;
+    padding: 20px;
+    align-items: flex-start;
+}
+
+.title{
+    color: white;
+    text-decoration: underline;
+}
+
+.footer-link{
+    color: white;
+    text-decoration: none;
+    
+}
+
+.footer-column{
+    display: flex ;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.logo-container{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.logo{
+    width: 250px;
+    justify-content: center;
+}
+
+.background{
+    background-color: #15406e;
+}
+
+.footer-bottom{
+    text-align: right;
+    color:white;
+}

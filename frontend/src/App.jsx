@@ -1,6 +1,5 @@
 import react from 'react';
 import { useState } from "react";
-import Footer from "./Footer";
 import { BrowserRouter } from "react-router-dom";
 import { Routes, Route } from 'react-router-dom';
 
@@ -8,6 +7,7 @@ import Register from "./pages/register";
 import Login from "./pages/login"
 import Navbar from './components/navbar';
 import HideNavbar from './components/hideNavbar';
+import Footer from "./components/footer";
 
 function App() {
   return (
