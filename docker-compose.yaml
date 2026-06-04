@@ -1,10 +1,10 @@
 services:
-  web:
+  server:
     build:
-      context: .
+      context: ./server
       dockerfile: Dockerfile
     ports:
-      - "8080:8080"
+      - "3001:3001"
     restart: unless-stopped
     depends_on:
       db:
@@ -29,14 +29,6 @@ services:
       timeout: 10s
       retries: 3
       start_period: 5s
-
-#  test:
-#    image: swsyspro-test-engine:2025-v3
-#    environment:
-#      SWSYSPRO_TEST_ENGINE_HOST: http://web:8080
-#    depends_on:
-#      web:
-#        condition: service_healthy
 
 volumes:
   mongo-data:
