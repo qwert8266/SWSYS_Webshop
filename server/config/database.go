@@ -10,6 +10,7 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
+// LoadEnv loading enviroment variables from .env file.
 func LoadEnv() {
 	err := godotenv.Load()
 	if err != nil {
@@ -17,6 +18,7 @@ func LoadEnv() {
 	}
 }
 
+// ConnectDB initializing the connection to the mongo database
 func ConnectDB() *mongo.Client {
 	uri := os.Getenv("MONGODB_URI")
 
@@ -35,4 +37,19 @@ func ConnectDB() *mongo.Client {
 	}
 
 	return client
+}
+
+// DisconnectDB disconnecting from the Database on shutdown
+func DisconnectDB(client *mongo.Client) {
+	if err := client.Disconnect(context.Background()); err != nil {
+		log.Fatal("Could not disconnect MongoDB:", err)
+	}
+}
+
+func NewProductCollection(client *mongo.Client) *mongo.Collection {
+	return client.Database("products").Collection("products")
+}
+
+func NewUserCollection(client *mongo.Client) *mongo.Collection {
+	return client.Database("users").Collection("users")
 }
