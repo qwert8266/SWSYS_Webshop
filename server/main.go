@@ -8,10 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/qwert8266/SWSYS_Webshop/server/config"
 	"github.com/qwert8266/SWSYS_Webshop/server/routes"
-	"go.mongodb.org/mongo-driver/v2/mongo"
 )
-
-var DB *mongo.Client
 
 func main() {
 	config.LoadEnv()
@@ -39,6 +36,6 @@ func main() {
 	}
 
 	defer func() {
-		config.DisconnectDB(DB)
+		config.DisconnectDB()
 	}()
 }

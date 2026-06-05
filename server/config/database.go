@@ -3,6 +3,7 @@ package config
 import (
 	"context"
 	"log"
+	"os"
 
 	"github.com/joho/godotenv"
 	"go.mongodb.org/mongo-driver/v2/mongo"
@@ -21,11 +22,11 @@ func LoadEnv() {
 
 // ConnectDB initializing the connection to the mongo database
 func ConnectDB() *mongo.Client {
-	//uri := os.Getenv("MONGODB_URI")
+	LoadEnv()
 
 	// Connects to MongoDB
 	serverAPI := options.ServerAPI(options.ServerAPIVersion1)
-	opts := options.Client().ApplyURI("mongodb://db:27017").SetServerAPIOptions(serverAPI)
+	opts := options.Client().ApplyURI(os.Getenv("MONGODB_URI")).SetServerAPIOptions(serverAPI)
 
 	client, err := mongo.Connect(opts)
 	if err != nil {
@@ -41,8 +42,8 @@ func ConnectDB() *mongo.Client {
 }
 
 // DisconnectDB disconnecting from the Database on shutdown
-func DisconnectDB(client *mongo.Client) {
-	if err := client.Disconnect(context.Background()); err != nil {
+func DisconnectDB() {
+	if err := DB.Disconnect(context.Background()); err != nil {
 		log.Fatal("Could not disconnect MongoDB:", err)
 	}
 }
