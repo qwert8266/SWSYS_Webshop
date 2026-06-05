@@ -28,8 +28,8 @@ func main() {
 
 	routes.RegisterHealthRoute(server)
 
-	routes.RegisterUserRoutes(server.Group("/user"))
-	routes.RegisterProductRoutes(server.Group("/product"))
+	routes.RegisterUserRoutes(server.Group("/users"))
+	routes.RegisterProductRoutes(server.Group("/products"))
 
 	// the addr is explicitly 0.0.0.0 because if the application is running inside a container,
 	//it must handle requests from outside the container.

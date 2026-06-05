@@ -5,13 +5,10 @@ import (
 	"github.com/qwert8266/SWSYS_Webshop/server/handlers"
 )
 
-func RegisterUserRoutes(rg *gin.RouterGroup) {
+func RegisterUserRoutes(users *gin.RouterGroup) {
 
-	users := rg.Group("/users")
-	{
-		users.GET("/", handlers.GetUsers)
-		users.GET("/:id", handlers.GetUserByID)
-		users.POST("/", handlers.AddNewUser)
-		users.DELETE("/:id", handlers.DeleteUser)
-	}
+	users.GET("/", handlers.GetUsers)
+	users.GET("/:id", handlers.GetUserByID)
+	users.POST("/", handlers.AddNewUser)
+	users.DELETE("/:id", handlers.DeleteUser)
 }

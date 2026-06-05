@@ -5,11 +5,8 @@ import (
 	"github.com/qwert8266/SWSYS_Webshop/server/handlers"
 )
 
-func RegisterProductRoutes(r *gin.RouterGroup) {
+func RegisterProductRoutes(products *gin.RouterGroup) {
 
-	products := r.Group("/products")
-	{
-		products.GET("/", handlers.GetProducts)
-		products.GET("/:id", handlers.GetProductByID)
-	}
+	products.GET("/", handlers.GetProducts)
+	products.GET("/:id", handlers.GetProductByID)
 }
