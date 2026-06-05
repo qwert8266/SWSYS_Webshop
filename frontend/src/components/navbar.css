@@ -1,0 +1,119 @@
+.navbar-container {
+    flex-wrap: nowrap;
+    padding-left: 80px;
+    padding-right: 80px;
+    gap: 1rem;
+}
+
+.navbar-logo {
+    width: 200px;
+}
+
+.navbar-collapse {
+    margin: 0 3rem ;
+}
+
+.nav-item {
+    font-size: 24px !important;
+}
+
+.nav-link a {
+    position: relative;
+    text-decoration: none;
+    color: black;
+}
+.nav-link a::before {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #15406e);
+    border-radius: 0;
+    transition: 0.5s; 
+}
+.nav-link a:hover::before {
+    width: 100%;
+}
+.nav-link.active a {
+    color: #ab8d51;
+}
+
+
+.navbar-elements-right {
+    display: flex;
+    margin-left: auto;
+    align-items: center;
+    gap: 0rem;
+    
+}
+
+/* Navbar icons */
+.navbar-user-area {
+    display: flex;
+    gap: 1rem;
+    /*align-items: center;
+    white-space: nowrap;*/
+}
+
+.navbar-icon-button {
+    width: 46px;
+    height: 46px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.navbar-icon {
+    width: 34px;
+    height: 34px;
+}
+
+
+/* Navbar Suchleiste */
+.navbar-search {
+    display: flex;
+    align-items: stretch;
+    max-height: 35px;
+    
+    width: clamp(180px, 30vw, 400px);
+    max-width: 460px;
+    min-width: 180px;
+    
+    flex-shrink: 1;
+}
+
+.navbar-search-shadow:focus-within {
+    box-shadow: 0 0 0 0.2rem #2777cc56;
+    border-radius: 6px 6px 6px 6px;
+}
+
+.navbar-search-input {
+    min-width: 0;
+    height: 35px;
+    padding: 0 1rem;
+    margin-right: -1rem;
+    font-size: 1rem;  
+
+    
+    border-color: #15406e;
+    border: 1px solid #15406e;
+    border-radius: 6px 0 0 6px;
+    border-right: none;
+    box-shadow: none !important;
+}
+
+.navbar-search-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 35px;
+}
+
+.navbar-search-icon {
+    display: block;
+    width: 24px;
+}
+

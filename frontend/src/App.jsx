@@ -1,14 +1,16 @@
-import { useState } from "react";
-import Footer from "./Footer";
+import React from "react";
+import { BrowserRouter } from "react-router-dom";
 
+import Navbar from './components/navbar';
 
-function App(){
-    return(
-        <>
-        <h1>TEST</h1>
-        <Footer></Footer>
-        </>
-    );
+function App() {
+  return (
+    <>
+      <BrowserRouter>
+        <Navbar />
+      </BrowserRouter>
+    </>
+  );
 }
 
-export default App
+export default App;
