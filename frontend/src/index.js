@@ -10,11 +10,14 @@ import "bootstrap-icons/font/bootstrap-icons.css"
 import App from "./App";
 import Register from "./pages/register";
 
+import App from './App';
+import { CartProvider } from "./context/cartContext";
 
 const root = createRoot(document.getElementById("root"));
 
 root.render(
-  <BrowserRouter>
-     <App />
-  </BrowserRouter>
+  
+  <CartProvider>
+    <App />
+  </CartProvider>
 );
