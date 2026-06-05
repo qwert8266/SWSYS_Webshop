@@ -90,7 +90,7 @@ function Navbar() {
           
           {/* Bedienelemente */}
           <div className="collapse navbar-collapse" id="navbarContent">
-            <ul className="navbar-nav mb-2 mb-lg-0 me-4">
+            <ul className="navbar-nav mb-2 mb-lg-0 gap-2">
               <li className="nav-item">
                 <NavLink className="nav-link" to="/home">
                   <a href="/#">Home</a>
