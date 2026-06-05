@@ -9,6 +9,6 @@ func RegisterUserRoutes(users *gin.RouterGroup) {
 
 	users.GET("/", handlers.GetUsers)
 	users.GET("/:id", handlers.GetUserByID)
-	users.POST("/", handlers.AddNewUser)
+	users.POST("/register", handlers.AddNewUser)
 	users.DELETE("/:id", handlers.DeleteUser)
 }

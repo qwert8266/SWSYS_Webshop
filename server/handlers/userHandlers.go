@@ -56,11 +56,42 @@ func GetUserByID(c *gin.Context) {
 func AddNewUser(c *gin.Context) {
 	var incomingUserData models.RegisterRequest
 
-	normalizedEmail := strings.ToLower(strings.TrimSpace(incomingUserData.Email))
-
 	// the incoming JSON is parsed into newUser
 	if err := c.BindJSON(&incomingUserData); err != nil {
 		c.IndentedJSON(http.StatusBadRequest, gin.H{"error parsing user data": err.Error()})
+		return
+	}
+
+	normalizedEmail := strings.ToLower(strings.TrimSpace(incomingUserData.Email))
+	incomingUserData.CustomerType = strings.TrimSpace(incomingUserData.CustomerType)
+
+	if normalizedEmail == "" || len(incomingUserData.Password) < 8 {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "E-Mail und Passwort mit mindestens 8 Zeichen sind erforderlich."})
+		return
+	}
+
+	if incomingUserData.CustomerType != "private" && incomingUserData.CustomerType != "business" {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Ungüliger Kundentyp."})
+		return
+	}
+
+	if strings.TrimSpace(incomingUserData.FirstName) == "" || strings.TrimSpace(incomingUserData.LastName) == "" {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Vorname und Nachname sind erforderlich."})
+		return
+	}
+
+	if incomingUserData.CustomerType == "business" && strings.TrimSpace(incomingUserData.CompanyName) == "" {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Für ein Geschäftskonto ist der Unternehmensname erforderlich."})
+		return
+	}
+
+	err := users.FindOne(c.Request.Context(), bson.M{"email": normalizedEmail}).Err()
+	if err == nil {
+		c.IndentedJSON(http.StatusConflict, gin.H{"error": "Diese E-Mail-Adresse ist bereits registriert."})
+		return
+	}
+	if !errors.Is(err, mongo.ErrNoDocuments) {
+		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
