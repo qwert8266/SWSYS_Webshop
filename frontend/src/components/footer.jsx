@@ -7,8 +7,8 @@ function Footer(){
 
 
     return(
-      <div className="background">
-        <footer className="footer">
+      <footer className="footer">
+        <div className="footer-content">
           <div className="logo-container">
             <NavLink className="navbar-brand" to="/">
             <img className="logo" src="/img/nav_logo_oval.png" alt="logo" /> 
@@ -66,12 +66,14 @@ function Footer(){
             </NavLink>
           </div>
 
-          </footer>
+          
+          </div>
           <div className="footer-bottom">
             <p>&copy; {new Date().getFullYear()} Ctrl+Alt+Deluxe</p>
           </div>
+          
 
-      </div>
+      </footer>
       
       
       

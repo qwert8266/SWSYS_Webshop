@@ -1,8 +1,19 @@
 .footer{
+    padding: 40px 80px 5px 0;
+
+    width: 100%;
+    background-color: #15406e;
     display: flex;
-    gap: 120px;
-    padding: 20px;
+    flex-direction: column;
+    margin-top:auto;
+}
+
+.footer-content {
+    display: flex;
+    justify-content: center;
     align-items: flex-start;
+    gap: 120px;
+    flex-wrap: wrap;
 }
 
 .title{
@@ -19,7 +30,6 @@
 .footer-column{
     display: flex ;
     flex-direction: column;
-    justify-content: center;
     align-items: flex-start;
     gap: 10px;
 }
@@ -32,14 +42,17 @@
 
 .logo{
     width: 250px;
-    justify-content: center;
 }
 
-.background{
-    background-color: #15406e;
-}
 
 .footer-bottom{
-    text-align: right;
+    display: block;
+    text-align: center;
     color:white;
+
+    margin-top: 20px;
+    font-size: 0.9rem;
+}
+.footer-bottom p {
+    margin:0;
 }

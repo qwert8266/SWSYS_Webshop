@@ -9,7 +9,7 @@ import Navbar from './components/navbar';
 import HideNavbar from './components/hideNavbar';
 import Footer from "./components/footer";
 import ShoppingCart from './pages/shoppingCart';
-import Test from './pages/test';
+//import Test from './pages/test';
 
 function App() {
   return (
@@ -23,7 +23,7 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/login" element={<Login />}/>
           <Route path="/cart" element={<ShoppingCart />} />
-          <Route path="/test" element={<Test/>} /> 
+          {/*<Route path="/test" element={<Test/>} /> */}
 
         </Routes>
         <Footer></Footer>
