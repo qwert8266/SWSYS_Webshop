@@ -31,7 +31,7 @@ export const schnäpse = [
 export const top_banners = [
     {png: "bier_top.png", sentence: "Bier geht doch immer!"},
     {png: "wein_top.png", sentence: "Wein in meinen Mund!"},
-    {png: "schnaps_top.png", sentence: "Ich fühl mich Osborne!"}
+    {png: "schnaps_top2.png", sentence: "Ich fühl mich Osborne!"}
 ]
 
 function Category({ products, banner }){
@@ -61,12 +61,6 @@ function Category({ products, banner }){
                     <p>{"★".repeat(Math.round(product.rating))}{"☆".repeat(5 - Math.round(product.rating))}</p>
                     <p>{product.price} €</p>
 
-                    <div className='cart-input'>
-                        <input type="number" min="1" defaultValue="1" />
-                        <button className='cart-button'>
-                            <img className="cart-at-product" src={`/img/cart-icon_white.png`} alt="+" />
-                        </button>
-                    </div>
                 </div>
             ))}
         </div>
