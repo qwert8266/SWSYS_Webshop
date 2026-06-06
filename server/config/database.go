@@ -4,13 +4,17 @@ import (
 	"context"
 	"log"
 	"os"
+	"strings"
+	"time"
 
 	"github.com/joho/godotenv"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
-var DB = ConnectDB()
+// var DB = ConnectDB()
+// containes the shared MongoDB client after main() has initialized it.
+var DB *mongo.Client
 
 // LoadEnv loading enviroment variables from .env file.
 func LoadEnv() {
@@ -18,23 +22,32 @@ func LoadEnv() {
 	if err != nil {
 		log.Fatal("Could not load .env file")
 	}
+
 }
 
-// ConnectDB initializing the connection to the mongo database
+// creates the MongoDB client and verifies the connection with ping
 func ConnectDB() *mongo.Client {
-	LoadEnv()
+
+	uri := os.Getenv("MONGODB_URI")
+	if !strings.HasPrefix(uri, "mongodb://") {
+		log.Fatalf("Invalid MongoDB Uri: %q.", uri)
+	}
 
 	// Connects to MongoDB
 	serverAPI := options.ServerAPI(options.ServerAPIVersion1)
-	opts := options.Client().ApplyURI(os.Getenv("MONGODB_URI")).SetServerAPIOptions(serverAPI)
+	opts := options.Client().ApplyURI(uri).SetServerAPIOptions(serverAPI)
 
 	client, err := mongo.Connect(opts)
 	if err != nil {
 		log.Fatal("Could not connect to MongoDB:", err)
 	}
 
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
 	// Pings the database to verify connection
-	if err := client.Ping(context.TODO(), nil); err != nil {
+	//if err := client.Ping(context.TODO(), nil); err != nil {
+	if err := client.Ping(ctx, nil); err != nil {
 		log.Fatal("Could not ping MongoDB:", err)
 	}
 
@@ -42,16 +55,35 @@ func ConnectDB() *mongo.Client {
 }
 
 // DisconnectDB disconnecting from the Database on shutdown
-func DisconnectDB() {
+func DisconnectDB(client *mongo.Client) {
+	if client == nil {
+		return
+	}
+
 	if err := DB.Disconnect(context.Background()); err != nil {
 		log.Fatal("Could not disconnect MongoDB:", err)
 	}
 }
 
-func NewProductCollection(client *mongo.Client) *mongo.Collection {
-	return client.Database("products").Collection("products")
+// returnes the configured MongoDB database name
+func DatabaseName() string {
+	return strings.TrimSpace(os.Getenv("MONGODB_DATABASE"))
 }
 
-func NewUserCollection(client *mongo.Client) *mongo.Collection {
-	return client.Database("users").Collection("users")
+// returns a MongoDB collection
+func collection(name string) *mongo.Collection {
+	if DB == nil {
+		log.Fatal("MongoDB client is not initialized.")
+	}
+	return DB.Database(DatabaseName()).Collection(name)
+}
+
+// returns the products collection of the webshop database
+func ProductCollection() *mongo.Collection {
+	return collection("products")
+}
+
+// returns the users collection of the webshop database
+func UserCollection() *mongo.Collection {
+	return collection("users")
 }

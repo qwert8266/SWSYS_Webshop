@@ -12,10 +12,13 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
-var products = config.NewProductCollection(config.DB)
+//var products = config.ProductCollection()
 
+// returns all Products from MongoDB
 func GetProducts(c *gin.Context) {
-	cursor, err := products.Find(c.Request.Context(), bson.M{})
+	productCollection := config.ProductCollection()
+
+	cursor, err := productCollection.Find(c.Request.Context(), bson.M{})
 	if err != nil {
 		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -39,7 +42,8 @@ func GetProductByID(c *gin.Context) {
 
 	var product models.Product
 
-	err = products.FindOne(c.Request.Context(), bson.M{"id": id}).Decode(&product)
+	productCollection := config.ProductCollection()
+	err = productCollection.FindOne(c.Request.Context(), bson.M{"id": id}).Decode(&product)
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			c.IndentedJSON(http.StatusNotFound, gin.H{"message": "requested product not found"})

@@ -12,6 +12,10 @@ import (
 
 func main() {
 	config.LoadEnv()
+
+	config.DB = config.ConnectDB()
+	defer config.DisconnectDB(config.DB)
+
 	server := gin.Default()
 
 	server.Use(cors.New(cors.Config{
@@ -25,7 +29,7 @@ func main() {
 
 	routes.RegisterHealthRoute(server)
 
-	routes.RegisterUserRoutes(server.Group("/users"))
+	routes.RegisterUserRoutes(server.Group("/user"))
 	routes.RegisterProductRoutes(server.Group("/products"))
 
 	// the addr is explicitly 0.0.0.0 because if the application is running inside a container,
@@ -35,7 +39,8 @@ func main() {
 		fmt.Println(err)
 	}
 
-	defer func() {
+	/*defer func() {
 		config.DisconnectDB()
 	}()
+	*/
 }
