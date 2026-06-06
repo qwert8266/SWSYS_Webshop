@@ -6,14 +6,13 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/joho/godotenv"
 	"github.com/qwert8266/SWSYS_Webshop/server/config"
 	"github.com/qwert8266/SWSYS_Webshop/server/routes"
 )
 
 func main() {
-	//config.LoadEnv()
-	_ = godotenv.Load()
+	config.LoadEnv()
+
 	config.DB = config.ConnectDB()
 	defer config.DisconnectDB(config.DB)
 

@@ -27,7 +27,6 @@ func LoadEnv() {
 
 // creates the MongoDB client and verifies the connection with ping
 func ConnectDB() *mongo.Client {
-	//LoadEnv()
 
 	uri := os.Getenv("MONGODB_URI")
 	if !strings.HasPrefix(uri, "mongodb://") {
