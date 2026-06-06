@@ -5,6 +5,15 @@ export const biere = [
   { name: "Becks", price: "14,99", rating: 3.8, img: "becks.png" },
   { name: "Corona", price: "19,99", rating: 3.4, img: "corona.png"  },
   { name: "Desperados", price: "34,99", rating: 4.5, img: "desperados.png" },
+  { name: "Becks", price: "14,99", rating: 3.8, img: "becks.png" },
+  { name: "Corona", price: "19,99", rating: 3.4, img: "corona.png"  },
+  { name: "Desperados", price: "34,99", rating: 4.5, img: "desperados.png" },
+  { name: "Becks", price: "14,99", rating: 3.8, img: "becks.png" },
+  { name: "Corona", price: "19,99", rating: 3.4, img: "corona.png"  },
+  { name: "Desperados", price: "34,99", rating: 4.5, img: "desperados.png" },
+  { name: "Becks", price: "14,99", rating: 3.8, img: "becks.png" },
+  { name: "Corona", price: "19,99", rating: 3.4, img: "corona.png"  },
+  { name: "Desperados", price: "34,99", rating: 4.5, img: "desperados.png" },
 ];
 
 
@@ -25,8 +34,6 @@ export const top_banners = [
     {png: "schnaps_top.png", sentence: "Ich fühl mich Osborne!"}
 ]
 
-const rating = 4;
-
 function Category({ products, banner }){
 
     return(
@@ -45,7 +52,7 @@ function Category({ products, banner }){
 
         <div className="product_row">
             {products.map((product) => (
-                <div className="produkt" key={product.name}>
+                <div className="product" key={product.name}>
                     
                     <NavLink className="product_link" to={"/"+product.name.toLowerCase()}>
                         <img className="product_png" src={`/img/product_images/${product.img}`} alt={product.name} />
@@ -53,9 +60,18 @@ function Category({ products, banner }){
                     </NavLink>
                     <p>{"★".repeat(Math.round(product.rating))}{"☆".repeat(5 - Math.round(product.rating))}</p>
                     <p>{product.price} €</p>
+
+                    <div className='cart-input'>
+                        <input type="number" min="1" defaultValue="1" />
+                        <button className='cart-button'>
+                            <img className="cart-at-product" src={`/img/cart-icon_white.png`} alt="+" />
+                        </button>
+                    </div>
                 </div>
             ))}
         </div>
+
+        
         </div>
     )
 }
