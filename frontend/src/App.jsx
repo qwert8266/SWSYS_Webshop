@@ -25,9 +25,9 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/login" element={<Login />}/>
           <Route path="/cart" element={<ShoppingCart />} />
-          <Route path="/bier" element={<Category products={biere} banner={top_banners[0]}/>} />
-          <Route path="/wein" element={<Category products={weine} banner={top_banners[1]}/>} />
-          <Route path="/schnaps" element={<Category products={schnäpse} banner={top_banners[2]}/>} />
+          <Route path="/bier" element={<Category key="bier" products={biere} banner={top_banners[0]}/>} />
+          <Route path="/wein" element={<Category key="wein" products={weine} banner={top_banners[1]}/>} />
+          <Route path="/schnaps" element={<Category key="schnaps" products={schnäpse} banner={top_banners[2]}/>} />
           {/*<Route path="/test" element={<Test/>} /> */}
 
         </Routes>
