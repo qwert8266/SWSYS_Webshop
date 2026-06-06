@@ -2,21 +2,21 @@ import { NavLink } from 'react-router-dom';
 import './categories.css';
 
 export const biere = [
-  { name: "Becks", preis: "14,99", img: "becks.png" },
-  { name: "Corona", preis: "19,99", img: "corona.png"  },
-  { name: "Desperados", preis: "34,99", img: "desperados.png" },
+  { name: "Becks", price: "14,99", rating: 3.8, img: "becks.png" },
+  { name: "Corona", price: "19,99", rating: 3.4, img: "corona.png"  },
+  { name: "Desperados", price: "34,99", rating: 4.5, img: "desperados.png" },
 ];
 
 
 export const weine = [
-  { name: "Merlot", preis: "9,99", img: "merlot.png" },
-  { name: "Riesling", preis: "12,99", img: "riesling.png" }
+  { name: "Merlot", price: "9,99", rating: 2.8, img: "merlot.png" },
+  { name: "Riesling", price: "12,99", rating: 3.6, img: "riesling.png" }
 ];
 
 export const schnäpse = [
-  { name: "Jägermeister", preis: "14,99", img: "jägermeister.png" },
-  { name: "Havana", preis: "12,99", img: "havana.png" },
-  { name: "Veterano", preis: "5,99", img: "veterano.png" }
+  { name: "Jägermeister", price: "14,99", rating: 1.0, img: "jägermeister.png" },
+  { name: "Havana", price: "12,99", rating: 3.8, img: "havana.png" },
+  { name: "Veterano", price: "5,99", rating: 5.0, img: "veterano.png" }
 ];
 
 export const top_banners = [
@@ -24,6 +24,8 @@ export const top_banners = [
     {png: "wein_top.png", sentence: "Wein in meinen Mund!"},
     {png: "schnaps_top.png", sentence: "Ich fühl mich Osborne!"}
 ]
+
+const rating = 4;
 
 function Category({ products, banner }){
 
@@ -49,8 +51,8 @@ function Category({ products, banner }){
                         <img className="product_png" src={`/img/product_images/${product.img}`} alt={product.name} />
                         <h3>{product.name}</h3>
                     </NavLink>
-                    
-                    <p>{product.preis} €</p>
+                    <p>{"★".repeat(Math.round(product.rating))}{"☆".repeat(5 - Math.round(product.rating))}</p>
+                    <p>{product.price} €</p>
                 </div>
             ))}
         </div>
