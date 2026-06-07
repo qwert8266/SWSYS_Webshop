@@ -26,7 +26,7 @@ function ShoppingCart() {
               <div className="d-flex justify-content-between align-items-start mb-4">
                 <div>
                   <h1>Warenkorb</h1>
-                  <p>Dein warenkorb ist noch leer.</p>
+                  <p>Dein Warenkorb ist noch leer.</p>
                   <Link className="btn btn-primary" to="/sortiment">
                   Produkte ansehen
                   </Link>
