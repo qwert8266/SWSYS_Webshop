@@ -1,5 +1,10 @@
 .product-page{
     display: flex ;
+    flex-direction: column;
+}
+
+.product-page-top{
+    display: flex ;
     flex-direction: row;
     gap: 30px;
     padding-left: 60px;
@@ -9,8 +14,8 @@
 }
 
 .product-picture{
-    width: 800px;
-    height: 800px;
+    width: 600px;
+    height: 600px;
     object-fit: contain;
 }
 
@@ -19,7 +24,7 @@
     padding-right: 60px;
 }
 
-.product-name{
+.blue-header{
     color: #15406e;
     font-size: 50px;
     padding-bottom: 30px;
@@ -52,4 +57,38 @@
     align-items: center;
     border-top-right-radius: 6px;
     border-bottom-right-radius: 6px;
+}
+
+
+
+.product-page-bottom{
+    padding-left: 60px;
+    padding-right: 60px;
+    padding-bottom: 60px;
+}
+
+.review-section{
+    display: flex ;
+    flex-direction: row;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 30px;
+}
+
+.review-card{
+    width: 400px;
+    height: auto;
+    min-height: 230px;
+    font-size: 30px;
+}
+
+.picture_and_name{
+    display: flex ;
+    flex-direction: row;
+    gap: 15px;
+}
+
+.profile-picture{
+    width: 40px;
+    height: 40px;
 }

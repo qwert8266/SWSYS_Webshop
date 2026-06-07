@@ -7,11 +7,26 @@ export const produkte = [
   { name: "Desperados", price: "34,99", rating: 4.5, img: "desperados.png", category: "bier" },
   { name: "Merlot", price: "9,99", rating: 2.8, img: "merlot.png", category: "wein" },
   { name: "Riesling", price: "12,99", rating: 3.6, img: "riesling.png", category: "wein" },
-  { name: "Jägermeister", price: "14,99", rating: 1.0, img: "jägermeister.png", category: "schnaps" },
+  { name: "Jägermeister", price: "14,99", rating: 1.1, img: "jägermeister.png", category: "schnaps" },
   { name: "Havana", price: "12,99", rating: 3.8, img: "havana.png", category: "schnaps" },
-  { name: "Veterano", price: "5,99", rating: 5.0, img: "veterano.png", category: "schnaps" },
+  { name: "Veterano", price: "5,99", rating: 4.9, img: "veterano.png", category: "schnaps" },
 
 ];
+
+const rezensionen = [
+    {username: "Mathis Gronewold", profilePicture: "profile_picture.png", rating: 5, evaluation: "Da geht mir einer ab!"},
+    {username: "Lucas Mauermann", profilePicture: "profile_picture.png", rating: 1, evaluation: "Könnte kotzen."},
+    {username: "Wesley Pabst", profilePicture: "profile_picture.png", rating: 3, evaluation: "Naja, weiss ja nicht..."},
+    {username: "Mathis Gronewold", profilePicture: "profile_picture.png", rating: 5, evaluation: "Da geht mir einer ab!"},
+    {username: "Lucas Mauermann", profilePicture: "profile_picture.png", rating: 1, evaluation: "Könnte kotzen."},
+    {username: "Wesley Pabst", profilePicture: "profile_picture.png", rating: 3, evaluation: "Naja, weiss ja nicht..."},
+    {username: "Mathis Gronewold", profilePicture: "profile_picture.png", rating: 5, evaluation: "Da geht mir einer ab!"},
+    {username: "Lucas Mauermann", profilePicture: "profile_picture.png", rating: 1, evaluation: "Könnte kotzen."},
+    {username: "Wesley Pabst", profilePicture: "profile_picture.png", rating: 3, evaluation: "Naja, weiss ja nicht..."},
+    {username: "Mathis Gronewold", profilePicture: "profile_picture.png", rating: 5, evaluation: "Da geht mir einer ab!"},
+    {username: "Lucas Mauermann", profilePicture: "profile_picture.png", rating: 1, evaluation: "Könnte kotzen."},
+    {username: "Wesley Pabst", profilePicture: "profile_picture.png", rating: 3, evaluation: "Naja, weiss ja nicht..."},
+]
 
 function Product({}){
     const { category, productName } = useParams();
@@ -24,31 +39,51 @@ function Product({}){
 
     return(
         <div className='product-page'>
-            <div >
-                <img className='product-picture' src={`/img/product_images/${product.img}` }alt={product.name}></img>
+            <div className='product-page-top'>
+                <div >
+                    <img className='product-picture' src={`/img/product_images/${product.img}` }alt={product.name}></img>
+                </div>
+
+                <div className='product-information'> 
+                    <div className='blue-header'>
+                        {product.name}
+                    </div>
+                    <div className='other-information'>
+                        <p>Info 1: ...</p>
+                        <p>Info 2: ...</p>
+                        <p>Info 3: ...</p>
+                        <p>{"★".repeat(Math.round(product.rating))}{"☆".repeat(5 - Math.round(product.rating))}{"("+product.rating+")"}</p>
+                        <p>{product.price}€</p>
+                    </div>
+                    <div className='cart-input'>
+                        <input type="number" min="1" defaultValue="1" />
+                        <button className='cart-button'>
+                            <img className="cart-at-product" src={`/img/cart-icon_white.png`} alt="+" />
+                        </button>
+                    </div>
+                </div>
             </div>
 
-            <div className='product-information'> 
-                <div className='product-name'>
-                    {product.name}
+            <div className='product-page-bottom'>
+                <div className='blue-header'>
+                    Rezensionen
                 </div>
-                <div className='other-information'>
-                    <p>Info 1: ...</p>
-                    <p>Info 2: ...</p>
-                    <p>Info 3: ...</p>
-                    <p>{"★".repeat(Math.round(product.rating))}{"☆".repeat(5 - Math.round(product.rating))}{"("+product.rating+")"}</p>
-                    <p>{product.price}€</p>
-                </div>
-                <div className='cart-input'>
-                    <input type="number" min="1" defaultValue="1" />
-                    <button className='cart-button'>
-                        <img className="cart-at-product" src={`/img/cart-icon_white.png`} alt="+" />
-                    </button>
+
+                <div className='review-section'>
+                    {rezensionen.map((rezension) => (
+                        <div className='review-card'>
+                            <div className='picture_and_name'>
+                                <img className='profile-picture' src={`/img/${rezension.profilePicture}`} alt={rezension.username}></img>
+                                <p>{rezension.username}</p>
+                            </div>
+                            <p>{"★".repeat(Math.round(rezension.rating))}{"☆".repeat(5 - Math.round(rezension.rating))}</p>
+                            <p>{rezension.evaluation}</p>
+                        </div>
+                    ))}
                 </div>
             </div>
-
-            
         </div>
+        
     )
 }
 
