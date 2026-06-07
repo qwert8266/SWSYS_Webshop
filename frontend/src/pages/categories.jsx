@@ -5,15 +5,6 @@ export const biere = [
   { name: "Becks", price: "14,99", rating: 3.8, img: "becks.png" },
   { name: "Corona", price: "19,99", rating: 3.4, img: "corona.png"  },
   { name: "Desperados", price: "34,99", rating: 4.5, img: "desperados.png" },
-  { name: "Becks", price: "14,99", rating: 3.8, img: "becks.png" },
-  { name: "Corona", price: "19,99", rating: 3.4, img: "corona.png"  },
-  { name: "Desperados", price: "34,99", rating: 4.5, img: "desperados.png" },
-  { name: "Becks", price: "14,99", rating: 3.8, img: "becks.png" },
-  { name: "Corona", price: "19,99", rating: 3.4, img: "corona.png"  },
-  { name: "Desperados", price: "34,99", rating: 4.5, img: "desperados.png" },
-  { name: "Becks", price: "14,99", rating: 3.8, img: "becks.png" },
-  { name: "Corona", price: "19,99", rating: 3.4, img: "corona.png"  },
-  { name: "Desperados", price: "34,99", rating: 4.5, img: "desperados.png" },
 ];
 
 
@@ -31,10 +22,10 @@ export const schnäpse = [
 export const top_banners = [
     {png: "bier_top.png", sentence: "Bier geht doch immer!"},
     {png: "wein_top.png", sentence: "Wein in meinen Mund!"},
-    {png: "schnaps_top2.png", sentence: "Ich fühl mich Osborne!"}
+    {png: "schnaps_top.png", sentence: "Ich fühl mich Osborne!"}
 ]
 
-function Category({ products, banner }){
+function Category({ products, banner, category }){
 
     return(
         <div className='category-page'>
@@ -54,7 +45,7 @@ function Category({ products, banner }){
             {products.map((product) => (
                 <div className="product" key={product.name}>
                     
-                    <NavLink className="product_link" to={"/"+product.name.toLowerCase()}>
+                    <NavLink className="product_link" to={"/"+category+"/"+product.name.toLowerCase()}>
                         <img className="product_png" src={`/img/product_images/${product.img}`} alt={product.name} />
                         <h3>{product.name}</h3>
                     </NavLink>

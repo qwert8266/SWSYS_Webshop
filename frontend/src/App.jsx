@@ -11,6 +11,8 @@ import Footer from "./components/footer";
 import ShoppingCart from './pages/shoppingCart';
 import Category from "./pages/categories";
 import {biere, weine,schnäpse, top_banners } from "./pages/categories"
+import Product from "./pages/product";
+import {produkte} from "./pages/product";
 //import Test from './pages/test';
 
 function App() {
@@ -25,9 +27,10 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/login" element={<Login />}/>
           <Route path="/cart" element={<ShoppingCart />} />
-          <Route path="/bier" element={<Category key="bier" products={biere} banner={top_banners[0]}/>} />
-          <Route path="/wein" element={<Category key="wein" products={weine} banner={top_banners[1]}/>} />
-          <Route path="/schnaps" element={<Category key="schnaps" products={schnäpse} banner={top_banners[2]}/>} />
+          <Route path="/bier" element={<Category key="bier" products={biere} banner={top_banners[0]} category={"bier"}/>} />
+          <Route path="/wein" element={<Category key="wein" products={weine} banner={top_banners[1]} category={"wein"}/>} />
+          <Route path="/schnaps" element={<Category key="schnaps" products={schnäpse} banner={top_banners[2]} category={"schnaps"}/>} />
+          <Route path="/:category/:productName"  element={<Product />} />
           {/*<Route path="/test" element={<Test/>} /> */}
 
         </Routes>
