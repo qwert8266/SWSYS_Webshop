@@ -1,6 +1,7 @@
 import { React, useEffect, useRef, useState } from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from "../context/authContext";
+import { useCart } from "../context/cartContext";
 import "../custom.scss";
 
 import './navbar.css';
@@ -8,6 +9,7 @@ import './navbar.css';
 function Navbar() {
   const navigate = useNavigate();
   const { isAuthenticated, isAuthLoading } = useAuth();
+  const { totalQuantity } = useCart();
 
   function handleSearchButtonClick(event) {
    
@@ -128,7 +130,7 @@ function Navbar() {
                 src="/img/cart-icon.png" 
                 alt="warenkorb icon"
               />
-              {/*TODO: Anzahl Produkte im Warenkorb */}
+              {totalQuantity > 0 && <span className="cart-badge">{totalQuantity}</span>}
             </NavLink>
           </div>
 
