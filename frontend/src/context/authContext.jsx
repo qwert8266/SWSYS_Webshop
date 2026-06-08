@@ -34,12 +34,7 @@ export function AuthProvider({ children }) {
     return saveAuthResponse(authResponse);
     }, [saveAuthResponse]
   );
-  /*const register = useCallback(async (formData) => {
-    const registeredUser = await authApi.register(formData);
-    setUser(registeredUser);
-    return registeredUser;
-  }, []);
-  */
+  
 
   const login = useCallback(async (credentials) => {
     const authResponse = await authApi.login(credentials);
