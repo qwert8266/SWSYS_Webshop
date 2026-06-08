@@ -120,6 +120,10 @@
 /*****************
  * Shopping Cart *
  *****************/
+.navbar-icon-button {
+    position: relative;
+}
+
 .cart-badge {
     position: absolute;
     top: -6px;
