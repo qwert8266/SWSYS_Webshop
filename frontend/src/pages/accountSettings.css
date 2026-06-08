@@ -1,59 +1,8 @@
-/*##################*/
-/* Login & Register */
-
-.page-message {
-    padding: 32px 20px;
-    text-align: center;
-}
-
-.auth-page {
-    width: min(460px, calc(100% - 32px));
-    margin: 48px auto;
-    padding: 32px;
-    border: 1px solid #e2e8f0;
-    border-radius: 18px;
-    background: #ffffff;
-    box-shadow: 0 14px 40px rgba(15, 23, 42 0.08);
-}
-
-.auth-form {
-    display: grid;
-    gap: 18px;
-    margin: 24px 0;
-}
-
-.auth-form label,
-.settings-grid label,
-.two-factor-options label:not(.method-card) {
-    display: grid;
-    gap: 8px;
-    font-weight: 600;
-    color: #1f2037;
-}
-
-.auth-form input,
-.settings-grid input,
-.settings-grid select,
-.two-factor-options input[type="tel"] {
-    width: 100%;
-    border: 1px solid #cbd5e1;
-    padding: 10px 12px;
-    font: inherit;
-}
-
-.auth-error {
-    padding: 10px 12px;
-    border-radius: 10px;
-    background: #fee2e2;
-    color: #991b1b;
-}
-
 .account-page {
     max-width: 1180px;
     margin: 0 auto;
 }
 
-/*##################*/
 /*Willkommens Banner*/
 .account-banner {
     display: flex;
@@ -99,7 +48,7 @@
     color: #0f172a;
 }
 
-/*##################*/
+
 /*Gesammter Content */
 .account-layout {
     display: grid;
@@ -107,7 +56,7 @@
     gap: 24px;
 }
 
-/*##################*/
+
 /*Seitenleiste links*/
 .account-sidebar,
 .account-card {
@@ -164,7 +113,7 @@
 
 /*Abmelden-Button*/
 .account-nav.logout {
-    margin-top: 350px;
+    margin-top: 300px;
     margin-bottom: 0px;
     color: #b91c1c;
 }

@@ -106,7 +106,8 @@ function Navbar() {
             <NavLink
               type="button"
               className="btn btn-light border navbar-icon-button"
-              onClick={handleAccountClick}    
+              onClick={handleAccountClick}  
+              to="/login"  
               title={isAuthenticated ? "Mein Account" : "Anmelden"}      
               aria-label={isAuthenticated ? "Accounteinstellungen" : "Zur Anmeldung"}
             >

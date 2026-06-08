@@ -3,7 +3,7 @@ import { Link, NavLink, useNavigate } from "react-router-dom"
 
 import { EMAIL_REGEX } from "../constants/validation";
 import { ERROR_EMPTY_PASSWORD, ERROR_INVALID_EMAIL } from "../constants/errorMessages";
-import "../App.css";
+
 
 function Login(){
     const navigate = useNavigate();
