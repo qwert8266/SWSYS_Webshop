@@ -15,7 +15,7 @@ class AuthApi {
   }
 
   async register(userData) {
-    return this.request("/users/register", {
+    return this.request("/user/register", {
       method: "POST",
       body: userData,
     });
