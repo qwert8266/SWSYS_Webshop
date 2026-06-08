@@ -30,7 +30,7 @@ function Login(){
     setIsLoggingIn(false);
 
     // Fehler wenn kein Passwort eingetragen wurde.
-    if(formData.password == ""){
+    if(formData.password === ""){
         setError(ERROR_EMPTY_PASSWORD);
         setIsLoggingIn(false);
         return;

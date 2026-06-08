@@ -10,12 +10,16 @@ import "bootstrap-icons/font/bootstrap-icons.css"
 import App from "./App";
 
 import { CartProvider } from "./context/cartContext";
+import { AuthProvider } from "./context/authContext";
 
 const root = createRoot(document.getElementById("root"));
 
 root.render(
-  
-  <CartProvider>
-    <App />
-  </CartProvider>
+
+  <AuthProvider>
+    <CartProvider>
+      <App />
+    </CartProvider>
+  </AuthProvider>
+
 );
