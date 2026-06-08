@@ -230,6 +230,19 @@ func LoginUser(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
+func LogoutUser(c *gin.Context) {
+	claims, ok := middleware.ClaimsFromContext(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Nicht angemeldet."})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Abmeldung erfolgreich.",
+		"userId":  claims.UserID,
+	})
+}
+
 func buildAuthResponse(message string, user models.User) (models.AuthResponse, error) {
 	accessToken, err := helpers.GenerateToken(user.ID, user.Email, helpers.AccessTokenType, config.JWTSecret(), helpers.AccessTokenTTL)
 	if err != nil {
