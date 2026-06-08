@@ -1,39 +1,20 @@
 import { React, useEffect, useRef, useState } from 'react';
 import { NavLink } from 'react-router-dom';
+import { useAuth } from "../context/authContext";
 import "../custom.scss";
 
 import './navbar.css';
 
 function Navbar() {
-
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const searchRef = useRef(null);
-
-  
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (
-        isSearchOpen &&
-        searchRef.current &&
-        !searchRef.current.contains(event.target)
-      ) {
-        setIsSearchOpen(false);
-      }
-    }
-
-    document.addEventListener("mousedown", handleClickOutside);
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    }
-
-  }, [isSearchOpen]);
+  const navigate = useNavigate();
+  const { isAuthenticated, isAuthLoading } = useAuth();
 
   function handleSearchButtonClick(event) {
-    if (!isSearchOpen) {
-      event.preventDefault();
-      setIsSearchOpen(true);
-    }
+   
+  }
+
+  function handleAccountClick() {
+    navigate(isAuthenticated ? "/account-settings" : "/login");
   }
 
 
@@ -57,12 +38,11 @@ function Navbar() {
             <span className="navbar-toggler-icon"></span>
           </button>
         
-        {/* Suchleiste */}
         <div className="navbar-elements-right">
+          {/* Suchleiste */}
           <div className="navbar-search-shadow">
           <form
-            ref={searchRef}
-            className={`navbar-search ${isSearchOpen ? "navbar-search-open" : ""}`}
+            className="navbar-search"
             role="search"
           >
             <input
@@ -124,9 +104,9 @@ function Navbar() {
             <NavLink
               type="button"
               className="btn btn-light border navbar-icon-button"
-              //onClick={}    /*TODO: {handleAccountClick} */
-              //title={}      /*TODO: Authentifiziert ? "Mein Account" : "Anmelden" */
-              aria-label=''   /*TODO: Authentifiziert ? "Accounteinstellungen" : "Zur Anmeldung" */
+              onClick={handleAccountClick}    
+              title={isAuthenticated ? "Mein Account" : "Anmelden"}      
+              aria-label={isAuthenticated ? "Accounteinstellungen" : "Zur Anmeldung"}
             >
               <img
                 className="navbar-icon"
