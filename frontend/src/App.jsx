@@ -5,6 +5,7 @@ import './App.css';
 
 import ProtectedRoutes from "./routes/protectedRoutes";
 
+import CookieBanner from "./components/cookie_banner";
 import Register from "./pages/register";
 import Login from "./pages/login"
 import Navbar from './components/navbar';
@@ -27,6 +28,7 @@ function App() {
         </HideNavbar>
 
         <Routes>
+          <Route path="" element={<CookieBanner/>}/>
           <Route path="/register" element={<Register />} />
           <Route path="/login" element={<Login />}/>
           <Route path="/cart" element={<ShoppingCart />} />
