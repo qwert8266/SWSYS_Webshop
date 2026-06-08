@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from "react-router-dom";
-//import { useAuth } from "../context/authContext";
+import { useAuth } from "../context/authContext";
 
 import "./accountSettings.css";
 
@@ -35,7 +35,7 @@ const exampleOrders = [
 
 function AccountSettings() {
   const navigate = useNavigate();
-  //const { user, logout } = useAuth();
+  const { user, logout } = useAuth();
   const [activeSection, setActiveSection] = useState("account");
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
   const [twoFactorMethod, setTwoFactorMethod] = useState("authenticator");
@@ -45,10 +45,10 @@ function AccountSettings() {
  //   return user?.email?.trim()?.charAt(0)?.toUpperCase() || "U";
  // }, [user?.email]);
 
- // function handleLogout() {
- //   logout();
- //   navigate("/logout");
- // }
+  function handleLogout() {
+    logout();
+    navigate("/");
+  }
   
   return (
     <main className="page account-page">
@@ -95,7 +95,7 @@ function AccountSettings() {
 
           <button
             className="account-nav logout"
-            //onClick={handleLogout}
+            onClick={handleLogout}
             type="button"
           >
             Abmelden
