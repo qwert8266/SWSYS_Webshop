@@ -17,6 +17,7 @@ import Category from "./pages/categories";
 import {biere, weine,schnäpse, top_banners } from "./pages/categories"
 import Product from "./pages/product";
 import {produkte} from "./pages/product";
+import Home from './pages/home';
 //import Test from './pages/test';
 
 function App() {
@@ -29,6 +30,7 @@ function App() {
 
         <Routes>
           <Route path="" element={<CookieBanner/>}/>
+          <Route path="/home" element={<Home />} />
           <Route path="/register" element={<Register />} />
           <Route path="/login" element={<Login />}/>
           <Route path="/cart" element={<ShoppingCart />} />
