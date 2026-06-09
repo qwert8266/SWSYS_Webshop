@@ -1,7 +1,7 @@
 .hover-container {
     position: relative;
-    width: 60%;
-    height: 350px;
+    width: 280px;
+    height: 240px;
     overflow: hidden;
     border-radius: 4px;
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
@@ -73,4 +73,15 @@
     margin: 0 0 10px 0;
     font-size: 28px;
     font-weight: 700;
+}
+
+.category-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 280px);
+    gap: 20px;
+    justify-content: center;
+}
+
+.album {
+    background-color: white !important;
 }
