@@ -1,7 +1,7 @@
 .basic-column{
     display: flex ;
     flex-direction: row;
-    
+    padding-bottom: 50px;
 }
 .order_details{
     display: flex ;
@@ -13,17 +13,26 @@
     display: flex ;
     flex-direction: column;
     align-items: left;
+    gap: 20px;
 }
 .greeting_combo{
     border-radius: 6px;
 }
 .inputs{
     border-radius: 6px;
+    font-size: 20px;
 }
 .checkout_header{
     display: flex ;
     flex-direction: column;
 }
+
+.checkout_header2{
+    display: flex ;
+    flex-direction: column;
+    gap: 20px;
+}
+
 .checkout_footer{
     display: flex ;
     flex-direction: row;
@@ -32,10 +41,13 @@
     display: flex ;
     flex-direction: column;
     align-items: left;
+    gap: 30px;
+    padding-bottom: 30px;
 }
 .pay_method{
     display: flex ;
     flex-direction: row;
+    gap: 30px;
 }
 .card_pay{
     border-radius: 6px;
@@ -43,21 +55,42 @@
 .paypal{
     border-radius: 6px;
 }
-.delivery_kind{}
+.delivery_kind{
+    display: flex;
+    gap: 30px;
+}
 .delivery_combo{
     border-radius: 6px;
 }
-.button_row{}
+.button_row{
+    display: flex;
+    gap: 50px;
+}
 .return_button{
     border-radius: 6px;
+    font-size: 20px;
 }
 .pay_button{
     border-radius: 6px;
     color: white;
     background-color: #15406e;
+    font-size: 20px;
 }
 .basket{}
 .blue_text{
     color: #15406e;
+    font-size: 30px;
+}
+
+.blue_text_big{
+    color: #15406e;
+    font-size: 50px; 
+    text-align: center;
+    padding-bottom: 40px;
+    width: 100%;
+}
+
+.medium_text{
     font-size: 20px;
+    width: 180px;
 }

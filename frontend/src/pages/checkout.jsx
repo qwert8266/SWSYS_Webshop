@@ -19,12 +19,13 @@ function Checkout(){
 
 
     return(
-        <div>
+        <div >
+            <label className='blue_text_big'>Nur noch ein paar Klicks entfernt...</label>
             <div className='basic-column'>
                 <div className='order_details'>
                     <div className='personal_data'>
                         <div className='checkout_header'>
-                            <label className='blue_text'>Adressant</label>
+                            <label className='blue_text'>Adressat</label>
                             <div className='checkout_footer'>
                                 <select className='greeting_combo'>
                                     <option>Herr</option>
@@ -41,22 +42,23 @@ function Checkout(){
                         </div>
                         <div className='checkout_footer'>
                             <input className='inputs' placeholder='Straße'></input>
-                            <input className='inputs' placeholder='Nr.'></input>
-                            <input className='inputs' placeholder='PLZ'></input>
+                            <input className='inputs' style={{ width: "80px" }} placeholder='Nr.'></input>
+                            
                         </div>
                         <div className='checkout_footer'>
+                            <input className="inputs" style={{ width: "80px" }} placeholder='PLZ'/>
                             <input className='inputs' placeholder='Stadt'></input>
                             <input className='inputs' placeholder='Land'></input>
                         </div>
 
-                        <div className='checkout_header'>
+                        <div className='checkout_header2'>
                             <label className='blue_text'>Kontaktdaten</label>
                             <div className='checkout_footer'>
-                                <label>Email</label>
+                                <label className='medium_text'>Email</label>
                                 <input className='inputs' placeholder='Email'></input>
                             </div>
                             <div className='checkout_footer'>
-                                <label>Telefonnummer</label>
+                                <label className='medium_text'>Telefonnummer</label>
                                 <input className='inputs' placeholder='Telefonnummer'></input>
                             </div>
                         </div>
@@ -64,11 +66,12 @@ function Checkout(){
                         <div className='delivery_details'>
                         <label className='blue_text'>Bezahlung und Lieferungsart</label>
                         <div className='pay_method'>
+                            <label className='medium_text'>Zahlungsmethode</label>
                             <button className='card_pay'>Karte</button>
                             <button className='paypal'>Paypal</button>
                         </div>
                         <div className='delivery_kind'>
-                            <label>Lieferungsart</label>
+                            <label className='medium_text'>Lieferungsart</label>
                             <select className='delivery_combo'>
                                 <option>Standard</option>
                                 <option>Premium</option>
@@ -81,7 +84,9 @@ function Checkout(){
                     
 
                     <div className='button_row'>
-                        <button className='return_button'>Zurück zum Warenkorb</button>
+                        <NavLink to="/cart">
+                            <button className='return_button'>Zurück zum Warenkorb</button>
+                        </NavLink>
                         <button className='pay_button'>Jetzt bestellen</button>
                     </div>
                 </div>
@@ -129,23 +134,9 @@ function Checkout(){
                     style={{ width: "115px" }}
                     aria-label={`Menge für ${items.name}`}    
                   >
-                    <button
-                      className="btn btn-outline-secondary btn-sm"
-                      type="button"
-                      onClick={() => decreaseQuantity(item.id)}
-                      aria-label="Menge verringern"
-                    >
-                      -
-                    </button>
-                    <strong>{item.quantity}</strong>
-                    <button
-                      className="btn btn-outline-secondary btn-sm"
-                      type="button"
-                      onClick={() => increaseQuantity(item.id)}
-                      aria-label="Menge erhöhen"
-                    >
-                      +
-                    </button>
+                    
+                    <strong>{item.quantity}x</strong>
+                    
                   </div>
 
                   <strong 
@@ -158,16 +149,7 @@ function Checkout(){
                     })}
                   </strong>
 
-                  <button
-                    className="btn p-2 border-0 bg-transparent flex-shrink-0  cart-delete-button"
-                    type="button"
-                    onClick={() => removeItem(item.id)}
-                  >
-                    <img
-                      src="/img/trash.svg"
-                      className='cart-delete-icon'
-                    />
-                  </button>
+                
                 </article>
               ))}   
             </div>
