@@ -21,6 +21,7 @@ func RegisterUserRoutes(rg *gin.RouterGroup) {
 	{
 		users.GET("/", handlers.GetUsers)
 		users.GET("/:id", handlers.GetUserByID)
+		users.PATCH("/:id", handlers.ModifyUser)
 
 		users.DELETE("/:id", handlers.DeleteUser)
 	}

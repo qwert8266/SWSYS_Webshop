@@ -87,26 +87,15 @@ func AddNewUser(c *gin.Context) {
 		return
 	}
 
+	if !checkIncomingData(c, incomingUserData) {
+		return
+	}
+
 	normalizedEmail := strings.ToLower(strings.TrimSpace(incomingUserData.Email))
 	incomingUserData.CustomerType = strings.TrimSpace(incomingUserData.CustomerType)
 
 	if normalizedEmail == "" || len(incomingUserData.Password) < 8 {
 		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "E-Mail und Passwort mit mindestens 8 Zeichen sind erforderlich."})
-		return
-	}
-
-	if incomingUserData.CustomerType != "private" && incomingUserData.CustomerType != "business" {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Ungüliger Kundentyp."})
-		return
-	}
-
-	if strings.TrimSpace(incomingUserData.FirstName) == "" || strings.TrimSpace(incomingUserData.LastName) == "" {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Vorname und Nachname sind erforderlich."})
-		return
-	}
-
-	if incomingUserData.CustomerType == "business" && strings.TrimSpace(incomingUserData.CompanyName) == "" {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Für ein Geschäftskonto ist der Unternehmensname erforderlich."})
 		return
 	}
 
@@ -163,6 +152,61 @@ func AddNewUser(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, response)
+}
+
+func ModifyUser(c *gin.Context) {
+	id, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "the requested uuid is not a valid uuid"})
+		return
+	}
+
+	var incomingUserData models.RegisterRequest
+	if err := c.BindJSON(&incomingUserData); err != nil {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error parsing user data": err.Error()})
+		return
+	}
+
+	// checking the data for invalid syntax
+	if !checkIncomingData(c, incomingUserData) {
+		return
+	}
+
+	//updating the address
+	newAddress := models.Address{
+		Street:      strings.TrimSpace(incomingUserData.Street),
+		HouseNumber: strings.TrimSpace(incomingUserData.HouseNumber),
+		ZipCode:     strings.TrimSpace(incomingUserData.ZipCode),
+		City:        strings.TrimSpace(incomingUserData.City),
+		Country:     strings.TrimSpace(incomingUserData.Country),
+	}
+
+	updateToUser := bson.D{
+		{"$set", bson.D{{"customer_type", incomingUserData.CustomerType}}},
+		{"$set", bson.D{{"salutation", incomingUserData.Salutation}}},
+		{"$set", bson.D{{"first_name", incomingUserData.FirstName}}},
+		{"$set", bson.D{{"last_name", incomingUserData.LastName}}},
+		{"$set", bson.D{{"birth_date", incomingUserData.BirthDate}}},
+		{"$set", bson.D{{"phone", incomingUserData.Phone}}},
+		{"$set", bson.D{{"company_name", incomingUserData.CompanyName}}},
+
+		{"$set", bson.D{{"address", newAddress}}},
+
+		{"$set", bson.D{{"updated_at", time.Now()}}},
+	}
+
+	var updatedUser models.User
+	userCollection := config.UserCollection()
+
+	//update the user
+	err = userCollection.FindOneAndUpdate(c.Request.Context(), bson.M{"id": id}, updateToUser).Decode(&updatedUser)
+	if errors.Is(err, mongo.ErrNoDocuments) {
+		c.IndentedJSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		return
+	} else if err != nil {
+		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	}
+	c.IndentedJSON(http.StatusOK, models.ToPublicUser(updatedUser))
 }
 
 func DeleteUser(c *gin.Context) {
@@ -274,4 +318,22 @@ func findUserByEmail(c *gin.Context, email string) (models.User, error) {
 	var user models.User
 	err := config.UserCollection().FindOne(c.Request.Context(), bson.M{"email": email}).Decode(&user)
 	return user, err
+}
+
+func checkIncomingData(c *gin.Context, rr models.RegisterRequest) bool {
+	if rr.CustomerType != "private" && rr.CustomerType != "business" {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Ungüliger Kundentyp."})
+		return false
+	}
+
+	if strings.TrimSpace(rr.FirstName) == "" || strings.TrimSpace(rr.LastName) == "" {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Vorname und Nachname sind erforderlich."})
+		return false
+	}
+
+	if rr.CustomerType == "business" && strings.TrimSpace(rr.CompanyName) == "" {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Für ein Geschäftskonto ist der Unternehmensname erforderlich."})
+		return false
+	}
+	return true
 }
