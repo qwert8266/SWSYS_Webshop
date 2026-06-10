@@ -21,7 +21,7 @@ func Authenticate() gin.HandlerFunc {
 			return
 		}
 
-		token := strings.TrimPrefix(authHeader, "Bearer")
+		token := strings.TrimSpace(strings.TrimPrefix(authHeader, "Bearer "))
 		if token == authHeader || token == "" {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Autorization-Header muss das Format 'Bearer <token>' haben."})
 			c.Abort()
