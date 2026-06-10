@@ -15,5 +15,6 @@ func RegisterProductRoutes(products *gin.RouterGroup) {
 	//endpoints for modifying products should be protected somehow:
 	products.POST("/", handlers.CreateProduct)
 	products.PUT("/:id", handlers.UpdateProduct)
+	products.PATCH("/:id", handlers.ModifyStock)
 	products.DELETE("/:id", handlers.DeleteProduct)
 }

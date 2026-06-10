@@ -24,3 +24,7 @@ type ProductData struct {
 	Stock       uint32 `json:"stock"`
 	Category    string `json:"category"`
 }
+
+type StockOperation struct {
+	Value int32 `json:"value"`
+}

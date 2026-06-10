@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -12,6 +13,7 @@ import (
 	"github.com/qwert8266/SWSYS_Webshop/server/models"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 // GetProducts returns all Products from MongoDB
@@ -124,6 +126,7 @@ func UpdateProduct(c *gin.Context) {
 	productID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		c.IndentedJSON(http.StatusBadRequest, gin.H{"error parsing product id": err.Error()})
+		return
 	}
 	var updatedProductData models.ProductData
 
@@ -165,6 +168,7 @@ func DeleteProduct(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		c.IndentedJSON(http.StatusBadRequest, gin.H{"error parsing product id": err.Error()})
+		return
 	}
 
 	productCollection := config.ProductCollection()
@@ -177,4 +181,70 @@ func DeleteProduct(c *gin.Context) {
 	} else {
 		c.IndentedJSON(http.StatusNoContent, gin.H{"message": "product deleted"})
 	}
+}
+
+// ModifyStock is used to increase or decrease the stock of the specified product
+func ModifyStock(c *gin.Context) {
+	//retrieving the product ID
+	productID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error parsing product id": err.Error()})
+		return
+	}
+
+	// retrieving the amount to increase or decrease
+	var operation models.StockOperation
+	if err = c.BindJSON(&operation); err != nil {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error parsing stock operation": err.Error()})
+		return
+	}
+
+	// filtering for product specified
+	filter := bson.M{
+		"product_id": productID,
+	}
+	idFilter := filter
+
+	var message strings.Builder
+
+	//switching between increasing or decreasing stock
+	if operation.Value > 0 {
+		message.WriteString(fmt.Sprintf("stock amount increased by %d", operation.Value))
+	} else if operation.Value < 0 {
+		//adding a minimum stock to the filter to prevent modification if stock is insufficient
+		filter = bson.M{
+			"product_id": productID,
+			"stock": bson.M{
+				"$gte": -operation.Value,
+			},
+		}
+		message.WriteString(fmt.Sprintf("stock amount decreased by %d", -operation.Value))
+	} else {
+		c.IndentedJSON(http.StatusOK, gin.H{"message": "congratulations, increasing by zero did absolutely nothing!"})
+		return
+	}
+
+	//found product to retrieve stock from
+	var product models.Product
+
+	// creating update to stock
+	updateToStock := bson.D{{"$inc", bson.D{{"stock", operation.Value}}}}
+	err = config.ProductCollection().FindOneAndUpdate(
+		c.Request.Context(),
+		filter,
+		updateToStock,
+		options.FindOneAndUpdate().SetReturnDocument(options.After),
+	).Decode(&product)
+
+	if errors.Is(err, mongo.ErrNoDocuments) {
+		// checking if the product exists
+		var foundProduct models.Product
+		if err = config.ProductCollection().FindOne(c.Request.Context(), idFilter).Decode(&foundProduct); err != nil {
+			c.IndentedJSON(http.StatusNotFound, gin.H{"message": "product not found"})
+			return
+		}
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "insufficient stock", "available": foundProduct.Stock})
+		return
+	}
+	c.IndentedJSON(http.StatusOK, gin.H{"message": message.String(), "new_stock": product.Stock})
 }
