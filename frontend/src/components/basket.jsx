@@ -79,7 +79,7 @@ function ShoppingCart() {
                       {item.price.toLocaleString("de-DE", {
                         style: "currency",
                         currency: "EUR",
-                      })}
+                      })}€
                     </span>
                   </div>
                   

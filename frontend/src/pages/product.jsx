@@ -1,9 +1,10 @@
 import { NavLink, useParams } from 'react-router-dom';
 import './product.css';
 import { useCart } from '../context/cartContext';
+import { useState } from 'react';
 
 export const produkte = [
-  { name: "Becks", id: "001", price: "14.99", rating: 3.8, image: "becks.png", category: "bier"},
+  { name: "Becks", id: "001", price: "14.99", rating: 3.8, image: "becks.png", category: "bier", quantity: 0},
   { name: "Corona", id: "002", price: "19.99", rating: 3.4, image: "corona.png", category: "bier"  },
   { name: "Desperados", id: "003", price: "34.99", rating: 4.5, image: "desperados.png", category: "bier" },
   { name: "Merlot", id: "004", price: "9.99", rating: 2.8, image: "merlot.png", category: "wein" },
@@ -40,9 +41,11 @@ function Product({}){
 
     const {addItem}=useCart();
 
-    function handleAddToCart(product){
-        addItem(product);
+    function handleAddToCart(product, quantity){
+        addItem(product, quantity);
     }
+
+    const [quantity, setQuantity] = useState(1);
 
     return(
         <div className='product-page'>
@@ -63,8 +66,8 @@ function Product({}){
                         <p>{product.price}€</p>
                     </div>
                     <div className='cart-input'>
-                        <input type="number" min="1" defaultValue="1" />
-                        <button className='cart-button' onClick={()=>handleAddToCart(product)}>
+                        <input type="number" min="1" defaultValue="1" onChange={(e)=>setQuantity(parseInt(e.target.value))}/>
+                        <button className='cart-button' onClick={()=>handleAddToCart(product, quantity)}>
                             <img className="cart-at-product" src={`/img/cart-icon_white.png`} alt="+" />
                         </button>
                     </div>
