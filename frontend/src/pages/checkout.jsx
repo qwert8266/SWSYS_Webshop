@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import './checkout.css';
 import { useCart } from "../context/cartContext";
@@ -5,7 +6,31 @@ import { useCart } from "../context/cartContext";
 
 function Checkout(){
 
-    //const {items}=useCart();
+    const [personalData, setPersonalData] = useState({
+        salutation: "Herr",
+        firstName: "Weyles",
+        lastName: "Papst",
+        
+        street: "Geile Straße",
+        houseNumber: "420",
+        zipCode: "28282",
+        city: "Bremen",
+        country: "Deutschland",
+
+        email: "weyles.papst@gmail.com",
+        phone: "0173 93643783",
+    
+        paymentMethod: "PayPal",
+        delivery: "Premium"
+    });
+
+    const [editData, setEditData] =useState(personalData);
+
+    const [showPlaintextBox, setShowPlaintextBox] =useState(true);
+    const [showInputBoxes, setShowInputBoxes] = useState(false);
+
+    const [payPal,setPayPal] = useState(personalData.paymentMethod === "PayPal")
+    const [card,setCard] = useState(personalData.paymentMethod === "Karte")
 
     const {
     items,
@@ -23,17 +48,45 @@ function Checkout(){
             <label className='blue_text_big'>Nur noch ein paar Klicks entfernt...</label>
             <div className='basic-column'>
                 <div className='order_details'>
+
+                    {showPlaintextBox &&
+                    <div>
+                        <div className='plaintextBox'>
+                            <label className='blue_text'>Lieferadresse und Zahlungsmethode</label>
+                            <label className='more_space'>{personalData.salutation} {personalData.firstName} {personalData.lastName}</label>
+                            <label>{personalData.street} {personalData.houseNumber} </label>
+                            <label>{personalData.zipCode} {personalData.city}</label>
+                            <label className='more_space'>{personalData.country}</label>
+                            <label>Email: {personalData.email} </label>
+                            <label className='more_space'>Telefonnummer: {personalData.phone} </label>
+                            <label>Zahlungsmethode: {personalData.paymentMethod} </label>
+                            <label>Versandart: {personalData.delivery} </label>
+                        </div>
+                        <div className='changeDataButtonBox'>
+                            <button className='changeDataButton' onClick={()=>{setShowInputBoxes(true);setShowPlaintextBox(false)}}>Anpassen</button>
+                        </div>
+
+                        <div className='button_row'>
+                            <NavLink to="/cart">
+                                <button className='white_button'>Zurück zum Warenkorb</button>
+                            </NavLink>
+                            <button className='blue_button'>Jetzt bestellen</button>
+                        </div>
+                    </div>
+                    }
+
+                    {showInputBoxes &&
                     <div className='personal_data'>
                         <div className='checkout_header'>
-                            <label className='blue_text'>Adressat</label>
+                            <label className='blue_text' defaultValue={personalData.salutation}>Adressat</label>
                             <div className='checkout_footer'>
-                                <select className='greeting_combo'>
+                                <select className='greeting_combo' onChange={(e)=>setEditData({...editData,salutation:e.target.value})}>
                                     <option>Herr</option>
                                     <option>Frau</option>
                                     <option>Divers</option>
                                 </select>
-                                <input className='inputs' placeholder='Vorname'></input>
-                                <input className='inputs' placeholder='Nachname'></input>
+                                <input className='inputs' placeholder='Vorname' defaultValue={personalData.firstName} onChange={(e)=>setEditData({...editData,firstName:e.target.value})}></input>
+                                <input className='inputs' placeholder='Nachname' defaultValue={personalData.lastName} onChange={(e)=>setEditData({...editData,lastName:e.target.value})}></input>
                             </div>
                             
                         </div>
@@ -41,25 +94,25 @@ function Checkout(){
                             <label className='blue_text'>Adresse</label>
                         </div>
                         <div className='checkout_footer'>
-                            <input className='inputs' placeholder='Straße'></input>
-                            <input className='inputs' style={{ width: "80px" }} placeholder='Nr.'></input>
+                            <input className='inputs' placeholder='Straße' defaultValue={personalData.street} onChange={(e)=>setEditData({...editData,street:e.target.value})}></input>
+                            <input className='inputs' style={{ width: "80px" }} placeholder='Nr.' defaultValue={personalData.houseNumber} onChange={(e)=>setEditData({...editData,houseNumber:e.target.value})}></input>
                             
                         </div>
                         <div className='checkout_footer'>
-                            <input className="inputs" style={{ width: "80px" }} placeholder='PLZ'/>
-                            <input className='inputs' placeholder='Stadt'></input>
-                            <input className='inputs' placeholder='Land'></input>
+                            <input className="inputs" style={{ width: "80px" }} placeholder='PLZ' defaultValue={personalData.zipCode} onChange={(e)=>setEditData({...editData,zipCode:e.target.value})}/>
+                            <input className='inputs' placeholder='Stadt' defaultValue={personalData.city} onChange={(e)=>setEditData({...editData,city:e.target.value})}></input>
+                            <input className='inputs' placeholder='Land' defaultValue={personalData.country} onChange={(e)=>setEditData({...editData,country:e.target.value})}></input>
                         </div>
 
                         <div className='checkout_header2'>
                             <label className='blue_text'>Kontaktdaten</label>
                             <div className='checkout_footer'>
                                 <label className='medium_text'>Email</label>
-                                <input className='inputs' placeholder='Email'></input>
+                                <input className='inputs' placeholder='Email' defaultValue={personalData.email} onChange={(e)=>setEditData({...editData,email:e.target.value})}></input>
                             </div>
                             <div className='checkout_footer'>
                                 <label className='medium_text'>Telefonnummer</label>
-                                <input className='inputs' placeholder='Telefonnummer'></input>
+                                <input className='inputs' placeholder='Telefonnummer' defaultValue={personalData.phone} onChange={(e)=>setEditData({...editData,phone:e.target.value})}></input>
                             </div>
                         </div>
 
@@ -67,28 +120,31 @@ function Checkout(){
                         <label className='blue_text'>Bezahlung und Lieferungsart</label>
                         <div className='pay_method'>
                             <label className='medium_text'>Zahlungsmethode</label>
-                            <button className='card_pay'>Karte</button>
-                            <button className='paypal'>Paypal</button>
+                            <button className={card ? "blue_button" : "white_button"} value={"Karte"} onClick={(e)=>{setEditData({...editData,paymentMethod:e.target.value});setCard(true);setPayPal(false)}}>Karte</button>
+                            <button className={payPal ? "blue_button" : "white_button"} value={"PayPal"} onClick={(e)=>{setEditData({...editData,paymentMethod:e.target.value});setCard(false);setPayPal(true)}}>Paypal</button>
                         </div>
                         <div className='delivery_kind'>
                             <label className='medium_text'>Lieferungsart</label>
-                            <select className='delivery_combo'>
+                            <select className='delivery_combo ' defaultValue={personalData.delivery} onChange={(e)=>setEditData({...editData,delivery:e.target.value})}>
                                 <option>Standard</option>
                                 <option>Premium</option>
                             </select>
                         </div>
                         
                         </div>
-                    </div>
 
+                        <div className='button_row'>
+                            
+                            <button className='white_button' onClick={()=>{setShowInputBoxes(false);setShowPlaintextBox(true)}}>Zurück</button>
+                            
+                            <button className='blue_button' onClick={()=>{setShowInputBoxes(false);setShowPlaintextBox(true);setPersonalData(editData)}}>Speichern</button>
+                        </div>
+
+                    </div>
+                    }
                     
 
-                    <div className='button_row'>
-                        <NavLink to="/cart">
-                            <button className='return_button'>Zurück zum Warenkorb</button>
-                        </NavLink>
-                        <button className='pay_button'>Jetzt bestellen</button>
-                    </div>
+                    
                 </div>
 
                <div 

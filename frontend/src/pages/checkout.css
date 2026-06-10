@@ -3,6 +3,30 @@
     flex-direction: row;
     padding-bottom: 50px;
 }
+
+.plaintextBox{
+    display: flex ;
+    flex-direction: column;
+    border: 1px solid #000000;
+    border-radius: 8px;
+    padding: 10px;
+}
+
+.more_space{
+    padding-bottom: 10px;
+}
+
+.changeDataButtonBox{
+    display: flex ;
+    justify-content: flex-end;
+}
+
+.changeDataButton{
+    border: white;
+    border-color: white;
+    background-color: white;
+    color: #15406e;
+}
 .order_details{
     display: flex ;
     flex-direction: column;
@@ -66,11 +90,11 @@
     display: flex;
     gap: 50px;
 }
-.return_button{
+.white_button{
     border-radius: 6px;
     font-size: 20px;
 }
-.pay_button{
+.blue_button{
     border-radius: 6px;
     color: white;
     background-color: #15406e;
