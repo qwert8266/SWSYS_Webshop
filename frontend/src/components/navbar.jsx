@@ -19,6 +19,7 @@ function Navbar() {
     navigate(isAuthenticated ? "/account-settings" : "/login");
   }
 
+  //const location = useLocation();
 
   return (
     <nav className="navbar navbar-expand-md bg-body-tertiary" fixed="top">
@@ -118,6 +119,7 @@ function Navbar() {
               />
             </NavLink>
 
+            {/*location.pathname.startsWith("/employee/") ?():()*/}
             {/* Shopping cart */}
             <NavLink
               type="button"
