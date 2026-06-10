@@ -3,8 +3,6 @@ package handlers
 import (
 	"errors"
 	"net/http"
-	"os"
-	"regexp"
 	"strings"
 	"time"
 
@@ -20,7 +18,7 @@ import (
 )
 
 // var users = config.UserCollection()
-var emailRegex = regexp.MustCompile(os.Getenv("VALID_EMAIL_REGEX"))
+//var emailRegex = regexp.MustCompile(os.Getenv("VALID_EMAIL_REGEX"))
 
 func GetUsers(c *gin.Context) {
 	users := config.UserCollection()
@@ -104,7 +102,7 @@ func AddNewUser(c *gin.Context) {
 		c.IndentedJSON(http.StatusConflict, gin.H{"error": "Diese E-Mail-Adresse ist bereits registriert."})
 		return
 	}
-	if !errors.Is(err, mongo.ErrNoDocuments) {
+	if !errors.Is(err, mongo.ErrNoDocuments) && err != nil {
 		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
