@@ -3,6 +3,8 @@ package handlers
 import (
 	"errors"
 	"net/http"
+	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -82,7 +84,39 @@ func GetProductByCategory(c *gin.Context) {
 
 // CreateProduct creates a new product and generates an uuid for it.
 func CreateProduct(c *gin.Context) {
-	//var incomingProduct models.Product
+	var incomingProduct models.ProductData
+
+	//parsing all incoming data
+	if err := c.BindJSON(&incomingProduct); err != nil {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error parsing product data": err.Error()})
+		return
+	}
+
+	//trimming strings:
+	name := strings.TrimSpace(incomingProduct.Name)
+	description := strings.TrimSpace(incomingProduct.Description)
+	normalizedCategory := strings.ToLower(strings.TrimSpace(incomingProduct.Category))
+
+	// creating new user and generating a new user ID.
+	newProduct := models.Product{
+		ProductID:   uuid.New(),
+		Name:        name,
+		Description: description,
+		Price:       incomingProduct.Price,
+		Stock:       incomingProduct.Stock,
+		Category:    normalizedCategory,
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+	}
+
+	// adding the new user to the collection
+	productCollection := config.ProductCollection()
+	if _, err := productCollection.InsertOne(c.Request.Context(), newProduct); err != nil {
+		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error creating new product": err.Error()})
+		return
+	}
+
+	c.IndentedJSON(http.StatusCreated, newProduct)
 }
 
 // UpdateProduct allows modification of existing products values
