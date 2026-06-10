@@ -12,8 +12,7 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
-// var DB = ConnectDB()
-// containes the shared MongoDB client after main() has initialized it.
+// DB contains the shared MongoDB client after main() has initialized it.
 var DB *mongo.Client
 
 // LoadEnv loading enviroment variables from .env file.
@@ -25,7 +24,7 @@ func LoadEnv() {
 
 }
 
-// creates the MongoDB client and verifies the connection with ping
+// ConnectDB creates the MongoDB client and verifies the connection with ping
 func ConnectDB() *mongo.Client {
 
 	uri := os.Getenv("MONGODB_URI")
@@ -65,7 +64,7 @@ func DisconnectDB(client *mongo.Client) {
 	}
 }
 
-// returnes the configured MongoDB database name
+// DatabaseName returnes the configured MongoDB database name
 func DatabaseName() string {
 	return strings.TrimSpace(os.Getenv("MONGODB_DATABASE"))
 }
@@ -78,12 +77,12 @@ func collection(name string) *mongo.Collection {
 	return DB.Database(DatabaseName()).Collection(name)
 }
 
-// returns the products collection of the webshop database
+// ProductCollection returns the products collection of the webshop database
 func ProductCollection() *mongo.Collection {
 	return collection("products")
 }
 
-// returns the users collection of the webshop database
+// UserCollection returns the users collection of the webshop database
 func UserCollection() *mongo.Collection {
 	return collection("users")
 }
