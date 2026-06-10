@@ -12,6 +12,7 @@ import Navbar from './components/navbar';
 import HideNavbar from './components/hideNavbar';
 import Footer from "./components/footer";
 import ShoppingCart from './pages/shoppingCart';
+import Checkout from "./pages/checkout";
 import AccountSettings from "./pages/accountSettings";
 import Category from "./pages/categories";
 import {biere, weine,schnäpse, top_banners } from "./pages/categories"
@@ -34,6 +35,7 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/login" element={<Login />}/>
           <Route path="/cart" element={<ShoppingCart />} />
+          <Route path="/cart/checkout" element={<Checkout/>}/>
           <Route path="account-settings" element={
             <ProtectedRoutes>
               <AccountSettings/>

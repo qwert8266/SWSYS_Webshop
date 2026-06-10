@@ -1,5 +1,6 @@
-import { Link } from 'react-router-dom';
+import { Link, NavLink } from 'react-router-dom';
 import { useCart } from "../context/cartContext";
+
 
 
 function ShoppingCart() {
@@ -52,7 +53,7 @@ function ShoppingCart() {
           >
             <div className="d-flex justify-content-between align-items-start mb-4">
               <div>
-                <h1 class="h3 mb-0">Warenkorb</h1>
+                <h1 className="h3 mb-0">Warenkorb</h1>
               </div>
 
               <span className="account-badge">{totalQuantity} Artikel</span>
@@ -154,9 +155,11 @@ function ShoppingCart() {
                 </strong>
               </div>
 
-              <button className='btn btn-success w-100 mt-3' type='button'>
-                Zur Kasse
-              </button>
+              <NavLink to="/cart/checkout">
+                <button className='btn btn-success w-100 mt-3' type='button'>
+                  Zur Kasse
+                </button>
+              </NavLink>
 
               <button
                 className="btn btn-outline-secondary w-100 mt-2"
