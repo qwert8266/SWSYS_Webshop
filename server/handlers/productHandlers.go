@@ -138,19 +138,20 @@ func UpdateProduct(c *gin.Context) {
 	description := strings.TrimSpace(updatedProductData.Description)
 	normalizedCategory := strings.ToLower(strings.TrimSpace(updatedProductData.Category))
 
-	updatedProduct := models.Product{
-		Name:        name,
-		Description: description,
-		Price:       updatedProductData.Price,
-		Stock:       updatedProductData.Stock,
-		Category:    normalizedCategory,
-		UpdatedAt:   time.Now(),
+	//updateOne() needs to be told how to modify the Document in the collection. (in this case using $set)
+	updatedProduct := bson.D{
+		{"$set", bson.D{{"name", name}}},
+		{"$set", bson.D{{"description", description}}},
+		{"$set", bson.D{{"price", updatedProductData.Price}}},
+		{"$set", bson.D{{"stock", updatedProductData.Stock}}},
+		{"$set", bson.D{{"category", normalizedCategory}}},
+		{"$set", bson.D{{"updated_at", time.Now()}}},
 	}
 
 	productCollection := config.ProductCollection()
 
 	//updating product in collection:
-	if result, err := productCollection.UpdateOne(c.Request.Context(), bson.M{"id": productID}, updatedProduct); err != nil {
+	if result, err := productCollection.UpdateOne(c.Request.Context(), bson.M{"product_id": productID}, updatedProduct); err != nil {
 		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error updating product": err.Error()})
 	} else if result.MatchedCount == 0 {
 		c.IndentedJSON(http.StatusNotFound, gin.H{"message": "product not found"})
@@ -168,12 +169,12 @@ func DeleteProduct(c *gin.Context) {
 
 	productCollection := config.ProductCollection()
 
-	result, err := productCollection.DeleteOne(c.Request.Context(), bson.M{"id": id})
+	result, err := productCollection.DeleteOne(c.Request.Context(), bson.M{"product_id": id})
 	if err != nil {
 		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 	} else if result.DeletedCount == 0 {
 		c.IndentedJSON(http.StatusNotFound, gin.H{"message": "product not found"})
 	} else {
-		c.IndentedJSON(http.StatusNoContent, nil)
+		c.IndentedJSON(http.StatusNoContent, gin.H{"message": "product deleted"})
 	}
 }
