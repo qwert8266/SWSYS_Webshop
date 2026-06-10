@@ -82,7 +82,7 @@ func GetProductByCategory(c *gin.Context) {
 
 // CreateProduct creates a new product and generates an uuid for it.
 func CreateProduct(c *gin.Context) {
-	var incomingProduct models.Product
+	//var incomingProduct models.Product
 }
 
 // UpdateProduct allows modification of existing products values
