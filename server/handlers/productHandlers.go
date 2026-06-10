@@ -120,7 +120,44 @@ func CreateProduct(c *gin.Context) {
 }
 
 // UpdateProduct allows modification of existing products values
-func UpdateProduct(c *gin.Context) {}
+func UpdateProduct(c *gin.Context) {
+	productID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error parsing product id": err.Error()})
+	}
+	var updatedProductData models.ProductData
+
+	//parsing all incoming data
+	if err := c.BindJSON(&updatedProductData); err != nil {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error parsing product data": err.Error()})
+		return
+	}
+
+	//trimming strings:
+	name := strings.TrimSpace(updatedProductData.Name)
+	description := strings.TrimSpace(updatedProductData.Description)
+	normalizedCategory := strings.ToLower(strings.TrimSpace(updatedProductData.Category))
+
+	updatedProduct := models.Product{
+		Name:        name,
+		Description: description,
+		Price:       updatedProductData.Price,
+		Stock:       updatedProductData.Stock,
+		Category:    normalizedCategory,
+		UpdatedAt:   time.Now(),
+	}
+
+	productCollection := config.ProductCollection()
+
+	//updating product in collection:
+	if result, err := productCollection.UpdateOne(c.Request.Context(), bson.M{"id": productID}, updatedProduct); err != nil {
+		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error updating product": err.Error()})
+	} else if result.MatchedCount == 0 {
+		c.IndentedJSON(http.StatusNotFound, gin.H{"message": "product not found"})
+	} else {
+		c.IndentedJSON(http.StatusOK, updatedProduct)
+	}
+}
 
 // DeleteProduct deletes a product by its uuid.
 func DeleteProduct(c *gin.Context) {
