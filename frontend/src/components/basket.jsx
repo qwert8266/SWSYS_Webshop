@@ -66,14 +66,14 @@ function ShoppingCart() {
                   key={item.id}
                 >
                   <img
-                    className="rounded-3 object-fit-cover flex-shrink-0" 
-                    src={"/img/" + item.image} alt={item.title} 
-                    style={{ width: "95px", height: "85px"}}
-                    alt={item.title}
+                    className="rounded-3 object-fit-contain flex-shrink-0" 
+                    src={"/img/product_images/" + item.image} alt={item.name} 
+                    style={{ width: "95px", height: "95px"}}
+                    alt={item.name}
                   />
 
                   <div className="flex-grow-1">
-                    <h5>{item.title}</h5>
+                    <h5>{item.name}</h5>
                     
                     <span>
                       {item.price.toLocaleString("de-DE", {
@@ -87,7 +87,7 @@ function ShoppingCart() {
                   <div
                     className="d-flex align-items-center gap-2 justify-content-center flex-shrink-0"
                     style={{ width: "115px" }}
-                    aria-label={`Menge für ${items.title}`}    
+                    aria-label={`Menge für ${items.name}`}    
                   >
                     <button
                       className="btn btn-outline-secondary btn-sm"
