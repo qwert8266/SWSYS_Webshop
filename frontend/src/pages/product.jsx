@@ -1,15 +1,17 @@
 import { NavLink, useParams } from 'react-router-dom';
 import './product.css';
+import { useCart } from '../context/cartContext';
+import { useState } from 'react';
 
 export const produkte = [
-  { name: "Becks", price: "14,99", rating: 3.8, img: "becks.png", category: "bier"},
-  { name: "Corona", price: "19,99", rating: 3.4, img: "corona.png", category: "bier"  },
-  { name: "Desperados", price: "34,99", rating: 4.5, img: "desperados.png", category: "bier" },
-  { name: "Merlot", price: "9,99", rating: 2.8, img: "merlot.png", category: "wein" },
-  { name: "Riesling", price: "12,99", rating: 3.6, img: "riesling.png", category: "wein" },
-  { name: "Jägermeister", price: "14,99", rating: 1.1, img: "jägermeister.png", category: "schnaps" },
-  { name: "Havana", price: "12,99", rating: 3.8, img: "havana.png", category: "schnaps" },
-  { name: "Veterano", price: "5,99", rating: 4.9, img: "veterano.png", category: "schnaps" },
+  { name: "Becks", id: "001", price: "14.99", rating: 3.8, image: "becks.png", category: "bier", quantity: 0},
+  { name: "Corona", id: "002", price: "19.99", rating: 3.4, image: "corona.png", category: "bier"  },
+  { name: "Desperados", id: "003", price: "34.99", rating: 4.5, image: "desperados.png", category: "bier" },
+  { name: "Merlot", id: "004", price: "9.99", rating: 2.8, image: "merlot.png", category: "wein" },
+  { name: "Riesling", id: "005", price: "12.99", rating: 3.6, image: "riesling.png", category: "wein" },
+  { name: "Jägermeister", id: "006", price: "14.99", rating: 1.1, image: "jägermeister.png", category: "schnaps" },
+  { name: "Havana", id: "007", price: "12.99", rating: 3.8, image: "havana.png", category: "schnaps" },
+  { name: "Veterano", id: "008", price: "5.99", rating: 4.9, image: "veterano.png", category: "schnaps" },
 
 ];
 
@@ -37,11 +39,19 @@ function Product({}){
         p.name.toLowerCase() === productName
     );
 
+    const {addItem}=useCart();
+
+    function handleAddToCart(product, quantity){
+        addItem(product, quantity);
+    }
+
+    const [quantity, setQuantity] = useState(1);
+
     return(
         <div className='product-page'>
             <div className='product-page-top'>
                 <div >
-                    <img className='product-picture' src={`/img/product_images/${product.img}` }alt={product.name}></img>
+                    <img className='product-picture' src={`/img/product_images/${product.image}` }alt={product.name}></img>
                 </div>
 
                 <div className='product-information'> 
@@ -56,8 +66,8 @@ function Product({}){
                         <p>{product.price}€</p>
                     </div>
                     <div className='cart-input'>
-                        <input type="number" min="1" defaultValue="1" />
-                        <button className='cart-button'>
+                        <input type="number" min="1" defaultValue="1" onChange={(e)=>setQuantity(parseInt(e.target.value))}/>
+                        <button className='cart-button' onClick={()=>handleAddToCart(product, quantity)}>
                             <img className="cart-at-product" src={`/img/cart-icon_white.png`} alt="+" />
                         </button>
                     </div>

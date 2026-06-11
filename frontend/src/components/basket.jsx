@@ -1,5 +1,6 @@
-import { Link } from 'react-router-dom';
+import { Link, NavLink } from 'react-router-dom';
 import { useCart } from "../context/cartContext";
+
 
 
 function ShoppingCart() {
@@ -52,7 +53,7 @@ function ShoppingCart() {
           >
             <div className="d-flex justify-content-between align-items-start mb-4">
               <div>
-                <h1 class="h3 mb-0">Warenkorb</h1>
+                <h1 className="h3 mb-0">Warenkorb</h1>
               </div>
 
               <span className="account-badge">{totalQuantity} Artikel</span>
@@ -66,20 +67,20 @@ function ShoppingCart() {
                   key={item.id}
                 >
                   <img
-                    className="rounded-3 object-fit-cover flex-shrink-0" 
-                    src={"/img/" + item.image} alt={item.title} 
-                    style={{ width: "95px", height: "85px"}}
-                    alt={item.title}
+                    className="rounded-3 object-fit-contain flex-shrink-0" 
+                    src={"/img/product_images/" + item.image} alt={item.name} 
+                    style={{ width: "95px", height: "95px"}}
+                    alt={item.name}
                   />
 
                   <div className="flex-grow-1">
-                    <h5>{item.title}</h5>
+                    <h5>{item.name}</h5>
                     
                     <span>
                       {item.price.toLocaleString("de-DE", {
                         style: "currency",
                         currency: "EUR",
-                      })}
+                      })}€
                     </span>
                   </div>
                   
@@ -87,7 +88,7 @@ function ShoppingCart() {
                   <div
                     className="d-flex align-items-center gap-2 justify-content-center flex-shrink-0"
                     style={{ width: "115px" }}
-                    aria-label={`Menge für ${items.title}`}    
+                    aria-label={`Menge für ${items.name}`}    
                   >
                     <button
                       className="btn btn-outline-secondary btn-sm"
@@ -154,9 +155,11 @@ function ShoppingCart() {
                 </strong>
               </div>
 
-              <button className='btn btn-success w-100 mt-3' type='button'>
-                Zur Kasse
-              </button>
+              <NavLink to="/cart/checkout">
+                <button className='btn btn-success w-100 mt-3' type='button'>
+                  Zur Kasse
+                </button>
+              </NavLink>
 
               <button
                 className="btn btn-outline-secondary w-100 mt-2"
