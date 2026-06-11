@@ -22,94 +22,128 @@ function Contact(){
         product.name.toLowerCase().includes(search.toLowerCase())
     );
 
-    const[reasonForContact, setReasonForContact] = useState("")
+    const[reasonForContact, setReasonForContact] = useState("");
+    const[sentForm, setSentFrom] = useState(false)
 
 
     return(
-        <div className='center_everything'>
-            <div className='basic-column'>
-                <label className='blue_text_big'>Kontaktformular</label>
-                
-                
-                <div className='align_left'>
-                    <label className='blue_text'>Anliegen</label>
-                    <select className='combobox' value={reasonForContact} onChange={(e)=> setReasonForContact(e.target.value)}>
-                        <option>Bitte auswählen...</option>
-                        <option>Karriere</option>
-                        <option>Beschwerde</option>
-                        <option>Großbestellung</option>
-                        <option>Sonstiges</option>
-                    </select>
-                </div>
-
-                <div className='beschreibung_div'>
-                    <label className='blue_text'>Beschreibung</label>
-                    <textarea className="input_beschreibung" placeholder='Tragen Sie hier Ihr Anliegen ein...'/>
-                </div>
-
-                <div className='contact_info'>
-                    <label className='blue_text'>Kontakt</label>
-                    <div className='align_left'>
-                        <label className='blue_text'>Email</label>
-                        <input className="inputs" placeholder='example@mail.com'/>
-                    </div>
-
-                    <div className='align_left'>
-                        <label className='blue_text'>Telefonnummer</label>
-                        <input className="inputs" placeholder='0173 1234567'/>
-                    </div>
-                </div>
-                {reasonForContact === "Karriere" &&
-                    <div className='career_info'>
-                        <div>
-                            <label className='blue_text'>Anschreiben</label>
-                            <input className="file-input" type="file" />
+        <div>
+            <div>
+                {!sentForm &&
+                <div className='center_everything'>
+                    <div className='basic-column2'>
+                        <label className='blue_text_big'>Kontaktformular</label>
+                        
+                        
+                        <div className='align_left'>
+                            <label className='blue_text'>Anliegen</label>
+                            <select className='combobox' value={reasonForContact} onChange={(e)=> setReasonForContact(e.target.value)}>
+                                <option>Bitte auswählen...</option>
+                                <option>Karriere</option>
+                                <option>Beschwerde</option>
+                                <option>Großbestellung</option>
+                                <option>Sonstiges</option>
+                            </select>
                         </div>
 
-                        <div>
-                            <label className='blue_text'>Lebenslauf</label>
-                            <input className="file-input" type="file" />
+                        <div className='beschreibung_div'>
+                            <label className='blue_text'>Beschreibung</label>
+                            <textarea className="input_beschreibung" placeholder='Tragen Sie hier Ihr Anliegen ein...'/>
                         </div>
-                    </div>
-                }
 
-                {reasonForContact === "Großbestellung" &&
-                <div className='großbestellung_container'>
-                    <label className='blue_text_long'>Ausgewählte Produkte</label>
-                    <div className='added_product_container'>
-                        <div className='added_product'>
-                            <label> 6x Becks</label>
-                            <label> 6x19.99E</label>
-                            <label> 120.00E</label>
+                        <div className='contact_info'>
+                            <label className='blue_text'>Kontakt</label>
+                            <div className='align_left'>
+                                <label className='blue_text'>Email</label>
+                                <input className="inputs" placeholder='example@mail.com'/>
+                            </div>
+
+                            <div className='align_left'>
+                                <label className='blue_text'>Telefonnummer</label>
+                                <input className="inputs" placeholder='0173 1234567'/>
+                            </div>
                         </div>
-                    </div>
-                    <div className='search_container'>
-                        <div className='search_wrapper'>
-                            <input  className="search_input" 
-                                    type="text" 
-                                    placeholder='Produkte suchen...'
-                                    value={search}
-                                    onChange={(e)=>setSearch(e.target.value)}/>
-                            {search && (
-                                <div className="suggestions">
-                                    {suggestions.map(product => (
-                                        <div key={product.id} onClick={()=>setSearch(product.name)}>
-                                            {product.name}
-                                        </div>
-                                    ))}
+                        {reasonForContact === "Karriere" &&
+                            <div className='career_info'>
+                                <div>
+                                    <label className='blue_text'>Anschreiben</label>
+                                    <input className="file-input" type="file" />
                                 </div>
-                            )}
+
+                                <div>
+                                    <label className='blue_text'>Lebenslauf</label>
+                                    <input className="file-input" type="file" />
+                                </div>
+                            </div>
+                        }
+
+                        {reasonForContact === "Großbestellung" &&
+                        <div className='großbestellung_container'>
+                            <label className='blue_text_long'>Ausgewählte Produkte</label>
+                            <div className='added_product_container'>
+                                <div className='added_product'>
+                                    <label> 6x Becks</label>
+                                    <label> 6x19.99E</label>
+                                    <label> 120.00E</label>
+                                </div>
+                            </div>
+                            <div className='search_container'>
+                                <div className='search_wrapper'>
+                                    <input  className="search_input" 
+                                            type="text" 
+                                            placeholder='Produkte suchen...'
+                                            value={search}
+                                            onChange={(e)=>setSearch(e.target.value)}/>
+                                    {search && (
+                                        <div className="suggestions">
+                                            {suggestions.map(product => (
+                                                <div key={product.id} onClick={()=>setSearch(product.name)}>
+                                                    {product.name}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                                <input className="search_input_count" type="text" placeholder='Anzahl'/>
+                                <button className='addButton'>+</button>
+                            </div>
                         </div>
-                        <input className="search_input_count" type="text" placeholder='Anzahl'/>
-                        <button className='addButton'>+</button>
+                        }
+                        <div>
+                            <button className='blue_button' onClick={()=>{setSentFrom(true)}}>Jetzt abschicken</button>
+                        </div>
                     </div>
                 </div>
-}
-                <div>
-                    <button className='blue_button'>Jetzt abschicken</button>
-                </div>
+            }
             </div>
+            <div>
+        {sentForm &&
+            <div className='successful_order2'>
+                {reasonForContact === "Karriere" &&
+                <div className='sentIt'>
+                    <label className='success_label2'>Vielen Dank für Ihre Bewerbung!</label>
+                    <label className='success_label_minor2'>Sie können schon bald mit einer Rückmeldung rechnen.</label>
+                </div>
+                }
+                {(reasonForContact === "Beschwerde" || reasonForContact === "Sonstiges" ) &&
+                <div className='sentIt'>
+                    <label className='success_label2'>Vielen Dank für Ihr Feedback!</label>
+                    <label className='success_label_minor2'>Wir werden uns bald bei dir melden.</label>
+                </div>
+                }
+                {reasonForContact === "Großbestellung" &&
+                <div className='sentIt'>
+                    <label className='success_label2'>Vielen Dank für deine Großbestellung!</label>
+                    <label className='success_label_minor2'>Bei Rückfragen werden wir uns bei dir melden.</label>
+                </div>
+                }
+                <NavLink to="/home">
+                    <button className='success_button' >Zurück zu unseren Produkten</button>
+                </NavLink>
+            </div>
+        }
         </div>
+      </div>
     )
 }
 
