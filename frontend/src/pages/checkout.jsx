@@ -26,8 +26,9 @@ function Checkout(){
 
     const [editData, setEditData] =useState(personalData);
 
-    const [showPlaintextBox, setShowPlaintextBox] =useState(true);
+    const [showPlaintextBox, setShowPlaintextBox] = useState(true);
     const [showInputBoxes, setShowInputBoxes] = useState(false);
+    const [showSuccessfulOrderScreen, setShowSuccessfulOrderScreen] = useState(false);
 
     const [payPal,setPayPal] = useState(personalData.paymentMethod === "PayPal")
     const [card,setCard] = useState(personalData.paymentMethod === "Karte")
@@ -44,6 +45,9 @@ function Checkout(){
 
 
     return(
+      <div>
+      <div>
+      {!showSuccessfulOrderScreen &&
         <div >
             <label className='blue_text_big'>Nur noch ein paar Klicks entfernt...</label>
             <div className='basic-column'>
@@ -70,7 +74,7 @@ function Checkout(){
                             <NavLink to="/cart">
                                 <button className='white_button'>Zurück zum Warenkorb</button>
                             </NavLink>
-                            <button className='blue_button'>Jetzt bestellen</button>
+                            <button className='blue_button' onClick={()=>{setShowInputBoxes(false);setShowPlaintextBox(false);setShowSuccessfulOrderScreen(true);clearCart()}}>Jetzt bestellen</button>
                         </div>
                     </div>
                     }
@@ -210,8 +214,24 @@ function Checkout(){
               ))}   
             </div>
           </div> 
+
+          
         </div>
         </div>
+          }
+          </div>
+          <div>
+            {showSuccessfulOrderScreen &&
+            <div className='successful_order'>
+              <label className='success_label'>Der Durst hat bald ein Ende!</label>
+              <label className='success_label_minor'>Ihre Bestellung wird schon bald verschickt.</label>
+              <NavLink to="/home">
+                <button className='success_button' >Zurück zu den Produkten</button>
+              </NavLink>
+            </div>
+          }
+          </div>
+          </div>
     )
 }
 

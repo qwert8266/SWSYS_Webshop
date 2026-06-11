@@ -118,3 +118,28 @@
     font-size: 20px;
     width: 180px;
 }
+
+.successful_order{
+    display: flex;
+    flex-direction: column;
+    padding-top: 50px;
+    padding-bottom: 50px;
+    align-items: center;
+}
+
+.success_label{
+    color: #15406e;
+    font-size: 50px; 
+}
+.success_label_minor{
+    font-size: 20px;
+    padding-bottom: 50px;
+}
+.success_button{
+    border-radius: 6px;
+    color: white;
+    background-color: #15406e;
+    font-size: 20px;
+    max-width: 300px;
+    align-self: center;
+}
