@@ -137,7 +137,7 @@ function Navbar() {
               </li>
               
               <li className='nav-item'>
-                <NavLink className="nav-link" to="/kontakt">
+                <NavLink className="nav-link" to="/contact">
                   <a>Kontakt</a>
                 </NavLink>
               </li>

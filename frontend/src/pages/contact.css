@@ -1,0 +1,177 @@
+.center_everything{
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+.basic-column{
+    display: flex ;
+    flex-direction: column;
+    padding-bottom: 50px;
+    width: 800px;
+    align-items: left;
+    gap: 30px;
+}
+
+.beschreibung_div{
+    display: flex ;
+    flex-direction: column;
+}
+
+.align_left{
+    display: flex ;
+    flex-direction: row;
+    align-items: left;
+    width: 100%;
+}
+
+.blue_text{
+    color: #15406e;
+    font-size: 30px;
+    width: 250px;
+}
+
+.blue_text_long{
+    color: #15406e;
+    font-size: 30px;
+    width: auto;
+}
+
+.blue_text_big{
+    color: #15406e;
+    font-size: 50px; 
+    text-align: center;
+    padding-bottom: 40px;
+    width: 100%;
+}
+
+.blue_button{
+    border-radius: 6px;
+    color: white;
+    background-color: #15406e;
+    font-size: 20px;
+    width: auto;
+    align-self: center;
+}
+
+.inputs{
+    border-radius: 6px;
+    font-size: 20px;
+}
+
+.input_beschreibung{
+    width: 800px;
+    height: 250px;
+
+    padding: 10px;
+    font-size: 15px;
+
+    border-radius: 6px;
+    resize: vertical;
+}
+
+.combobox{
+    background-color: white;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    padding: 8px;
+    width: 300px;
+}
+
+.file-input::file-selector-button {
+    background-color: white;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    padding: 8px 12px;
+    cursor: pointer;
+}
+
+.added_product_container{
+    background-color: white;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    padding: 8px;
+}
+
+.added_product{
+    display: flex;
+    flex-direction: row;
+    background-color: white;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    padding: 8px;
+    gap: 200px;
+}
+
+.search_container{
+    display: flex;
+    justify-content: center;
+    position: relative;
+    align-items: flex-start;
+    
+}
+
+.search_wrapper {
+    position: relative;
+}
+
+.search_input{
+    width: 300px;
+    border-top-left-radius: 6px;
+    border-bottom-left-radius: 6px;
+    font-size: 20px;
+}
+
+.search_input_count{
+    width: 80px;
+    font-size: 20px;
+
+}
+
+.addButton{
+    border-top-right-radius: 6px;
+    border-bottom-right-radius: 6px;
+    font-size: 20px;
+}
+
+.suggestions {
+    position: relative;
+    top: 100%;
+    left: 0;
+    width: 300px;
+
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+
+    z-index: 1000;
+}
+
+.suggestions div {
+    padding: 10px;
+    cursor: pointer;
+}
+
+.suggestions div:hover {
+    background-color: #f5f5f5;
+}
+
+.contact_info{
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.career_info{
+    display: flex;
+    align-items: left;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.großbestellung_container{
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
