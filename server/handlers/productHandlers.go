@@ -46,7 +46,7 @@ func GetProductByID(c *gin.Context) {
 	var product models.Product
 	productCollection := config.ProductCollection()
 
-	err = productCollection.FindOne(c.Request.Context(), bson.M{"id": id}).Decode(&product)
+	err = productCollection.FindOne(c.Request.Context(), bson.M{"product_id": id}).Decode(&product)
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			c.IndentedJSON(http.StatusNotFound, gin.H{"message": "requested product not found"})
@@ -97,6 +97,7 @@ func CreateProduct(c *gin.Context) {
 	//trimming strings:
 	name := strings.TrimSpace(incomingProduct.Name)
 	description := strings.TrimSpace(incomingProduct.Description)
+	image := strings.TrimSpace(incomingProduct.Image)
 	normalizedCategory := strings.ToLower(strings.TrimSpace(incomingProduct.Category))
 
 	// creating new user and generating a new user ID.
@@ -104,6 +105,7 @@ func CreateProduct(c *gin.Context) {
 		ProductID:   uuid.New(),
 		Name:        name,
 		Description: description,
+		Image:       image,
 		Price:       incomingProduct.Price,
 		Stock:       incomingProduct.Stock,
 		Category:    normalizedCategory,
@@ -139,12 +141,14 @@ func UpdateProduct(c *gin.Context) {
 	//trimming strings:
 	name := strings.TrimSpace(updatedProductData.Name)
 	description := strings.TrimSpace(updatedProductData.Description)
+	image := strings.TrimSpace(updatedProductData.Image)
 	normalizedCategory := strings.ToLower(strings.TrimSpace(updatedProductData.Category))
 
 	//updateOne() needs to be told how to modify the Document in the collection. (in this case using $set)
 	updatedProduct := bson.D{
 		{"$set", bson.D{{"name", name}}},
 		{"$set", bson.D{{"description", description}}},
+		{"$set", bson.D{{"image", image}}},
 		{"$set", bson.D{{"price", updatedProductData.Price}}},
 		{"$set", bson.D{{"stock", updatedProductData.Stock}}},
 		{"$set", bson.D{{"category", normalizedCategory}}},

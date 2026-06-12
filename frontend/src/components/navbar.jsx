@@ -2,6 +2,7 @@ import { React, useEffect, useRef, useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from "../context/authContext";
 import { useCart } from "../context/cartContext";
+import { CATEGORY_CONFIGS } from "../utils/categoryConfig";
 import "../custom.scss";
 
 import './navbar.css';
@@ -15,35 +16,7 @@ function Navbar() {
    
   }
 
-  const categories = [
-    {
-      "name": "Angebote",
-      "slug": "angebote"
-    },
-    {
-      "name": "Bier",
-      "slug": "bier"
-    },
-    {
-      "name": "Wein & Sekt",
-      "slug": "wein&sekt"
-    },
-    {
-      "name": "Spirituosen",
-      "slug": "spirituosen"
-    },
-    { "name": "Softgetränke",
-      "slug": "softgetraenke"
-    },
-    {
-      "name": "Wasser",
-      "slug": "wasser"
-    },
-    {
-      "name": "Kaffe & Tee",
-      "slug": "kaffe&tee"
-    }
-  ]
+  const categories = CATEGORY_CONFIGS;
 
   return (
     <nav className="navbar navbar-expand-md bg-body-tertiary" fixed="top">

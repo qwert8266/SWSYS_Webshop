@@ -4,6 +4,7 @@ import './checkout.css';
 import { useAuth } from "../context/authContext";
 import { useCart } from "../context/cartContext";
 import orderApi from '../api/orderApi';
+import { formatEuro } from "../utils/productHelpers";
 
 function buildPersonalData(user) {
   const address = user?.address || {};
@@ -84,7 +85,7 @@ function Checkout(){
 
     const orderData = {
       items: items.map((item) => ({
-        productId:  item.product_id,
+        product_id:  item.product_id,
         quantity: item.quantity,
       })),
       address: {
@@ -300,10 +301,7 @@ function Checkout(){
                       <div className="flex-grow-1">
                         <h5>{item.name}</h5>
                         <span>
-                          {item.price.toLocaleString("de-DE", {
-                            style: "currency",
-                            currency: "EUR",
-                          })}€
+                          {formatEuro(item.price)}
                         </span>
                       </div>
                       
@@ -319,10 +317,7 @@ function Checkout(){
                         className="text-nowrap text-end flex-shrink-0" 
                         style={{ width: "55px"}} /* 90 px*/
                       >
-                        {(item.price * item.quantity).toLocaleString("de-DE", {
-                          style: "currency",
-                          currency: "EUR",
-                        })}
+                        {formatEuro(item.price * item.quantity)}
                       </strong>
                     </article>
                   ))}   
@@ -330,11 +325,7 @@ function Checkout(){
 
                 <div className="d-flex jusify-content-between gap-3 py-3 border-top mt-3">
                   <span>Gesamt</span>
-                  <strong>{(totalPrice).toLocaleString("de-DE", {
-                    style: "currency",
-                    currency: "EUR",
-                    })}
-                  </strong>
+                  <strong>{formatEuro(totalPrice)}</strong>
                 </div>
               </div> 
           </div>

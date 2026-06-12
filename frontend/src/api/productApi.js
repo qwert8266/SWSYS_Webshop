@@ -13,12 +13,12 @@ class ProductApi extends BaseApi {
     return this.request("/products/");
   }
 
-  async getProductByCategory(category) {
+  async getProductsByCategory(category) {
     return this.request(`/products/category/${encodeURIComponent(category)}`);
   }
 
   async getProductById(productId) {
-    return this.request(`/product/${encodeURIComponent(productId)}`);
+    return this.request(`/products/${encodeURIComponent(productId)}`);
   }
 }
 

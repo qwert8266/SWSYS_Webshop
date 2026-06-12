@@ -68,7 +68,7 @@ export class BaseApi {
     }
 
     if (accessToken) {
-      requestHeaders.accessToken = `Bearer ${accessToken}`;
+      requestHeaders.Authorization = `Bearer ${accessToken}`;
     }
 
     return requestHeaders;
