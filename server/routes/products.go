@@ -7,6 +7,14 @@ import (
 
 func RegisterProductRoutes(products *gin.RouterGroup) {
 
+	// retrieving products:
 	products.GET("/", handlers.GetProducts)
 	products.GET("/:id", handlers.GetProductByID)
+	products.GET("/category/:category", handlers.GetProductByCategory)
+
+	//endpoints for modifying products should be protected somehow:
+	products.POST("/", handlers.CreateProduct)
+	products.PUT("/:id", handlers.UpdateProduct)
+	products.PATCH("/:id", handlers.ModifyStock)
+	products.DELETE("/:id", handlers.DeleteProduct)
 }
