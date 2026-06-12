@@ -55,16 +55,17 @@ func CreateOrder(c *gin.Context) {
 
 		// checks if at least one product has been ordered
 		if requestedItem.Quantity <= 0 {
-			//rollbackReservedStock(c, reservedItems)
+			rollbackReservedStock(c, reservedItems)
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Die Bestellmenge muss mindestens 1 sein."})
 			return
 		}
 
 		var product models.Product
+		// selects product where stock value is >= quantity of the requested item
 		filter := bson.M{
 			"product_id": productID,
 			"stock": bson.M{
-				"$get": requestedItem.Quantity,
+				"$gte": requestedItem.Quantity,
 			},
 		}
 		update := bson.M{
@@ -82,7 +83,7 @@ func CreateOrder(c *gin.Context) {
 
 		// checks if the stock reduction failed
 		if err != nil {
-			//rolbackReservedStock(c, reservedItems)
+			rollbackReservedStock(c, reservedItems)
 
 			// checks if no suitable product with enough stock was found
 			if errors.Is(err, mongo.ErrNoDocuments) {
@@ -147,6 +148,7 @@ func CreateOrder(c *gin.Context) {
 }
 
 func GetMyOrders(c *gin.Context) {
+	// checks if the user is logged in
 	claims, ok := middleware.ClaimsFromContext(c)
 	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Nicht angemeldet."})
@@ -158,17 +160,20 @@ func GetMyOrders(c *gin.Context) {
 		bson.M{"user_id": claims.UserID},
 		options.Find().SetSort(bson.D{{Key: "created_at", Value: -1}}),
 	)
+	// If the order fails to load
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
+	// checks if the loaded orders could be read
 	var orders []models.Order
 	if err := cursor.All(c.Request.Context(), &orders); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
+	// Make sure that no orders return an empty array
 	if orders == nil {
 		orders = []models.Order{}
 	}
@@ -182,6 +187,7 @@ type reservedStock struct {
 }
 
 func rollbackReservedStock(c *gin.Context, reservedItems []reservedStock) {
+	// restores all items that have already been reserved
 	for _, item := range reservedItems {
 		_, _ = config.ProductCollection().UpdateOne(
 			c.Request.Context(),

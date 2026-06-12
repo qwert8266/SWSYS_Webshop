@@ -21,7 +21,7 @@ type Order struct {
 
 // Stored inside an order document
 type OrderItem struct {
-	ProductID      uuid.UUID `bson:"product_id" json:"productId"`
+	ProductID      uuid.UUID `bson:"product_id" json:"product_id"`
 	Name           string    `bson:"name" json:"name"`
 	Quantity       uint32    `bson:"quantity" json:"quantity"`
 	UnitPrice      uint32    `bson:"unit_price" json:"unitPrice"`
@@ -37,6 +37,6 @@ type CreateOrderRequst struct {
 
 // contains the ordered product and its quantity
 type CreateOrderItemRequst struct {
-	ProductID string `json:"productId"`
+	ProductID string `json:"product_id"`
 	Quantity  uint32 `json:"quantity"`
 }
