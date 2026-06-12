@@ -53,5 +53,4 @@ func GetProductByID(c *gin.Context) {
 		return
 	}
 	c.IndentedJSON(http.StatusOK, product)
-
 }

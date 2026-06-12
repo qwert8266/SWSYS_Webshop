@@ -12,7 +12,6 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
-// var DB = ConnectDB()
 // containes the shared MongoDB client after main() has initialized it.
 var DB *mongo.Client
 

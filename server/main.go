@@ -39,8 +39,4 @@ func main() {
 		fmt.Println(err)
 	}
 
-	/*defer func() {
-		config.DisconnectDB()
-	}()
-	*/
 }
