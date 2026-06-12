@@ -86,3 +86,8 @@ func ProductCollection() *mongo.Collection {
 func UserCollection() *mongo.Collection {
 	return collection("users")
 }
+
+// OrderCollection returns the orders collection of the webshop database
+func OrderCollection() *mongo.Collection {
+	return collection("orders")
+}
