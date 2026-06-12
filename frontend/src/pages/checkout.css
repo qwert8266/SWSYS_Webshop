@@ -1,0 +1,144 @@
+.basic-column{
+    display: flex ;
+    flex-direction: row;
+    padding-bottom: 50px;
+}
+
+.plaintextBox{
+    display: flex ;
+    flex-direction: column;
+    border: 1px solid #000000;
+    border-radius: 8px;
+    padding: 10px;
+}
+
+.more_space{
+    padding-bottom: 10px;
+}
+
+.changeDataButtonBox{
+    display: flex ;
+    justify-content: flex-end;
+}
+
+.changeDataButton{
+    border: white;
+    border-color: white;
+    background-color: white;
+    color: #15406e;
+}
+.order_details{
+    display: flex ;
+    flex-direction: column;
+    align-items: center;
+    width: 1000px;
+}
+.personal_data{
+    display: flex ;
+    flex-direction: column;
+    align-items: left;
+    gap: 20px;
+}
+.greeting_combo{
+    border-radius: 6px;
+}
+.inputs{
+    border-radius: 6px;
+    font-size: 20px;
+}
+.checkout_header{
+    display: flex ;
+    flex-direction: column;
+}
+
+.checkout_header2{
+    display: flex ;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.checkout_footer{
+    display: flex ;
+    flex-direction: row;
+}
+.delivery_details{
+    display: flex ;
+    flex-direction: column;
+    align-items: left;
+    gap: 30px;
+    padding-bottom: 30px;
+}
+.pay_method{
+    display: flex ;
+    flex-direction: row;
+    gap: 30px;
+}
+.card_pay{
+    border-radius: 6px;
+}
+.paypal{
+    border-radius: 6px;
+}
+.delivery_kind{
+    display: flex;
+    gap: 30px;
+}
+.delivery_combo{
+    border-radius: 6px;
+}
+.button_row{
+    display: flex;
+    gap: 50px;
+}
+.white_button{
+    border-radius: 6px;
+    font-size: 20px;
+}
+.blue_button{
+    border-radius: 6px;
+    color: white;
+    background-color: #15406e;
+    font-size: 20px;
+}
+.blue_text{
+    color: #15406e;
+    font-size: 30px;
+}
+
+.blue_text_big{
+    color: #15406e;
+    font-size: 50px; 
+    text-align: center;
+    padding-bottom: 40px;
+    width: 100%;
+}
+
+.medium_text{
+    font-size: 20px;
+    width: 180px;
+}
+
+.successful_order{
+    display: flex;
+    flex-direction: column;
+    padding-top: 50px;
+    padding-bottom: 50px;
+    align-items: center;
+}
+
+.success_label{
+    color: #15406e;
+    font-size: 50px; 
+}
+.success_label_minor{
+    font-size: 20px;
+    padding-bottom: 50px;
+}
+.success_button{
+    border-radius: 6px;
+    color: white;
+    background-color: #15406e;
+    font-size: 20px;
+    max-width: 300px;
+    align-self: center;
+}
