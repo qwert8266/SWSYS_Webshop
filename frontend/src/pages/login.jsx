@@ -3,17 +3,20 @@ import { Link, NavLink, useNavigate } from "react-router-dom"
 
 import { EMAIL_REGEX } from "../constants/validation";
 import { ERROR_EMPTY_PASSWORD, ERROR_INVALID_EMAIL } from "../constants/errorMessages";
+import { useAuth } from "../context/authContext";
 
 
 function Login(){
     const navigate = useNavigate();
+    const { login } = useAuth();
+
     const [isLoggingIn, setIsLoggingIn] = useState(false);
     const [error, setError] = useState("");
 
     const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-  });
+        email: "",
+        password: "",
+    });
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -45,8 +48,11 @@ function Login(){
     }
 
     try {
-        await Login(trimmedEmail, formData.password);
-        navigate("/account");
+        await login({
+            email: trimmedEmail, 
+            password: formData.password,
+        });
+        navigate("/account-settings");
     } catch (err) {
         setError(err.message);
     } finally {

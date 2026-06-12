@@ -37,18 +37,23 @@ function App() {
           <Route path="/login" element={<Login />}/>
           <Route path="/cart" element={<ShoppingCart />} />
           <Route path="/contact" element={<Contact/>}/>
-          <Route path="/cart/checkout" element={<Checkout/>}/>
+          <Route path="/cart/checkout" element={
+            <ProtectedRoutes>
+              <Checkout/>
+            </ProtectedRoutes>
+            }
+          />
           <Route path="account-settings" element={
             <ProtectedRoutes>
               <AccountSettings/>
             </ProtectedRoutes>
             }
           />
+          
           <Route path="/bier" element={<Category key="bier" products={biere} banner={top_banners[0]} category={"bier"}/>} />
           <Route path="/wein" element={<Category key="wein" products={weine} banner={top_banners[1]} category={"wein"}/>} />
           <Route path="/schnaps" element={<Category key="schnaps" products={schnäpse} banner={top_banners[2]} category={"schnaps"}/>} />
           <Route path="/:category/:productName"  element={<Product />} />
-          {/*<Route path="/test" element={<Test/>} /> */}
 
         </Routes>
         <Footer></Footer>

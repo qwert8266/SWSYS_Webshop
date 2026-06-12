@@ -92,7 +92,7 @@ func CreateOrder(c *gin.Context) {
 
 				// checks if the product does not exist at all
 				if errors.Is(findErr, mongo.ErrNoDocuments) {
-					c.JSON(http.StatusBadRequest, gin.H{"error": "Ein Product aus dem Warenkorb wurde nicht gefunden."})
+					c.JSON(http.StatusBadRequest, gin.H{"error": "Ein Produkt aus dem Warenkorb wurde nicht gefunden."})
 					return
 				}
 

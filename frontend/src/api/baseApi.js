@@ -44,6 +44,7 @@ export class BaseApi {
         0,
         { originalError: error.message }
       );
+      
     }
 
     const payload = await this.parseJsonResponse(response);
