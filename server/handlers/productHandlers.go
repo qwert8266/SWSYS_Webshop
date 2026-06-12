@@ -195,7 +195,7 @@ func ModifyStock(c *gin.Context) {
 	// retrieving the amount to increase or decrease
 	var operation models.StockOperation
 	if err = c.BindJSON(&operation); err != nil {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error parsing stock operation": err.Error()})
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error parsing stock operation": err.Error()})
 		return
 	}
 

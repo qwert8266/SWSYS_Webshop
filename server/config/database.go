@@ -45,7 +45,6 @@ func ConnectDB() *mongo.Client {
 	defer cancel()
 
 	// Pings the database to verify connection
-	//if err := client.Ping(context.TODO(), nil); err != nil {
 	if err := client.Ping(ctx, nil); err != nil {
 		log.Fatal("Could not ping MongoDB:", err)
 	}

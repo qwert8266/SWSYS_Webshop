@@ -47,9 +47,6 @@ func GetUserByID(c *gin.Context) {
 		return
 	}
 
-	//var user models.User
-
-	//err = users.FindOne(c.Request.Context(), bson.M{"id": id}).Decode(&user)
 	user, err := findUserByID(c, id)
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
