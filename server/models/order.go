@@ -11,7 +11,7 @@ type Order struct {
 	OrderID         uuid.UUID   `bson:"order_id" json:"orderId"`
 	UserID          uuid.UUID   `bson:"user_id" json:"userId"`
 	Items           []OrderItem `bson:"items" json:"items"`
-	ShippingAddress Address     `bson:"shipping_address" json:"schippingAddress"`
+	ShippingAddress Address     `bson:"shipping_address" json:"shippingAddress"`
 	PaymentMethod   string      `bson:"payment_method" json:"paymentMethod"`
 	Status          string      `bson:"status" json:"status"`
 	TotalPrice      uint32      `bson:"total_price" json:"totalPrice"`
@@ -28,15 +28,15 @@ type OrderItem struct {
 	LineTotalPrice uint32    `bson:"line_total_price" json:"lineTotalPrice"`
 }
 
-// CreateOrderRequst is sent by the frontend when checkout is completed
-type CreateOrderRequst struct {
-	Items           []CreateOrderItemRequst `json:"items"`
-	ShippingAddress Address                 `json:"address"`
-	PaymentMethod   string                  `json:"paymentMethod"`
+// CreateOrderRequest is sent by the frontend when checkout is completed
+type CreateOrderRequest struct {
+	Items           []CreateOrderItemRequest `json:"items"`
+	ShippingAddress Address                  `json:"address"`
+	PaymentMethod   string                   `json:"paymentMethod"`
 }
 
-// CreateOrderItemRequst contains the ordered product and its quantity
-type CreateOrderItemRequst struct {
+// CreateOrderItemRequest contains the ordered product and its quantity
+type CreateOrderItemRequest struct {
 	ProductID string `json:"product_id"`
 	Quantity  uint32 `json:"quantity"`
 }

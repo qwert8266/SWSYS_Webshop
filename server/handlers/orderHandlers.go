@@ -26,7 +26,7 @@ func CreateOrder(c *gin.Context) {
 		return
 	}
 
-	var request models.CreateOrderRequst
+	var request models.CreateOrderRequest
 	if err := c.BindJSON(&request); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Bestelldaten konnten nicht gelesen werden."})
 		return
