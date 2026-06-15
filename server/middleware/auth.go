@@ -40,7 +40,7 @@ func Authenticate() gin.HandlerFunc {
 	}
 }
 
-// returns the authenticated token claims from the Gin context
+// ClaimsFromContext returns the authenticated token claims from the Gin context
 func ClaimsFromContext(c *gin.Context) (*helpers.Claims, bool) {
 	value, exists := c.Get("claims")
 	if !exists {

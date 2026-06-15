@@ -56,7 +56,6 @@ func GetProductByID(c *gin.Context) {
 		return
 	}
 	c.IndentedJSON(http.StatusOK, product)
-
 }
 
 // GetProductByCategory returns all products of a specific category.
@@ -199,7 +198,7 @@ func ModifyStock(c *gin.Context) {
 	// retrieving the amount to increase or decrease
 	var operation models.StockOperation
 	if err = c.BindJSON(&operation); err != nil {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error parsing stock operation": err.Error()})
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error parsing stock operation": err.Error()})
 		return
 	}
 
