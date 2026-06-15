@@ -17,9 +17,9 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
-// creates a new order for the logged-in user and reduces product stock
+// CreateOrder creates a new order for the logged-in user and reduces product stock
 func CreateOrder(c *gin.Context) {
-	// checkes if the user is logged in
+	// checks if the user is logged in
 	claims, ok := middleware.ClaimsFromContext(c)
 	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Nicht angemeldet."})
@@ -73,7 +73,7 @@ func CreateOrder(c *gin.Context) {
 			"$set": bson.M{"updated_at": now},
 		}
 
-		// only products with enough avaliable stock are updated
+		// only products with enough available stock are updated
 		err = config.ProductCollection().FindOneAndUpdate(
 			c.Request.Context(),
 			filter,
@@ -96,13 +96,13 @@ func CreateOrder(c *gin.Context) {
 					return
 				}
 
-				// checks if a a database error occured whire searching for the product
+				// checks if a database error occurred while searching for the product
 				if findErr != nil {
 					c.JSON(http.StatusInternalServerError, gin.H{"error": findErr.Error()})
 					return
 				}
 				c.JSON(http.StatusBadRequest, gin.H{
-					"error":     fmt.Sprint("Nicht genug Bestand für %s.", existingProduct.Name),
+					"error":     fmt.Sprintf("Nicht genug Bestand für %s.", existingProduct.Name),
 					"productId": productID,
 					"available": existingProduct.Stock,
 				})

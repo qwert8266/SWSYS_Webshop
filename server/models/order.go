@@ -19,7 +19,7 @@ type Order struct {
 	UpdatedAt       time.Time   `bson:"updated_at" json:"updatedAt"`
 }
 
-// Stored inside an order document
+// OrderItem is Stored inside an order document
 type OrderItem struct {
 	ProductID      uuid.UUID `bson:"product_id" json:"product_id"`
 	Name           string    `bson:"name" json:"name"`
@@ -28,14 +28,14 @@ type OrderItem struct {
 	LineTotalPrice uint32    `bson:"line_total_price" json:"lineTotalPrice"`
 }
 
-// is sent by the frontend when checkout is completed
+// CreateOrderRequst is sent by the frontend when checkout is completed
 type CreateOrderRequst struct {
 	Items           []CreateOrderItemRequst `json:"items"`
 	ShippingAddress Address                 `json:"address"`
 	PaymentMethod   string                  `json:"paymentMethod"`
 }
 
-// contains the ordered product and its quantity
+// CreateOrderItemRequst contains the ordered product and its quantity
 type CreateOrderItemRequst struct {
 	ProductID string `json:"product_id"`
 	Quantity  uint32 `json:"quantity"`

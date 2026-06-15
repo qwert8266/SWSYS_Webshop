@@ -81,7 +81,7 @@ type AuthResponse struct {
 	ExpiresIn    int64      `json:"expiresIn"`
 }
 
-// ToPublicUser convertes the persisted User into the safe API representation
+// ToPublicUser converts the persisted User into the safe API representation
 func ToPublicUser(user User) PublicUser {
 	return PublicUser{
 		ID:           user.ID,

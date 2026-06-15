@@ -63,7 +63,7 @@ func DisconnectDB(client *mongo.Client) {
 	}
 }
 
-// DatabaseName returnes the configured MongoDB database name
+// DatabaseName returns the configured MongoDB database name
 func DatabaseName() string {
 	return strings.TrimSpace(os.Getenv("MONGODB_DATABASE"))
 }

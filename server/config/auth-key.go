@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-// returns the secret used to sign and validate tokens.
+// JWTSecret returns the secret used to sign and validate tokens.
 func JWTSecret() string {
 	secret := strings.TrimSpace(os.Getenv("JWT_SECRET"))
 	if secret == "" {

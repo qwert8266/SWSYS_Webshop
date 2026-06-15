@@ -27,7 +27,7 @@ const (
 	RefreshTokenTTL = 7 * 24 * time.Hour
 )
 
-// the signed payload stored inside a token
+// Claims the signed payload stored inside a token
 type Claims struct {
 	UserID    uuid.UUID `json:"userId"`
 	Email     string    `json:"email"`
@@ -43,7 +43,7 @@ type tokenHeader struct {
 
 var base64URL = base64.RawURLEncoding
 
-// creates a signed JWT-like HMAC token without an additional JWT dependency
+// GenerateToken creates a signed JWT-like HMAC token without an additional JWT dependency
 func GenerateToken(userID uuid.UUID, email, tokenType, secret string, ttl time.Duration) (string, error) {
 	now := time.Now().UTC()
 	claims := Claims{
@@ -70,7 +70,7 @@ func GenerateToken(userID uuid.UUID, email, tokenType, secret string, ttl time.D
 	return unsignedToken + "." + signature, nil
 }
 
-// verifies the token signature and checks whether the token is expired
+// ValidateToken verifies the token signature and checks whether the token is expired
 func ValidateToken(token, secret, expectedTokenType string) (*Claims, error) {
 	parts := strings.Split(token, ".")
 	if len(parts) != 3 {
