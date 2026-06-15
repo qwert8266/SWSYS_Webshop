@@ -11,7 +11,6 @@ func RegisterUserRoutes(rg *gin.RouterGroup) {
 	// Authentication endpoints
 	rg.POST("/register", handlers.AddNewUser)
 	rg.POST("/login", handlers.LoginUser)
-
 	// Protected so the backend can validate the submitted Bearer token before the frontend removes it from localStorage
 	rg.POST("/logout", middleware.Authenticate(), handlers.LogoutUser)
 
@@ -22,6 +21,8 @@ func RegisterUserRoutes(rg *gin.RouterGroup) {
 	{
 		users.GET("/", handlers.GetUsers)
 		users.GET("/:id", handlers.GetUserByID)
+		users.PATCH("/:id", handlers.ModifyUser)
+
 		users.DELETE("/:id", handlers.DeleteUser)
 	}
 

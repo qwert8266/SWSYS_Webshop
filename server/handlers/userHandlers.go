@@ -3,8 +3,7 @@ package handlers
 import (
 	"errors"
 	"net/http"
-	"os"
-	"regexp"
+	"net/mail"
 	"strings"
 	"time"
 
@@ -16,11 +15,9 @@ import (
 	"github.com/qwert8266/SWSYS_Webshop/server/models"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 	"golang.org/x/crypto/bcrypt"
 )
-
-// var users = config.UserCollection()
-var emailRegex = regexp.MustCompile(os.Getenv("VALID_EMAIL_REGEX"))
 
 func GetUsers(c *gin.Context) {
 	users := config.UserCollection()
@@ -80,74 +77,49 @@ func AddNewUser(c *gin.Context) {
 
 	// the incoming JSON is parsed into newUser
 	if err := c.BindJSON(&incomingUserData); err != nil {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error parsing user data": err.Error()})
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error parsing user data": err.Error()})
 		return
 	}
 
-	normalizedEmail := strings.ToLower(strings.TrimSpace(incomingUserData.Email))
-	incomingUserData.CustomerType = strings.TrimSpace(incomingUserData.CustomerType)
-
-	if normalizedEmail == "" || len(incomingUserData.Password) < 8 {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "E-Mail und Passwort mit mindestens 8 Zeichen sind erforderlich."})
-		return
-	}
-
-	if incomingUserData.CustomerType != "private" && incomingUserData.CustomerType != "business" {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Ungüliger Kundentyp."})
-		return
-	}
-
-	if strings.TrimSpace(incomingUserData.FirstName) == "" || strings.TrimSpace(incomingUserData.LastName) == "" {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Vorname und Nachname sind erforderlich."})
-		return
-	}
-
-	if incomingUserData.CustomerType == "business" && strings.TrimSpace(incomingUserData.CompanyName) == "" {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Für ein Geschäftskonto ist der Unternehmensname erforderlich."})
-		return
-	}
-
-	existingUser, err := findUserByEmail(c, normalizedEmail)
-	if err == nil && existingUser.ID != uuid.Nil {
-		c.IndentedJSON(http.StatusConflict, gin.H{"error": "Diese E-Mail-Adresse ist bereits registriert."})
-		return
-	}
-	if !errors.Is(err, mongo.ErrNoDocuments) {
-		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	passwordHash, err := bcrypt.GenerateFromPassword([]byte(incomingUserData.Password), bcrypt.DefaultCost)
+	validUserData, err := checkIncomingData(c, incomingUserData)
 	if err != nil {
-		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": "Password konnte nicht verarbeitet werden."})
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// check if the email already exists in the DB
+	if !checkForNoExistingEmail(c, validUserData.Email) {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "email already in use"})
+		return
+	}
+
+	// hashing the password
+	passwordHash, err := generateHash(c, validUserData.Password)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
 	}
 
 	now := time.Now().UTC()
 	// a new UUID is created for the new user
 	newUser := models.User{
 		ID:           uuid.New(),
-		CustomerType: incomingUserData.CustomerType,
-		Salutation:   strings.TrimSpace(incomingUserData.Salutation),
-		FirstName:    strings.TrimSpace(incomingUserData.FirstName),
-		LastName:     strings.TrimSpace(incomingUserData.LastName),
-		BirthDate:    strings.TrimSpace(incomingUserData.BirthDate),
-		Phone:        strings.TrimSpace(incomingUserData.Phone),
-		CompanyName:  strings.TrimSpace(incomingUserData.CompanyName),
+		CustomerType: validUserData.CustomerType,
+		Salutation:   strings.TrimSpace(validUserData.Salutation),
+		FirstName:    strings.TrimSpace(validUserData.FirstName),
+		LastName:     strings.TrimSpace(validUserData.LastName),
+		BirthDate:    strings.TrimSpace(validUserData.BirthDate),
+		Phone:        strings.TrimSpace(validUserData.Phone),
+		CompanyName:  strings.TrimSpace(validUserData.CompanyName),
 
-		Email:        normalizedEmail,
-		PasswordHash: string(passwordHash),
-		Address: models.Address{
-			Street:      strings.TrimSpace(incomingUserData.Street),
-			HouseNumber: strings.TrimSpace(incomingUserData.HouseNumber),
-			ZipCode:     strings.TrimSpace(incomingUserData.ZipCode),
-			City:        strings.TrimSpace(incomingUserData.City),
-			Country:     strings.TrimSpace(incomingUserData.Country),
-		},
-		CreatedAt: now,
-		UpdatedAt: now,
+		Email:        validUserData.Email,
+		PasswordHash: passwordHash,
+		Address:      buildAddress(validUserData),
+		CreatedAt:    now,
+		UpdatedAt:    now,
 	}
 
-	// the new movie is added to the list of movies
+	// the new user is added to the list of users
 	if _, err := config.UserCollection().InsertOne(c.Request.Context(), newUser); err != nil {
 		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -160,6 +132,85 @@ func AddNewUser(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, response)
+}
+
+func ModifyUser(c *gin.Context) {
+	id, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "the requested uuid is not a valid uuid"})
+		return
+	}
+
+	var incomingUserData models.RegisterRequest
+	if err := c.BindJSON(&incomingUserData); err != nil {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error parsing user data": err.Error()})
+		return
+	}
+
+	// checking the data for invalid syntax
+	validUserData, err := checkIncomingData(c, incomingUserData)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// get old user data for comparison
+	currentUserData, err := findUserByID(c, id)
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"message": "requested user not found"})
+		} else {
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
+		return
+	}
+
+	// check if the email shall be changed
+	if validUserData.Email != currentUserData.Email {
+		if !checkForNoExistingEmail(c, validUserData.Email) {
+			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "email already in use"})
+			return
+		}
+	}
+
+	// build the new address
+	newAddress := buildAddress(validUserData)
+
+	// write the update
+	updateToUser := bson.D{
+		{"$set", bson.D{{"customer_type", validUserData.CustomerType}}},
+		{"$set", bson.D{{"salutation", validUserData.Salutation}}},
+		{"$set", bson.D{{"first_name", validUserData.FirstName}}},
+		{"$set", bson.D{{"last_name", validUserData.LastName}}},
+		{"$set", bson.D{{"birth_date", validUserData.BirthDate}}},
+		{"$set", bson.D{{"phone", validUserData.Phone}}},
+		{"$set", bson.D{{"company_name", validUserData.CompanyName}}},
+
+		{"$set", bson.D{{"address", newAddress}}},
+
+		{"$set", bson.D{{"email", validUserData.Email}}},
+
+		{"$set", bson.D{{"updated_at", time.Now()}}},
+	}
+
+	var updatedUser models.User
+	userCollection := config.UserCollection()
+
+	//update the user
+	err = userCollection.FindOneAndUpdate(
+		c.Request.Context(),
+		bson.M{"id": id},
+		updateToUser,
+		options.FindOneAndUpdate().SetReturnDocument(options.After),
+	).Decode(&updatedUser)
+
+	if errors.Is(err, mongo.ErrNoDocuments) {
+		c.IndentedJSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		return
+	} else if err != nil {
+		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	}
+	c.IndentedJSON(http.StatusOK, models.ToPublicUser(updatedUser))
 }
 
 func DeleteUser(c *gin.Context) {
@@ -261,6 +312,27 @@ func buildAuthResponse(message string, user models.User) (models.AuthResponse, e
 	}, nil
 }
 
+func buildAddress(rr models.RegisterRequest) models.Address {
+
+	//TODO: verify address data
+	return models.Address{
+		Street:      strings.TrimSpace(rr.Street),
+		HouseNumber: strings.TrimSpace(rr.HouseNumber),
+		ZipCode:     strings.TrimSpace(rr.ZipCode),
+		City:        strings.TrimSpace(rr.City),
+		Country:     strings.TrimSpace(rr.Country),
+	}
+}
+
+func generateHash(c *gin.Context, password string) (string, error) {
+	passwordHash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": "Password konnte nicht verarbeitet werden."})
+		return "", err
+	}
+	return string(passwordHash), nil
+}
+
 func findUserByID(c *gin.Context, id uuid.UUID) (models.User, error) {
 	var user models.User
 	err := config.UserCollection().FindOne(c.Request.Context(), bson.M{"id": id}).Decode(&user)
@@ -271,4 +343,61 @@ func findUserByEmail(c *gin.Context, email string) (models.User, error) {
 	var user models.User
 	err := config.UserCollection().FindOne(c.Request.Context(), bson.M{"email": email}).Decode(&user)
 	return user, err
+}
+
+func checkForNoExistingEmail(c *gin.Context, email string) bool {
+	existingUser, err := findUserByEmail(c, email)
+	if err == nil && existingUser.ID != uuid.Nil {
+		c.AbortWithStatusJSON(http.StatusConflict, gin.H{"error": "Diese E-Mail-Adresse ist bereits registriert."})
+		return false
+	}
+	if !errors.Is(err, mongo.ErrNoDocuments) && err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return false
+	}
+	return true
+}
+
+func isEmailValid(email string) bool {
+	_, err := mail.ParseAddress(email)
+	return err == nil
+}
+
+func checkIncomingData(c *gin.Context, rr models.RegisterRequest) (models.RegisterRequest, error) {
+
+	// check email
+	normalizedEmail := strings.ToLower(strings.TrimSpace(rr.Email))
+	if !isEmailValid(normalizedEmail) {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Email ungültig"})
+		return rr, errors.New("email invalid")
+	}
+
+	// check password length
+	if len(rr.Password) < 8 {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Passwort mit mindestens 8 Zeichen erforderlich."})
+		return rr, errors.New("e-Mail und Passwort mit mindestens 8 Zeichen sind erforderlich")
+	}
+
+	// check customer type
+	rr.CustomerType = strings.TrimSpace(rr.CustomerType)
+	if rr.CustomerType != "private" && rr.CustomerType != "business" {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Ungüliger Kundentyp."})
+		return rr, errors.New("invalid customer type")
+	}
+
+	// check names
+	rr.FirstName = strings.TrimSpace(rr.FirstName)
+	rr.LastName = strings.TrimSpace(rr.LastName)
+	if rr.FirstName == "" || rr.LastName == "" {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Vorname und Nachname sind erforderlich."})
+		return rr, errors.New("no name given")
+	}
+
+	// check company name
+	rr.CompanyName = strings.TrimSpace(rr.CompanyName)
+	if rr.CustomerType == "business" && rr.CompanyName == "" {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Für ein Geschäftskonto ist der Unternehmensname erforderlich."})
+		return rr, errors.New("no company name given")
+	}
+	return rr, nil
 }

@@ -56,7 +56,6 @@ func GetProductByID(c *gin.Context) {
 		return
 	}
 	c.IndentedJSON(http.StatusOK, product)
-
 }
 
 // GetProductByCategory returns all products of a specific category.
