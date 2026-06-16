@@ -4,15 +4,18 @@ import { Link, NavLink, useNavigate } from "react-router-dom"
 
 import { EMAIL_REGEX } from "../constants/validation";
 import { ERROR_INVALID_EMAIL } from "../constants/errorMessages";
+import { useAuth } from "../context/authContext";
 import "../App.css";
 
 function Register() {
   const navigate = useNavigate();
-  const [customerType, setCustomerType] = useState("private");
+  const { register } = useAuth();
+  //const [customerType, setCustomerType] = useState("private");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
 
   const [formData, setFormData] = useState({
+    customerType: "private",
     email: "",
     password: "",
     phone: "",
@@ -41,21 +44,29 @@ function Register() {
       [name]: value
     });
   };
+
+  const customerType = formData.customerType;
+  const handleCustomerTypeChange = (type) => {
+    setFormData((prevFormData) => ({
+      ...prevFormData,
+      customerType: type
+    }));
+  };
   
   async function handleSubmit(event) {
     event.preventDefault();
     setError("");
-    setIsSubmitting(false);
+    setIsSubmitting(true);
 
-    const trimmedEmail = formData.email.trim().toLowerCase();
+    /*const trimmedEmail = formData.email.trim().toLowerCase();
     if (!EMAIL_REGEX.test(trimmedEmail)) {
       setError(ERROR_INVALID_EMAIL);
       setIsSubmitting(false);
       return;
-    }
+    }*/
 
     try {
-      await Register(trimmedEmail, formData.password);
+      await register(formData);
       navigate("/account");
     } catch (err) {
       setError(err.message);
@@ -78,13 +89,13 @@ function Register() {
         {/* check which form is selected */}
         <div 
           className={`customer-type-tab ${customerType === "private" ? "active" : ""}`}
-          onClick={() => setCustomerType("private")}
+          onClick={() => handleCustomerTypeChange("private")}
         >
           Privatkunde
         </div>
         <div 
           className={`customer-type-tab ${customerType === "business" ? "active" : ""}`}
-          onClick={() => setCustomerType("business")}
+          onClick={() => handleCustomerTypeChange("business")}
         >
           Geschäftskunde
           </div>

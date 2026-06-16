@@ -2,6 +2,7 @@ import { React, useEffect, useRef, useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from "../context/authContext";
 import { useCart } from "../context/cartContext";
+import { CATEGORY_CONFIGS } from "../utils/categoryConfig";
 import "../custom.scss";
 
 import './navbar.css';
@@ -20,6 +21,7 @@ function Navbar() {
   }
 
   //const location = useLocation();
+  const categories = CATEGORY_CONFIGS;
 
   return (
     <nav className="navbar navbar-expand-md bg-body-tertiary" fixed="top">
@@ -76,25 +78,40 @@ function Navbar() {
             <ul className="navbar-nav mb-2 mb-lg-0 gap-2">
               <li className="nav-item">
                 <NavLink className="nav-link" to="/home">
-                  <a href="/#">Home</a>
+                  <a>Home</a>
                 </NavLink>
               </li>
               
-              <li className='nav-item'>
-                <NavLink className="nav-link" to="/sortiment">
-                  <a href="/#">Sortiment</a>
+              <li className='nav-item nav-dropdown'>
+                <NavLink 
+                  className="nav-link" 
+                  to="/sortiment"
+                >
+                  <a>Sortiment</a>
                 </NavLink>
+
+                <div className="nav-dropdown-menu">
+                  {categories.map((Category) => (
+                    <NavLink
+                      key={Category.slug}
+                      className="nav-dropdown-link"
+                      to={`/sortiment/${Category.slug}`}
+                    >
+                      <a>{Category.name}</a>
+                    </NavLink>
+                  ))}
+                </div>
               </li>
               
               <li className='nav-item'>
                 <NavLink className="nav-link" to="/placeholder">
-                  <a href="/#">placeholder</a>
+                  <a>placeholder</a>
                 </NavLink>
               </li>
               
               <li className='nav-item'>
-                <NavLink className="nav-link" to="/kontakt">
-                  <a href="/#">Kontakt</a>
+                <NavLink className="nav-link" to="/contact">
+                  <a>Kontakt</a>
                 </NavLink>
               </li>
             </ul>
@@ -107,8 +124,8 @@ function Navbar() {
             <NavLink
               type="button"
               className="btn btn-light border navbar-icon-button"
-              onClick={handleAccountClick}  
-              to="/login"  
+              //onClick={handleAccountClick}  
+              to={isAuthenticated ? "/account-settings" : "/login"}
               title={isAuthenticated ? "Mein Account" : "Anmelden"}      
               aria-label={isAuthenticated ? "Accounteinstellungen" : "Zur Anmeldung"}
             >

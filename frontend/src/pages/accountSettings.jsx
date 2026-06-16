@@ -1,11 +1,13 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/authContext";
 
 import "./accountSettings.css";
+import orderApi from '../api/orderApi';
+import { formatEuro } from '../utils/productHelpers';
 
 
-const exampleOrders = [
+/*const exampleOrders = [
   {
     id: "XYZ-QVW007",
     order_date: "24.04.2026",
@@ -30,20 +32,95 @@ const exampleOrders = [
     total: "8,80 €",
     items: "12 Artikel"
   }
-]
+]*/
 
+function normalizeOrderResponse(response) {
+  if (Array.isArray(response)) {
+    return response;
+  }
+
+  if (Array.isArray(response?.orders)) {
+    return response.orders;
+  }
+
+  if (Array.isArray(response.data)) {
+    return response.data;
+  }
+
+
+  return [];
+}
+
+
+function formatOrderDate(dateString) {
+    if(!dateString) { return "Unbekannt"; }
+
+    return new Date(dateString).toLocaleDateString("de-DE", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+}
+
+function getOrderItemCount(order) {
+
+}
 
 function AccountSettings() {
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user, accessToken, logout } = useAuth();
   const [activeSection, setActiveSection] = useState("account");
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
   const [twoFactorMethod, setTwoFactorMethod] = useState("authenticator");
   const [phoneNumber, setPhoneNumber] = useState("");
+  const [orders, setOrders] = useState([]);
+  const [ordersLoading, setOrdersLoading] = useState(false);
+  const [ordersError, setOrdersError] = useState("");
 
- // const userInitial = useMemo(() => {
- //   return user?.email?.trim()?.charAt(0)?.toUpperCase() || "U";
- // }, [user?.email]);
+  const userInitial = useMemo(() => {
+    return user?.email?.trim()?.charAt(0)?.toUpperCase() || "U";
+  }, [user?.email]);
+
+  useEffect(() => {
+    if(!accessToken) { 
+      setOrders([]);
+      setOrdersError("");
+      setOrdersLoading(false);
+      return; 
+    }
+  
+    let ignoreResult = false;
+
+    async function loadOrders() {
+      setOrdersLoading(true);
+      setOrdersError("");
+
+      try {
+        const response = await orderApi.getMyOrders(accessToken);
+        const loadedOrders = normalizeOrderResponse(response);
+
+        if (!ignoreResult) {
+          setOrders(loadedOrders);
+        }
+      } catch (error) {
+        if (!ignoreResult) {
+          setOrders([]);
+          setOrdersError(error.message || "Bestellungen konnten nicht geladen werden.");
+        }
+      } finally {
+        if (!ignoreResult) {
+          setOrdersLoading(false);
+        }
+      }
+    }
+
+    loadOrders();
+
+    return () => {
+      ignoreResult = true;
+    };
+  }, [accessToken]);
+
 
   function handleLogout() {
     logout();
@@ -54,15 +131,14 @@ function AccountSettings() {
     <main className="page account-page">
       <section className="account-banner">
         <div className="account-avatar" aria-hidden="true">
-          {/*userInitial*/}
+          {userInitial}
         </div>
 
         <div>
           <p className="account-title">Mein Konto</p>
           <h1>Willkommen zurück</h1>
           <p className="account-subtitle">
-            Angemeldeter Benutzer
-            {/* {user?.email || "Angemeldeter Benutzer"} */}
+            {user?.email || "Angemeldeter Benutzer"}
           </p>
         </div>
       </section>
@@ -115,16 +191,15 @@ function AccountSettings() {
               <div className="account-overview-grid">
                 <article className="account-info-box">
                   <span className='small-padding'>Kundenstatus</span>
-                  <b >Privat-/Unternehmenskonto</b>
+                  <b >{user?.customerType === "business" ? "Geschäftskonto" : "Privatkonto"}</b>
                 </article>
                 <article className="account-info-box">
                   <span className='small-padding'>E-Mail-Adresse</span>
-                  Keine E-Mail hinterlegt
-                  <b>{/*user?.email || "Keine E-Mail hinterlegt"*/}</b>
+                  <b>{user?.email || "Keine E-Mail hinterlegt"}</b>
                 </article>
                 <article className="account-info-box">
                   <span className='small-padding'>Bestellungen</span>
-                  <b>{exampleOrders.length} Bestellungen</b>
+                  <b>{orders.length} Bestellungen</b>
                 </article>
                 <article className="account-info-box">
                   <span className='small-padding'>2FA-Status</span>
@@ -142,51 +217,78 @@ function AccountSettings() {
                   <p className="account-title">Bestellhistorie</p>
                   <h2>Deine letzten Bestellungen</h2>
                 </div>
-                <span className="account-badge">{exampleOrders.length} Bestellungen</span>
+                <span className="account-badge">{orders.length} Bestellungen</span>
               </div>
 
+              {ordersLoading && <p>Bestellungen werden geladen...</p>}
+              {ordersError && <p className='text-danger'>{ordersError}</p>}
+              {!ordersLoading && !ordersError && orders.length === 0 && (
+                <p>Du hast bisher noch Bestellung.</p>
+              )}
+
+              {!ordersLoading && !ordersError && orders.length > 0 && (
               <div className="orders-list">
-                {exampleOrders.map((order) => (
-                  <div className="order-card">
-                    <section className="order-status-container">
-                      <div className="section-notice-image">
-                        {/*Ein anderes Icon, je Bestellstatus (Zugestellt, etc.)*/}
-                        <svg className="icon" >
-                          <use href="info-circle.svg"></use>
-                        </svg>
-                      </div>
-                      <span className="section-notice-main">
-                        <span className="primary-Message">
-                          {order.status}
-                        </span>
-                        <span className="secondary-Message">
-                          <span className="item-wrapper">
-                            <span className="item-text-label">Bestelldatum: </span>
-                            <span className="item-text">{order.order_date} · </span>
-                            <span className="item-text-label">Bestellnummer: </span>
-                            <span className="item-text">{order.id} · </span>
-                            <span className="item-text-label">Gesamtbetrag: </span>
-                            <span className="item-text"><b>{order.total}</b></span>
+                {orders.map((order) => {
+                  const orderId = order?.orderId;
+                  const items = Array.isArray(order.items) ? order.items : [];
+
+                  return (
+                    <div className="order-card">
+                      <section className="order-status-container">
+                        <div className="section-notice-image">
+                          {/*Ein anderes Icon, je Bestellstatus (Zugestellt, etc.)*/}
+                          <svg className="icon" >
+                            <use href="info-circle.svg"></use>
+                          </svg>
+                        </div>
+                        <span className="section-notice-main">
+                          <span className="primary-Message">
+                            {order.status}
+                          </span>
+                          <span className="secondary-Message">
+                            <span className="item-wrapper">
+                              <span className="item-text-label">Bestelldatum: </span>
+                              <span className="item-text">{formatOrderDate(order.createdAt)} · </span>
+                              <span className="item-text-label">Bestellnummer: </span>
+                              <span className="item-text">{orderId} · </span>
+                              <span className="item-text-label">Gesamtbetrag: </span>
+                              <span className="item-text"><b>{formatEuro(order.totalPrice / 100)}</b></span>
+                            </span>
                           </span>
                         </span>
-                      </span>
-                    </section>
-                    <article className="order-item" key={order.id}>
-                      <div>
-                        <b>Bestellung {order.id}</b>
-                        <p>{order.items} · {order.date}</p>
-                      </div>
-                      <div className="order-details">
-                        {/*<span>{order.status}</span>
-                        <b>{order.total}</b>*/}
-                      </div>
-                      <button className="btn btn-outline-primary" type="button">
-                        Details
-                      </button>
-                    </article>
-                  </div>
-                ))}
+                      </section>
+                      <article className="order-item" key={order.id}>
+                        <div>
+                          <b>Bestellung {orderId}</b>
+                          {/*<p>{getOrderItemCount(order)}</p>*/}
+                          <p>{order?.items.reduce((sum, item) => sum + Number(item.quantity || 0),0)} Artikel</p>
+                          {items.length > 0 && (
+                            <ul className='order-products'>
+                              {items.map((item, index) => (
+                                <li key={`${item.product_id || item.productId}-${index}`}>
+                                  {item.quantity}x {item.name || "Produkt"}
+                                </li>
+                              ))}
+                            </ul>
+
+                          )}
+                        </div>
+                        <div className="order-details">
+                          <span>{order.status}</span>
+                          <b>{order.total}</b>
+                        </div>
+                        <button className="btn btn-outline-primary" type="button">
+                          Details
+                        </button>
+                      </article>
+                    </div>
+
+                  );
+                  
+
+                })}
               </div>
+            )}
             </section>
           )}
 
