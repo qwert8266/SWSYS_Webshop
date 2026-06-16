@@ -176,7 +176,6 @@ function Navbar() {
                   src="/img/hamburger_icon.png" 
                   alt="warenkorb icon"
                 />
-                {totalQuantity > 0 && <span className="cart-badge">{totalQuantity}</span>}
               </NavLink>
 
               <div className="dropdown-menu-custom">

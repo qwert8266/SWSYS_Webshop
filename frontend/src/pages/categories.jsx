@@ -86,7 +86,7 @@ function Category({ category: fixedCategory }){
                 </div>
             </div>
 
-            {isLoading && <p className="category-info">Producte werden geladen...</p>}
+            {isLoading && <p className="category-info">Produkte werden geladen...</p>}
             {loadError && <p className='category-info text-danger'>{loadError}</p>}
 
             {isLoading && !loadError && categoryProducts.length === 0 && (
