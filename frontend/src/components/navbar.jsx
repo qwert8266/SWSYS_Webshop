@@ -12,6 +12,16 @@ function Navbar() {
   const { isAuthenticated, isAuthLoading } = useAuth();
   const { totalQuantity } = useCart();
 
+  const [isEmployee, setIsEmployee] = useState(false);
+
+  useEffect(() => {
+    const roleInLocalStorage = localStorage.getItem("role");
+
+    if (roleInLocalStorage === "employee") {
+        setIsEmployee(true);
+    }
+}, []);
+
   function handleSearchButtonClick(event) {
    
   }
@@ -152,6 +162,30 @@ function Navbar() {
               />
               {totalQuantity > 0 && <span className="cart-badge">{totalQuantity}</span>}
             </NavLink>
+
+            <div className="dropdown-wrapper">
+              <NavLink
+                type="button"
+                className="btn btn-light border navbar-icon-button cart-icon-button"
+                title="Mitarbeiter"
+                aria-label='Warenkorb anzeigen'
+                to="/cart"
+              >
+                <img
+                  className="navbar-icon"
+                  src="/img/hamburger_icon.png" 
+                  alt="warenkorb icon"
+                />
+                {totalQuantity > 0 && <span className="cart-badge">{totalQuantity}</span>}
+              </NavLink>
+
+              <div className="dropdown-menu-custom">
+                <NavLink to="/product_management">Produktverwaltung</NavLink>
+                <NavLink to="/orders">Bestellungen</NavLink>
+                <NavLink to="/marketing">Marketing</NavLink>
+                <NavLink to="/analysis">Analyse-Dashboard</NavLink>
+              </div>
+            </div>
           </div>
 
         </div>
