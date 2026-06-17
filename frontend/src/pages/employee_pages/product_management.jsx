@@ -14,6 +14,9 @@ function ProductManagement({ category: fixedCategory }){
     const [isLoading, setIsLoading] = useState(false);
     const [loadError, setLoadError] = useState("");
 
+    const [showSuccessCreateLabel, setShowSuccessCreateLabel] = useState(false);
+    const [showSuccessDeleteLabel, setShowSuccessDeleteLabel] = useState(false);
+
     const { createProduct,deleteProduct,getProducts } = useProd();
 
     const [productData, setProductData] = useState({
@@ -28,11 +31,30 @@ function ProductManagement({ category: fixedCategory }){
     const handleChange = (event) => {
     const { name, value } = event.target;
 
-    setProductData({
-      ...productData,
-      [name]: value
-    });
-  };
+        setProductData({
+            ...productData,
+            [name]: 
+            name === "price" || name === "stock" ? Number(value) : value,
+        });
+    };
+
+    const handleCreateProduct = async () => {
+        await createProduct(productData);
+        setShowSuccessCreateLabel(true);
+
+        setTimeout(() => {
+            setShowSuccessCreateLabel(false);
+        }, 5000)
+    }
+
+    const handleDeleteProduct = async (productID) => {
+        await deleteProduct(productID)
+        setShowSuccessDeleteLabel(true);
+
+        setTimeout(() => {
+            setShowSuccessDeleteLabel(false);
+        }, 5000)
+    }
 
     const[clickedAddProductButton, setClickedAddProductButton] = useState(false)
 
@@ -71,7 +93,7 @@ function ProductManagement({ category: fixedCategory }){
 
     return(
         <div className='category-page'>
-            <div className='d-flex flex-column align-items-center pb-5'>
+            <div className='d-flex flex-column align-items-center pb-5 gap-3'>
                 <div className='sentence_top'>Produktverwaltung</div>
                 <div className='sentence_below_top'>
                     Hinzufügen oder entfernen von Produkten.
@@ -79,6 +101,18 @@ function ProductManagement({ category: fixedCategory }){
                 {!clickedAddProductButton &&
                 <button className="btn text-white fs-5 align-self-center" style={{ backgroundColor: "#15406e" }} onClick={() => setClickedAddProductButton(true)}>Produkt hinzufügen</button>
                 }
+                <div style={{height: "80px",width: "40%"}}>
+                    {showSuccessCreateLabel &&
+                        <div className="d-flex border rounded align-items-center justify-content-center " style={{height: "80px", width:"100%", alignItems: 'center', backgroundColor: 'green', color: 'white'}}>
+                            <label className='fs-3'>Produkt hinzugefügt. Fürs Anzeigen bitte Seite neu laden.</label>
+                        </div>
+                    }
+                    {showSuccessDeleteLabel &&
+                        <div className="d-flex border rounded align-items-center justify-content-center " style={{height: "80px", width:"100%", alignItems: 'center', backgroundColor: 'green', color: 'white'}}>
+                            <label className='fs-3'>Produkt gelöscht. Fürs Anzeigen bitte Seite neu laden.</label>
+                        </div>
+                    }
+                </div>
             </div>
             {isLoading && <p className="category-info">Produkte werden geladen...</p>}
             {loadError && <p className='category-info text-danger'>{loadError}</p>}
@@ -116,12 +150,12 @@ function ProductManagement({ category: fixedCategory }){
                     </div>
                     
                     <div className='pb-2'>
-                    <button className="btn text-white fs-5 align-self-center" style={{ backgroundColor: "#15406e" }} onClick={() => {setClickedAddProductButton(false);createProduct(productData)}}>Produkt hinzufügen</button>
+                    <button className="btn text-white fs-5 align-self-center" style={{ backgroundColor: "#15406e" }} onClick={() => {setClickedAddProductButton(false);handleCreateProduct()}}>Produkt hinzufügen</button>
                     </div>
                 </div>
             </div>}
             <div className="d-flex flex-column align-items-center">
-                <div className="d-flex flex-column align-items-end w-75">
+                <div className="d-flex flex-column align-items-center w-75">
                     {/* Suchleiste */}
                     <div className="navbar-search-shadow">
                         <form
@@ -175,7 +209,7 @@ function ProductManagement({ category: fixedCategory }){
                                         {product.stock !== null && product.stock == 0 && <p className='text-danger'>Nicht mehr verfügbar</p>}
                                     </div>
                                     <button className="btn p-2 border-0 bg-transparent flex-shrink-0  cart-delete-button justify-content-end"
-                                        type="button" onClick={() => {deleteProduct(product.id);console.log(product)}}>
+                                        type="button" onClick={() => {handleDeleteProduct(product.id);console.log(product)}}>
                                         <img
                                         src="/img/trash.svg"
                                         className='cart-delete-icon'
