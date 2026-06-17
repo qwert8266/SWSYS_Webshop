@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import productApi from '../api/productApi';
 import { getCategoryConfig } from '../utils/categoryConfig';
 import { formatEuro, normalizeProduct } from '../utils/productHelpers';
+import FourOFour from './404';
 
 /*export const produkte = [
   { name: "Becks", id: "001", price: "14.99", rating: 3.8, image: "becks.png", category: "bier", quantity: 0},
@@ -45,6 +46,7 @@ function Product(){
     const [isLoading, setIsLoading] = useState(false);
     const [loadError, setLoadError] = useState("");
     const [cartMessage, setCartMessage] = useState("");
+    const [productNotFound, setProductNotFound] = useState(false);
 
     /*const product = produkte.find(
         p =>
@@ -68,6 +70,10 @@ function Product(){
                 }
             } catch (error) {
                 if (!ignoreResult) {
+                    if(error.status === 404){
+                        setProductNotFound(true);
+                    }
+                    
                     setLoadError("Produkt konnte nicht geladen werden.");
                     setProduct(null);
                 }
@@ -95,17 +101,20 @@ function Product(){
         setCartMessage(`${product.name} wurde in den Warenkorb gelegt.`);
     }
 
+    {if(productNotFound || !selectedCategory){
+        return <FourOFour/>
+    }}
+
     if (isLoading) {
         return <p>Produkt wird geladen...</p>
     }
     if (!product?.name) {
         return (
-            <div className="product-page">
-                {loadError && <p className="text-danger">{loadError}</p>}
-                <p>Das Produkt wurde nicht gefunden</p>
-            </div>
+            <FourOFour/>
         );
     }
+
+    
 
 
     return(

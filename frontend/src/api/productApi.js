@@ -20,6 +20,14 @@ class ProductApi extends BaseApi {
   async getProductById(productId) {
     return this.request(`/products/${encodeURIComponent(productId)}`);
   }
+
+  async createProduct(productData) {
+    return this.request("/products/product_management", {
+      method: "POST",
+      body: productData,
+      errorMessage: "Produkt konnte nicht hinzugefügt werden. Bitte überprüfe deine Eingaben",
+    });
+  }
 }
 
 const productApi = new ProductApi();
