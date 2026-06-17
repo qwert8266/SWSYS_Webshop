@@ -5,6 +5,7 @@ import './App.css';
 
 import ProtectedRoutes from "./routes/protectedRoutes";
 
+import FourOFour from "./pages/404";
 import CookieBanner from "./components/cookie_banner";
 import Register from "./pages/register";
 import Login from "./pages/login"
@@ -57,6 +58,8 @@ function App() {
           <Route path="/wein" element={<Category category="wein" />} />
           <Route path="/schnaps" element={<Category category="schnaps" />} />
           <Route path="/:category/:productName"  element={<Product />} />
+
+          <Route path="*" element={<FourOFour />}/>
 
         </Routes>
         <Footer></Footer>

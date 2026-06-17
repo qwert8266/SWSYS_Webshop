@@ -6,6 +6,8 @@ import { useCart } from "../context/cartContext";
 import orderApi from '../api/orderApi';
 import { formatEuro } from "../utils/productHelpers";
 
+
+
 function buildPersonalData(user) {
   const address = user?.address || {};
 
@@ -20,7 +22,7 @@ function buildPersonalData(user) {
     country: address?.country || "Deutschland",
     email: user?.email || "",
     phone: user?.phone || "",
-    paymentMethod: "Paypal",
+    paymentMethod: "",
   };
 }
 
@@ -64,8 +66,8 @@ function Checkout(){
     const nextPersonalData = buildPersonalData(user);
     setPersonalData(nextPersonalData);
     setEditData(nextPersonalData);
-    setPayPal(nextPersonalData.paymentMethod == "PayPal");
-    setCard(nextPersonalData.paymentMethod === "Karte");
+    setPayPal(nextPersonalData.paymentMethod === "PayPal");
+    setCard(nextPersonalData.paymentMethod === "SEPA-Lastschrift");
     setRechnung(nextPersonalData.paymentMethod === "Rechnung");
   }, [user]);
 
@@ -132,11 +134,19 @@ function Checkout(){
       <div>
       {!showSuccessfulOrderScreen &&
         <div >
-            <label className='blue_text_big'>Nur noch ein paar Klicks entfernt...</label>
+          <label className='blue_text_big'>Nur noch ein paar Klicks entfernt...</label>
             <div className='basic-column'>
+              
               <div className='order_details'>
-                {submitError && <p className="text-danger">{submitError}</p>}
+                <div className='btn-back'>
+                  <NavLink to="/cart">
+                    <button className='btn'>&larr; Zurück zum Warenkorb</button>
+                  </NavLink>
+                </div>
 
+                {submitError && <p className="text-danger align-items-center">{submitError}</p>}
+
+                {/* Lieferdaten */}
                 {showPlaintextBox &&
                   <div>
                     <div className='plaintextBox'>
@@ -161,23 +171,43 @@ function Checkout(){
                         </button>
                     </div>
 
-                    {/* btn Zurück und Bestellung aufgeben */}
+                    {/* btn "Zurück" und "Bestellung aufgeben" */}
                     <div className='button_row'>
-                      <NavLink to="/cart">
-                          <button className='white_button'>Zurück zum Warenkorb</button>
-                      </NavLink>
+                     
                       <button 
                         className='blue_button' 
                         type="button"
                         disabled={isSubmitting}
-                        onClick={handlePlaceOrder}
+                        onClick={(e) => {setCard(false); setPayPal(false); setRechnung(true); }, handlePlaceOrder}
                       >
                         {isSubmitting ? "Bestellung wird gesendet..." : "Jetzt bestellen"}
                       </button>
+
+                      <button 
+                        className='btn btn-payment btn-paypal'
+                        type="button"
+                        disabled={isSubmitting}
+                        onClick={(e) => {setCard(false); setPayPal(true); setRechnung(false); }, handlePlaceOrder}
+                      >
+                        <img src="/img/PayPal.svg" alt="PayPal" />
+                      </button>
+
+                      <button 
+                        className='btn btn-payment btn-sepa'
+                        type="button"
+                        disabled={isSubmitting}
+                        onClick={(e) => {setCard(true); setPayPal(false); setRechnung(false); }, handlePlaceOrder}
+                      >
+                        <img src="/img/sepa-lastschrift-logo.svg" alt="SEPA Lastschrift" />
+                      </button>
+
+                      
+                      
                     </div>
                   </div>
                 }
 
+                {/* Eingabe Lieferdaten */}
                 {showInputBoxes &&
                   <div className='personal_data'>
                     <div className='checkout_header'>
@@ -293,7 +323,7 @@ function Checkout(){
                     >
                       <img
                         className="rounded-3 object-fit-contain flex-shrink-0" 
-                        src={"/img/product_images/" + item.image} alt={item.name} 
+                        src={"/img/product_images/" + item.image}
                         style={{ width: "95px", height: "95px"}}
                         alt={item.name}
                       />
