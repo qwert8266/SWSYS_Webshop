@@ -17,6 +17,9 @@ function ProductManagement({ category: fixedCategory }){
     const [showSuccessCreateLabel, setShowSuccessCreateLabel] = useState(false);
     const [showSuccessDeleteLabel, setShowSuccessDeleteLabel] = useState(false);
 
+    const [showAreYouSureDialog, setShowAreYouSureDialog] = useState(false);
+    const [productToDelete, setProductToDelete] = useState(null);
+
     const { createProduct,deleteProduct,getProducts } = useProd();
 
     const [productData, setProductData] = useState({
@@ -209,18 +212,54 @@ function ProductManagement({ category: fixedCategory }){
                                         {product.stock !== null && product.stock == 0 && <p className='text-danger'>Nicht mehr verfügbar</p>}
                                     </div>
                                     <button className="btn p-2 border-0 bg-transparent flex-shrink-0  cart-delete-button justify-content-end"
-                                        type="button" onClick={() => {handleDeleteProduct(product.id);console.log(product)}}>
+                                        type="button" onClick={() => {setProductToDelete(product);setShowAreYouSureDialog(true)}}>
                                         <img
                                         src="/img/trash.svg"
                                         className='cart-delete-icon'
                                         />
                                     </button>
+
+
+                                    
                                 </div>
                             ))}
                         </div>
                     </div>
                 </div>
             </div>
+            {showAreYouSureDialog && (
+            <div
+                className="position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center"
+                style={{
+                    backgroundColor: "rgba(0,0,0,0.2)",
+                    zIndex: 9999
+                }}
+            >
+                <div className="d-flex flex-column bg-white p-4 rounded align-items-center gap-3">
+                    <h3>Produkt wirklich löschen?</h3>
+                    <h3>Dies kann nicht rückgängig gemacht werden!</h3>
+
+                    <div className="d-flex gap-2">
+                        <button
+                            className="btn btn-danger"
+                            onClick={() => {
+                                handleDeleteProduct(productToDelete.id);
+                                setShowAreYouSureDialog(false);
+                            }}
+                        >
+                            Löschen
+                        </button>
+
+                        <button
+                            className="btn btn-secondary"
+                            onClick={() => setShowAreYouSureDialog(false)}
+                        >
+                            Abbrechen
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )}
         </div>
     );
 }
