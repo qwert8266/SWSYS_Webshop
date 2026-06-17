@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import "./home.css";
 
 function Home(){
@@ -34,19 +34,87 @@ function Home(){
             text: "Von aromatischem Kaffee bis zu wohltuendem Tee – entdecke deine Lieblingsmomente in der Tasse."
         }
     ]
+    const slides = [
+        {
+            image: "/img/BierAngebote.png",
+        },
+        {
+            image: "/img/Softdrinks_Wasser.png",
+        },
+        {
+            image: "/img/Wein_Sekt.png",
+        },
+    ];
+
+    const [slideIndex, setSlideIndex] = useState(0);
+
+    useEffect(() => {
+    const interval = setInterval(() => {
+      setSlideIndex((currentIndex) =>
+        (currentIndex + 1) % slides.length
+      );
+    }, 10000);
+
+    return () => clearInterval(interval);
+    }, [slides.length]);
+
+    function plusSlides(direction) {
+        setSlideIndex((currentIndex) =>
+        (currentIndex + direction + slides.length) % slides.length
+        );
+    }
+
+    function currentSlide(index) {
+        setSlideIndex(index);
+    }
 
 
     return(
         <main>
+
+        <div className="slideshow-container">
+            {slides.map((slide, index) => (
+                <div
+                    key={index}
+                    className={`mySlides slide-fade ${
+                    index === slideIndex ? "active-slide" : ""
+                     }`}
+                >
+        <div className="numbertext">
+            {index + 1} / {slides.length}
+        </div>
+
+        <img
+            src={slide.image}
+            alt={slide.text}
+            style={{ width: "100%" }}
+        />
+
+        <div className="text">{slide.text}</div>
+        </div>
+            ))}
+
+        
+        </div>
+
+<div style={{ textAlign: "center" }}>
+  {slides.map((_, index) => (
+    <span
+      key={index}
+      className={`dot ${
+        index === slideIndex ? "active-dot" : ""
+      }`}
+      onClick={() => currentSlide(index)}
+    />
+  ))}
+</div>
         <section className="py-5 text-center container">
             <div className="col-lg-6 col-md-8 mx-auto">
-            <h1 className="fw-light">Unsere Getränkevielfalt</h1>
-            <p className="lead text-body-secondary">
-              lorem ipsum
-            </p>
+            <h1 className="fw-light">Getränkemarkt  <span className="gold">Schmidt + Söhne</span> </h1>
             </div>
         </section>
         <div className="album py-5 bg-body-tertiary">
+            <h2 className="categoryHeader"> Unsere Getränkevielfalt </h2>
             <div className="container">
                 <div className="category-grid">
                     {categories.map((category) => (
