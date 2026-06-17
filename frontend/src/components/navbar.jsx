@@ -164,19 +164,16 @@ function Navbar() {
             </NavLink>
 
             <div className="dropdown-wrapper">
-              <NavLink
-                type="button"
+              <div
                 className="btn btn-light border navbar-icon-button cart-icon-button"
-                title="Mitarbeiter"
-                aria-label='Warenkorb anzeigen'
-                to="/cart"
+                title="Mitarbeiter-Funktionen"
               >
                 <img
-                  className="navbar-icon"
+                  className="navbar-icon "
                   src="/img/hamburger_icon.png" 
                   alt="warenkorb icon"
                 />
-              </NavLink>
+              </div>
 
               <div className="dropdown-menu-custom">
                 <NavLink to="/product_management">Produktverwaltung</NavLink>

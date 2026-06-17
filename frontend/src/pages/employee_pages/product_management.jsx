@@ -120,23 +120,72 @@ function ProductManagement({ category: fixedCategory }){
                     </div>
                 </div>
             </div>}
-
-            <div className="product_row">
-                {categoryProducts.map((product) => (
-                    <div className="product" key={product.id || product.name}>
-                        
-                        <NavLink 
-                            className="product_link" 
-                            to={`/sortiment/${selectedCategory.slug}/${encodeURIComponent(product.id)}`}
+            <div className="d-flex flex-column align-items-center">
+                <div className="d-flex flex-column align-items-end w-75">
+                    {/* Suchleiste */}
+                    <div className="navbar-search-shadow">
+                        <form
+                            className="navbar-search"
+                            role="search"
                         >
-                            <img className="product_png" src={getProductImagePath(product)} alt={product.name} />
-                            <h3>{product.name}</h3>
-                        </NavLink>
-                        <p>{"★".repeat(Math.round(product.rating))}{"☆".repeat(5 - Math.round(product.rating))}</p>
-                        <strong>{formatEuro(product.price)}</strong>
-                        {product.stock !== null && product.stock <= 15 && <p className='text-danger'>Nur noch {product.stock} verfügbar</p>}
+                            <input
+                            className="navbar-search-input form-control"
+                            type="search"
+                            placeholder="Produkt, Artikelnummer, Hersteller, ..."
+                            aria-label='Suchleiste'
+                            />
+
+                            <button
+                            className="btn btn-logoBlue navbar-search-btn"
+                            type="submit"
+                            aria-label='Suchen'
+                            >
+                            <img
+                                className="navbar-search-icon"
+                                src="/img/search-icon.svg"
+                                alt="suchen"
+                            />
+                            </button>
+                        </form>
                     </div>
-                ))}
+
+                    <div className='d-flex flex-column align-items-center'>
+                        <div className="d-flex flex-column border rounded align-items-left w-100">
+
+                            
+                            {categoryProducts.map((product) => (
+                                <div className="d-flex flex-row align-items-center border rounded" style={{gap: "60px"}} key={product.id || product.name}>
+                                    <div style={{width: "200px"}}>
+                                        <NavLink 
+                                            className="product_link" 
+                                            to={`/sortiment/${selectedCategory.slug}/${encodeURIComponent(product.id)}`}>
+                                            <img className="product_png w-75 ps-5" style={{width: "70px"}} src={getProductImagePath(product)} alt={product.name} />
+                                            
+                                        </NavLink>
+                                    </div>
+
+                                    <div style={{width: "400px"}}>
+                                        <h3 className='w-25'>{product.name}</h3>
+                                    </div>
+                                    <p>{"★".repeat(Math.round(product.rating))}{"☆".repeat(5 - Math.round(product.rating))}</p>
+                                    <strong>{formatEuro(product.price)}</strong>
+                                    <div style={{width: "100px"}}>
+                                        {product.stock !== null && (product.stock <= 15 && product.stock != 0) && <p className='text-danger'>Nur noch {product.stock} verfügbar</p>}
+                                        {product.stock !== null && product.stock > 15 && <p className=''>Noch {product.stock} verfügbar</p>}
+                                        {product.stock !== null && product.stock == 0 && <p className='text-danger'>Nicht mehr verfügbar</p>}
+                                    </div>
+                                    <button className="btn p-2 border-0 bg-transparent flex-shrink-0  cart-delete-button justify-content-end"
+                                        type="button" >
+                                        <img
+                                        src="/img/trash.svg"
+                                        className='cart-delete-icon'
+                                        />
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     );
