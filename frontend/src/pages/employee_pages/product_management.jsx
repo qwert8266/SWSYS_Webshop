@@ -14,7 +14,7 @@ function ProductManagement({ category: fixedCategory }){
     const [isLoading, setIsLoading] = useState(false);
     const [loadError, setLoadError] = useState("");
 
-    const { createProduct,getProducts } = useProd();
+    const { createProduct,deleteProduct,getProducts } = useProd();
 
     const [productData, setProductData] = useState({
         name: "",
@@ -163,7 +163,7 @@ function ProductManagement({ category: fixedCategory }){
                                             
                                         </NavLink>
                                     </div>
-
+                                    {}
                                     <div style={{width: "400px"}}>
                                         <h3 className='w-25'>{product.name}</h3>
                                     </div>
@@ -175,7 +175,7 @@ function ProductManagement({ category: fixedCategory }){
                                         {product.stock !== null && product.stock == 0 && <p className='text-danger'>Nicht mehr verfügbar</p>}
                                     </div>
                                     <button className="btn p-2 border-0 bg-transparent flex-shrink-0  cart-delete-button justify-content-end"
-                                        type="button" >
+                                        type="button" onClick={() => {deleteProduct(product.id);console.log(product)}}>
                                         <img
                                         src="/img/trash.svg"
                                         className='cart-delete-icon'

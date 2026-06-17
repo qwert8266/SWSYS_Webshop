@@ -67,7 +67,6 @@ function App() {
           <Route path="/schnaps" element={<Category category="schnaps" />} />
           <Route path="/:category/:productName"  element={<Product />} />
           
-          <Route path="/sortiment/:categorySlug/*" element={<FourOFour />}/>
           <Route path="*" element={<FourOFour />}/>
 
         </Routes>

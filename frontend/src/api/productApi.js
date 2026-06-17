@@ -28,6 +28,14 @@ class ProductApi extends BaseApi {
       errorMessage: "Produkt konnte nicht hinzugefügt werden. Bitte überprüfe deine Eingaben",
     });
   }
+
+  async deleteProduct(uuid) {
+    return this.request(`/products/${uuid}`, {
+      method: "DELETE",
+      body: uuid,
+      errorMessage: "Produkt konnte nicht gelöscht werden.",
+    });
+  }
 }
 
 const productApi = new ProductApi();

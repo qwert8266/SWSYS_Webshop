@@ -14,6 +14,7 @@ func RegisterProductRoutes(products *gin.RouterGroup) {
 
 	//endpoints for modifying products should only be accessible to logged in employees and be protected though middleware:
 	products.POST("/product_management", handlers.CreateProduct)
+	//products.DELETE("/product_management", handlers.DeleteProduct)
 	products.PUT("/:id", handlers.UpdateProduct)
 	products.PATCH("/:id", handlers.ModifyStock)
 	products.DELETE("/:id", handlers.DeleteProduct)
