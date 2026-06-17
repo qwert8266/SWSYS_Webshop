@@ -40,6 +40,31 @@ func Authenticate() gin.HandlerFunc {
 	}
 }
 
+func RoleAuth(roles ...string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+
+		// retrieve the token from the context
+		token := c.MustGet("claims").(helpers.Claims)
+
+		// Check if the user's role is in the allowed roles
+		roleAllowed := false
+		for _, role := range roles {
+			if token.Role == role {
+				roleAllowed = true
+				break
+			}
+		}
+
+		if !roleAllowed {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Forbidden: insufficient permissions"})
+			c.Abort()
+			return
+		}
+
+		c.Next()
+	}
+}
+
 // ClaimsFromContext returns the authenticated token claims from the Gin context
 func ClaimsFromContext(c *gin.Context) (*helpers.Claims, bool) {
 	value, exists := c.Get("claims")

@@ -103,20 +103,25 @@ func AddNewUser(c *gin.Context) {
 	now := time.Now().UTC()
 	// a new UUID is created for the new user
 	newUser := models.User{
-		ID:           uuid.New(),
+		ID: uuid.New(),
+
 		CustomerType: validUserData.CustomerType,
 		Salutation:   strings.TrimSpace(validUserData.Salutation),
 		FirstName:    strings.TrimSpace(validUserData.FirstName),
 		LastName:     strings.TrimSpace(validUserData.LastName),
 		BirthDate:    strings.TrimSpace(validUserData.BirthDate),
 		Phone:        strings.TrimSpace(validUserData.Phone),
-		CompanyName:  strings.TrimSpace(validUserData.CompanyName),
+
+		CompanyName: strings.TrimSpace(validUserData.CompanyName),
+		Address:     buildAddress(validUserData),
 
 		Email:        validUserData.Email,
 		PasswordHash: passwordHash,
-		Address:      buildAddress(validUserData),
-		CreatedAt:    now,
-		UpdatedAt:    now,
+
+		Role: "customer",
+
+		CreatedAt: now,
+		UpdatedAt: now,
 	}
 
 	// the new user is added to the list of users
@@ -292,12 +297,12 @@ func LogoutUser(c *gin.Context) {
 }
 
 func buildAuthResponse(message string, user models.User) (models.AuthResponse, error) {
-	accessToken, err := helpers.GenerateToken(user.ID, user.Email, helpers.AccessTokenType, config.JWTSecret(), helpers.AccessTokenTTL)
+	accessToken, err := helpers.GenerateToken(user.ID, user.Email, user.Role, helpers.AccessTokenType, config.JWTSecret(), helpers.AccessTokenTTL)
 	if err != nil {
 		return models.AuthResponse{}, err
 	}
 
-	refreshToken, err := helpers.GenerateToken(user.ID, user.Email, helpers.RefreshTokenType, config.JWTSecret(), helpers.RefreshTokenTTL)
+	refreshToken, err := helpers.GenerateToken(user.ID, user.Email, user.Role, helpers.RefreshTokenType, config.JWTSecret(), helpers.RefreshTokenTTL)
 	if err != nil {
 		return models.AuthResponse{}, err
 	}
@@ -400,4 +405,48 @@ func checkIncomingData(c *gin.Context, rr models.RegisterRequest) (models.Regist
 		return rr, errors.New("no company name given")
 	}
 	return rr, nil
+}
+
+func UpdateUserRoleHandler(c *gin.Context) {
+	userID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "the requested uuid is not a valid uuid"})
+		return
+	}
+
+	var roleUpdate struct {
+		Role string `json:"role" binding:"required"`
+	}
+
+	if err := c.ShouldBindJSON(&roleUpdate); err != nil {
+		c.JSON(400, gin.H{"error": "Invalid request"})
+		return
+	}
+
+	// Validate the role
+	validRole := false
+	for _, role := range models.AllowedRoles {
+		if roleUpdate.Role == role {
+			validRole = true
+			break
+		}
+	}
+
+	if !validRole {
+		c.JSON(400, gin.H{"error": "Invalid role"})
+		return
+	}
+
+	userCollection := config.UserCollection()
+
+	// Update the user's role
+	update := bson.M{"$set": bson.M{"role": roleUpdate.Role}}
+
+	if result, err := userCollection.UpdateOne(c.Request.Context(), bson.M{"id": userID}, update); err != nil {
+		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error updating product": err.Error()})
+	} else if result.MatchedCount == 0 {
+		c.IndentedJSON(http.StatusNotFound, gin.H{"message": "user not found"})
+	} else {
+		c.JSON(http.StatusOK, gin.H{"message": "Role updated successfully"})
+	}
 }

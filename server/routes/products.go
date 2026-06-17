@@ -3,6 +3,7 @@ package routes
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/qwert8266/SWSYS_Webshop/server/handlers"
+	"github.com/qwert8266/SWSYS_Webshop/server/middleware"
 )
 
 func RegisterProductRoutes(products *gin.RouterGroup) {
@@ -12,9 +13,14 @@ func RegisterProductRoutes(products *gin.RouterGroup) {
 	products.GET("/category/:category", handlers.GetProductByCategory)
 	products.GET("/:id", handlers.GetProductByID)
 
-	//endpoints for modifying products should only be accessible to logged in employees and be protected though middleware:
-	products.POST("/", handlers.CreateProduct)
-	products.PUT("/:id", handlers.UpdateProduct)
-	products.PATCH("/:id", handlers.ModifyStock)
-	products.DELETE("/:id", handlers.DeleteProduct)
+	// protected routes
+	protectedProducts := products.Group("")
+	protectedProducts.Use(middleware.Authenticate())
+	{
+		//endpoints for modifying products should only be accessible to logged in employees and be protected though middleware:
+		protectedProducts.POST("/", handlers.CreateProduct)
+		protectedProducts.PUT("/:id", handlers.UpdateProduct)
+		protectedProducts.PATCH("/:id", handlers.ModifyStock)
+		protectedProducts.DELETE("/:id", handlers.DeleteProduct)
+	}
 }

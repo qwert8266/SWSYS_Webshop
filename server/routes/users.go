@@ -8,21 +8,34 @@ import (
 
 func RegisterUserRoutes(rg *gin.RouterGroup) {
 
-	// Authentication endpoints
-	rg.POST("/register", handlers.AddNewUser)
-	rg.POST("/login", handlers.LoginUser)
-	// Protected so the backend can validate the submitted Bearer token before the frontend removes it from localStorage
-	rg.POST("/logout", middleware.Authenticate(), handlers.LogoutUser)
-
-	// Protected endpoint to read the currently logged-in account
-	rg.GET("/me", middleware.Authenticate(), handlers.GetCurrentUser)
-
-	users := rg.Group("/users")
+	// public routes which do not need authentication
+	public := rg.Group("")
 	{
-		users.GET("/", handlers.GetUsers)
-		users.GET("/:id", handlers.GetUserByID)
-		users.PATCH("/:id", handlers.ModifyUser)
+		// Authentication endpoints
+		public.POST("/register", handlers.AddNewUser)
+		public.POST("/login", handlers.LoginUser)
+	}
 
-		users.DELETE("/:id", handlers.DeleteUser)
+	// protected routes
+	protected := rg.Group("")
+	protected.Use(middleware.Authenticate())
+	{
+		// Protected so the backend can validate the submitted Bearer token before the frontend removes it from localStorage
+		protected.POST("/logout", middleware.Authenticate(), handlers.LogoutUser)
+
+		// Protected endpoint to read the currently logged-in account
+		protected.GET("/me", middleware.Authenticate(), handlers.GetCurrentUser)
+
+		// routes modifying users are only allowed for admins
+		adminRoutes := protected.Group("")
+		adminRoutes.Use(middleware.RoleAuth("customer"))
+		{
+			adminRoutes.GET("/", handlers.GetUsers)
+			adminRoutes.GET("/:id", handlers.GetUserByID)
+			adminRoutes.PATCH("/:id", handlers.ModifyUser)
+			adminRoutes.DELETE("/:id", handlers.DeleteUser)
+
+			adminRoutes.PUT("/users/:id/role", handlers.UpdateUserRoleHandler)
+		}
 	}
 }

@@ -31,6 +31,7 @@ const (
 type Claims struct {
 	UserID    uuid.UUID `json:"userId"`
 	Email     string    `json:"email"`
+	Role      string    `json:"role"`
 	TokenType string    `json:"tokenType"`
 	ExpiresAt int64     `json:"expiresAt"`
 	IssuedAt  int64     `json:"issuedAt"`
@@ -44,11 +45,12 @@ type tokenHeader struct {
 var base64URL = base64.RawURLEncoding
 
 // GenerateToken creates a signed JWT-like HMAC token without an additional JWT dependency
-func GenerateToken(userID uuid.UUID, email, tokenType, secret string, ttl time.Duration) (string, error) {
+func GenerateToken(userID uuid.UUID, email, role, tokenType, secret string, ttl time.Duration) (string, error) {
 	now := time.Now().UTC()
 	claims := Claims{
 		UserID:    userID,
 		Email:     email,
+		Role:      role,
 		TokenType: tokenType,
 		IssuedAt:  now.Unix(),
 		ExpiresAt: now.Add(ttl).Unix(),
