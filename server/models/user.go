@@ -31,6 +31,17 @@ type LoginCredentials struct {
 	Password string `json:"password"`
 }
 
+// PasswordResetRequest is sent when a user requests a password reset link
+type PasswordResetRequest struct {
+	Email string `json:"email"`
+}
+
+// PasswortResetConfirmRequest is sent from the password reset page
+type PasswordResetConfirmRequest struct {
+	Token    string `json:"token"`
+	Password string `json:"password"`
+}
+
 type Address struct {
 	Street      string `bson:"street" json:"street"`
 	HouseNumber string `bson:"house_number" json:"houseNumber"`
