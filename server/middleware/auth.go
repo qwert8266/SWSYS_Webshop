@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/qwert8266/SWSYS_Webshop/server/config"
 	"github.com/qwert8266/SWSYS_Webshop/server/database"
 	"github.com/qwert8266/SWSYS_Webshop/server/helpers"
 	"github.com/qwert8266/SWSYS_Webshop/server/models"
@@ -31,7 +30,7 @@ func Authenticate() gin.HandlerFunc {
 			return
 		}
 
-		claims, err := helpers.ValidateToken(token, config.JWTSecret(), helpers.AccessTokenType)
+		claims, err := helpers.ValidateToken(token, helpers.JWTSecret(), helpers.AccessTokenType)
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Ungültiger oder abgelaufener Token."})
 			c.Abort()

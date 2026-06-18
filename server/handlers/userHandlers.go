@@ -9,7 +9,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/qwert8266/SWSYS_Webshop/server/config"
 	"github.com/qwert8266/SWSYS_Webshop/server/database"
 	"github.com/qwert8266/SWSYS_Webshop/server/helpers"
 	"github.com/qwert8266/SWSYS_Webshop/server/middleware"
@@ -298,12 +297,12 @@ func LogoutUser(c *gin.Context) {
 }
 
 func buildAuthResponse(message string, user models.User) (models.AuthResponse, error) {
-	accessToken, err := helpers.GenerateToken(user.ID, user.Email, helpers.AccessTokenType, config.JWTSecret(), helpers.AccessTokenTTL)
+	accessToken, err := helpers.GenerateToken(user.ID, user.Email, helpers.AccessTokenType, helpers.JWTSecret(), helpers.AccessTokenTTL)
 	if err != nil {
 		return models.AuthResponse{}, err
 	}
 
-	refreshToken, err := helpers.GenerateToken(user.ID, user.Email, helpers.RefreshTokenType, config.JWTSecret(), helpers.RefreshTokenTTL)
+	refreshToken, err := helpers.GenerateToken(user.ID, user.Email, helpers.RefreshTokenType, helpers.JWTSecret(), helpers.RefreshTokenTTL)
 	if err != nil {
 		return models.AuthResponse{}, err
 	}
