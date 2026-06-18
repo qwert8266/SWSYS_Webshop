@@ -1,4 +1,4 @@
-package config
+package database
 
 import (
 	"context"
@@ -15,7 +15,7 @@ import (
 // DB contains the shared MongoDB client after main() has initialized it.
 var DB *mongo.Client
 
-// LoadEnv loading enviroment variables from .env file.
+// LoadEnv loading environment variables from .env file.
 func LoadEnv() {
 	err := godotenv.Load()
 	if err != nil {
@@ -63,8 +63,8 @@ func DisconnectDB(client *mongo.Client) {
 	}
 }
 
-// DatabaseName returns the configured MongoDB database name
-func DatabaseName() string {
+// Name DatabaseName returns the configured MongoDB database name
+func Name() string {
 	return strings.TrimSpace(os.Getenv("MONGODB_DATABASE"))
 }
 
@@ -73,7 +73,7 @@ func collection(name string) *mongo.Collection {
 	if DB == nil {
 		log.Fatal("MongoDB client is not initialized.")
 	}
-	return DB.Database(DatabaseName()).Collection(name)
+	return DB.Database(Name()).Collection(name)
 }
 
 // ProductCollection returns the products collection of the webshop database
