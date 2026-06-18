@@ -10,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/qwert8266/SWSYS_Webshop/server/config"
+	"github.com/qwert8266/SWSYS_Webshop/server/database"
 	"github.com/qwert8266/SWSYS_Webshop/server/helpers"
 	"github.com/qwert8266/SWSYS_Webshop/server/middleware"
 	"github.com/qwert8266/SWSYS_Webshop/server/models"
@@ -20,7 +21,7 @@ import (
 )
 
 func GetUsers(c *gin.Context) {
-	users := config.UserCollection()
+	users := database.UserCollection()
 
 	cursor, err := users.Find(c.Request.Context(), bson.M{})
 	if err != nil {
@@ -125,7 +126,7 @@ func AddNewUser(c *gin.Context) {
 	}
 
 	// the new user is added to the list of users
-	if _, err := config.UserCollection().InsertOne(c.Request.Context(), newUser); err != nil {
+	if _, err := database.UserCollection().InsertOne(c.Request.Context(), newUser); err != nil {
 		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -199,7 +200,7 @@ func ModifyUser(c *gin.Context) {
 	}
 
 	var updatedUser models.User
-	userCollection := config.UserCollection()
+	userCollection := database.UserCollection()
 
 	//update the user
 	err = userCollection.FindOneAndUpdate(
@@ -224,7 +225,7 @@ func DeleteUser(c *gin.Context) {
 		c.IndentedJSON(http.StatusBadRequest, gin.H{"error parsing user id": err.Error()})
 	}
 
-	result, err := config.UserCollection().DeleteOne(c.Request.Context(), bson.M{"id": id})
+	result, err := database.UserCollection().DeleteOne(c.Request.Context(), bson.M{"id": id})
 	if err != nil {
 		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 	} else if result.DeletedCount == 0 {
@@ -264,7 +265,7 @@ func LoginUser(c *gin.Context) {
 	}
 
 	// aktualisiert den Login-Zeitpunkt eines Users
-	if _, err := config.UserCollection().UpdateOne(
+	if _, err := database.UserCollection().UpdateOne(
 		c.Request.Context(),
 		bson.M{"id": user.ID},
 		bson.M{"$set": bson.M{"updated_at": time.Now().UTC()}},
@@ -297,12 +298,12 @@ func LogoutUser(c *gin.Context) {
 }
 
 func buildAuthResponse(message string, user models.User) (models.AuthResponse, error) {
-	accessToken, err := helpers.GenerateToken(user.ID, user.Email, user.Role, helpers.AccessTokenType, config.JWTSecret(), helpers.AccessTokenTTL)
+	accessToken, err := helpers.GenerateToken(user.ID, user.Email, helpers.AccessTokenType, config.JWTSecret(), helpers.AccessTokenTTL)
 	if err != nil {
 		return models.AuthResponse{}, err
 	}
 
-	refreshToken, err := helpers.GenerateToken(user.ID, user.Email, user.Role, helpers.RefreshTokenType, config.JWTSecret(), helpers.RefreshTokenTTL)
+	refreshToken, err := helpers.GenerateToken(user.ID, user.Email, helpers.RefreshTokenType, config.JWTSecret(), helpers.RefreshTokenTTL)
 	if err != nil {
 		return models.AuthResponse{}, err
 	}
@@ -340,13 +341,13 @@ func generateHash(c *gin.Context, password string) (string, error) {
 
 func findUserByID(c *gin.Context, id uuid.UUID) (models.User, error) {
 	var user models.User
-	err := config.UserCollection().FindOne(c.Request.Context(), bson.M{"id": id}).Decode(&user)
+	err := database.UserCollection().FindOne(c.Request.Context(), bson.M{"id": id}).Decode(&user)
 	return user, err
 }
 
 func findUserByEmail(c *gin.Context, email string) (models.User, error) {
 	var user models.User
-	err := config.UserCollection().FindOne(c.Request.Context(), bson.M{"email": email}).Decode(&user)
+	err := database.UserCollection().FindOne(c.Request.Context(), bson.M{"email": email}).Decode(&user)
 	return user, err
 }
 
@@ -437,7 +438,7 @@ func UpdateUserRoleHandler(c *gin.Context) {
 		return
 	}
 
-	userCollection := config.UserCollection()
+	userCollection := database.UserCollection()
 
 	// Update the user's role
 	update := bson.M{"$set": bson.M{"role": roleUpdate.Role}}

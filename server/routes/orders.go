@@ -11,4 +11,12 @@ func RegisterOrderRoutes(rg *gin.RouterGroup) {
 	rg.Use(middleware.Authenticate())
 	rg.POST("/", handlers.CreateOrder)
 	rg.GET("/me", handlers.GetMyOrders)
+
+	protectedOrders := rg.Group("")
+	protectedOrders.Use(middleware.RoleAuth("admin", "worker"))
+	{
+		//TODO:
+		//protectedOrders.GET("", handlers.GetAllOrders)
+		//protectedOrders.GET("", handlers.GetActiveOrders)
+	}
 }

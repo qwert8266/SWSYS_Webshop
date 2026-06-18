@@ -6,7 +6,10 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/qwert8266/SWSYS_Webshop/server/config"
+	"github.com/qwert8266/SWSYS_Webshop/server/database"
 	"github.com/qwert8266/SWSYS_Webshop/server/helpers"
+	"github.com/qwert8266/SWSYS_Webshop/server/models"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 // Authenticate validates a Bearer token and stores its claims in the Gin context.
@@ -23,7 +26,7 @@ func Authenticate() gin.HandlerFunc {
 
 		token := strings.TrimSpace(strings.TrimPrefix(authHeader, "Bearer "))
 		if token == authHeader || token == "" {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Autorization-Header muss das Format 'Bearer <token>' haben."})
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization-Header muss das Format 'Bearer <token>' haben."})
 			c.Abort()
 			return
 		}
@@ -44,12 +47,23 @@ func RoleAuth(roles ...string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 
 		// retrieve the token from the context
-		token := c.MustGet("claims").(helpers.Claims)
+		claims, ok := ClaimsFromContext(c)
+		if !ok {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Nicht angemeldet."})
+			return
+		}
+
+		var user models.User
+		err := database.UserCollection().FindOne(c.Request.Context(), bson.M{"id": claims.UserID}).Decode(&user)
+		if err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Nutzer wurde nicht gefunden."})
+			return
+		}
 
 		// Check if the user's role is in the allowed roles
 		roleAllowed := false
 		for _, role := range roles {
-			if token.Role == role {
+			if user.Role == role {
 				roleAllowed = true
 				break
 			}

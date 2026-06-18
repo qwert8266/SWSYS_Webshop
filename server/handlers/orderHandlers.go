@@ -9,7 +9,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/qwert8266/SWSYS_Webshop/server/config"
+	"github.com/qwert8266/SWSYS_Webshop/server/database"
 	"github.com/qwert8266/SWSYS_Webshop/server/middleware"
 	"github.com/qwert8266/SWSYS_Webshop/server/models"
 	"go.mongodb.org/mongo-driver/v2/bson"
@@ -74,7 +74,7 @@ func CreateOrder(c *gin.Context) {
 		}
 
 		// only products with enough available stock are updated
-		err = config.ProductCollection().FindOneAndUpdate(
+		err = database.ProductCollection().FindOneAndUpdate(
 			c.Request.Context(),
 			filter,
 			update,
@@ -88,7 +88,7 @@ func CreateOrder(c *gin.Context) {
 			// checks if no suitable product with enough stock was found
 			if errors.Is(err, mongo.ErrNoDocuments) {
 				var existingProduct models.Product
-				findErr := config.ProductCollection().FindOne(c.Request.Context(), bson.M{"product_id": productID}).Decode(&existingProduct)
+				findErr := database.ProductCollection().FindOne(c.Request.Context(), bson.M{"product_id": productID}).Decode(&existingProduct)
 
 				// checks if the product does not exist at all
 				if errors.Is(findErr, mongo.ErrNoDocuments) {
@@ -138,7 +138,7 @@ func CreateOrder(c *gin.Context) {
 		UpdatedAt:       now,
 	}
 	// checks if the order was successfully saved
-	if _, err := config.OrderCollection().InsertOne(c.Request.Context(), order); err != nil {
+	if _, err := database.OrderCollection().InsertOne(c.Request.Context(), order); err != nil {
 		rollbackReservedStock(c, reservedItems)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Bestellung konnte nicht gespeichert werden."})
 		return
@@ -155,7 +155,7 @@ func GetMyOrders(c *gin.Context) {
 		return
 	}
 
-	cursor, err := config.OrderCollection().Find(
+	cursor, err := database.OrderCollection().Find(
 		c.Request.Context(),
 		bson.M{"user_id": claims.UserID},
 		options.Find().SetSort(bson.D{{Key: "created_at", Value: -1}}),
@@ -189,7 +189,7 @@ type reservedStock struct {
 func rollbackReservedStock(c *gin.Context, reservedItems []reservedStock) {
 	// restores all items that have already been reserved
 	for _, item := range reservedItems {
-		_, _ = config.ProductCollection().UpdateOne(
+		_, _ = database.ProductCollection().UpdateOne(
 			c.Request.Context(),
 			bson.M{"product_id": item.ProductID},
 			bson.M{

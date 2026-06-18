@@ -21,14 +21,14 @@ func RegisterUserRoutes(rg *gin.RouterGroup) {
 	protected.Use(middleware.Authenticate())
 	{
 		// Protected so the backend can validate the submitted Bearer token before the frontend removes it from localStorage
-		protected.POST("/logout", middleware.Authenticate(), handlers.LogoutUser)
+		protected.POST("/logout", handlers.LogoutUser)
 
 		// Protected endpoint to read the currently logged-in account
-		protected.GET("/me", middleware.Authenticate(), handlers.GetCurrentUser)
+		protected.GET("/me", handlers.GetCurrentUser)
 
 		// routes modifying users are only allowed for admins
 		adminRoutes := protected.Group("")
-		adminRoutes.Use(middleware.RoleAuth("customer"))
+		adminRoutes.Use(middleware.RoleAuth("admin"))
 		{
 			adminRoutes.GET("/", handlers.GetUsers)
 			adminRoutes.GET("/:id", handlers.GetUserByID)

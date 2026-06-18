@@ -45,12 +45,11 @@ type tokenHeader struct {
 var base64URL = base64.RawURLEncoding
 
 // GenerateToken creates a signed JWT-like HMAC token without an additional JWT dependency
-func GenerateToken(userID uuid.UUID, email, role, tokenType, secret string, ttl time.Duration) (string, error) {
+func GenerateToken(userID uuid.UUID, email, tokenType, secret string, ttl time.Duration) (string, error) {
 	now := time.Now().UTC()
 	claims := Claims{
 		UserID:    userID,
 		Email:     email,
-		Role:      role,
 		TokenType: tokenType,
 		IssuedAt:  now.Unix(),
 		ExpiresAt: now.Add(ttl).Unix(),

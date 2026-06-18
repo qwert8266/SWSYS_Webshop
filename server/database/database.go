@@ -77,9 +77,7 @@ func collection(name string) *mongo.Collection {
 }
 
 // ProductCollection returns the products collection of the webshop database
-func ProductCollection() *mongo.Collection {
-	return collection("products")
-}
+func ProductCollection() *mongo.Collection { return collection("products") }
 
 // UserCollection returns the users collection of the webshop database
 func UserCollection() *mongo.Collection {
