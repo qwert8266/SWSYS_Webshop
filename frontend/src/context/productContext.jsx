@@ -12,6 +12,11 @@ export function ProductProvider({children}){
         }, []
     );
 
+    const updateProduct = useCallback(async (productData) => {
+        return await productApi.updateProduct(productData);
+        }, []
+    );
+
     const deleteProduct = useCallback(async (uuid) => {
         return await productApi.deleteProduct(uuid);
         }, []
@@ -26,10 +31,11 @@ export function ProductProvider({children}){
     const value = useMemo(
     () => ({
       createProduct,
+      updateProduct,
       deleteProduct,
       getProducts
     }),
-    [createProduct,deleteProduct,getProducts]
+    [createProduct,updateProduct,deleteProduct,getProducts]
   );
 
 

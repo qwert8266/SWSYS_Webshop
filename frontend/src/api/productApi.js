@@ -25,7 +25,15 @@ class ProductApi extends BaseApi {
     return this.request("/products/product_management", {
       method: "POST",
       body: productData,
-      errorMessage: "Produkt konnte nicht hinzugefügt werden. Bitte überprüfe deine Eingaben",
+      errorMessage: "Produkt konnte nicht hinzugefügt werden. Bitte überprüfe deine Eingaben.",
+    });
+  }
+
+  async updateProduct(productData) {
+    return this.request(`/products/${productData.id}`, {
+      method: "PUT",
+      body: productData,
+      errorMessage: "Produkt konnte nicht bearbeitet werden. Bitte versuche es erneut.",
     });
   }
 
