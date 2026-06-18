@@ -6,10 +6,11 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func healthCheck(c *gin.Context) {
-	c.IndentedJSON(http.StatusOK, gin.H{"status": "healthy"})
-}
-
+// RegisterHealthRoute registers the single public health-endpoint
 func RegisterHealthRoute(server *gin.Engine) {
-	server.GET("/health", healthCheck)
+	server.GET("/health",
+		func(c *gin.Context) {
+			c.IndentedJSON(http.StatusOK, gin.H{
+				"status": "healthy"})
+		})
 }

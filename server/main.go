@@ -6,15 +6,15 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/qwert8266/SWSYS_Webshop/server/config"
+	"github.com/qwert8266/SWSYS_Webshop/server/database"
 	"github.com/qwert8266/SWSYS_Webshop/server/routes"
 )
 
 func main() {
-	config.LoadEnv()
+	database.LoadEnv()
 
-	config.DB = config.ConnectDB()
-	defer config.DisconnectDB(config.DB)
+	database.DB = database.ConnectDB()
+	defer database.DisconnectDB(database.DB)
 
 	server := gin.Default()
 

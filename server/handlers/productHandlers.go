@@ -9,7 +9,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/qwert8266/SWSYS_Webshop/server/config"
+	"github.com/qwert8266/SWSYS_Webshop/server/database"
 	"github.com/qwert8266/SWSYS_Webshop/server/models"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
@@ -18,7 +18,7 @@ import (
 
 // GetProducts returns all Products from MongoDB
 func GetProducts(c *gin.Context) {
-	productCollection := config.ProductCollection()
+	productCollection := database.ProductCollection()
 
 	cursor, err := productCollection.Find(c.Request.Context(), bson.M{})
 	if err != nil {
@@ -44,7 +44,7 @@ func GetProductByID(c *gin.Context) {
 	}
 
 	var product models.Product
-	productCollection := config.ProductCollection()
+	productCollection := database.ProductCollection()
 
 	err = productCollection.FindOne(c.Request.Context(), bson.M{"product_id": id}).Decode(&product)
 	if err != nil {
@@ -63,7 +63,7 @@ func GetProductByCategory(c *gin.Context) {
 	category := c.Param("category")
 
 	var products []models.Product
-	productCollection := config.ProductCollection()
+	productCollection := database.ProductCollection()
 
 	cursor, err := productCollection.Find(c.Request.Context(), bson.M{"category": category})
 	if err != nil {
@@ -113,7 +113,7 @@ func CreateProduct(c *gin.Context) {
 	}
 
 	// adding the new user to the collection
-	productCollection := config.ProductCollection()
+	productCollection := database.ProductCollection()
 	if _, err := productCollection.InsertOne(c.Request.Context(), newProduct); err != nil {
 		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error creating new product": err.Error()})
 		return
@@ -154,7 +154,7 @@ func UpdateProduct(c *gin.Context) {
 		{"$set", bson.D{{"updated_at", time.Now()}}},
 	}
 
-	productCollection := config.ProductCollection()
+	productCollection := database.ProductCollection()
 
 	//updating product in collection:
 	if result, err := productCollection.UpdateOne(c.Request.Context(), bson.M{"product_id": productID}, updatedProduct); err != nil {
@@ -174,7 +174,7 @@ func DeleteProduct(c *gin.Context) {
 		return
 	}
 
-	productCollection := config.ProductCollection()
+	productCollection := database.ProductCollection()
 
 	result, err := productCollection.DeleteOne(c.Request.Context(), bson.M{"product_id": id})
 	if err != nil {
@@ -232,7 +232,7 @@ func ModifyStock(c *gin.Context) {
 
 	// creating update to stock
 	updateToStock := bson.D{{"$inc", bson.D{{"stock", operation.Value}}}}
-	err = config.ProductCollection().FindOneAndUpdate(
+	err = database.ProductCollection().FindOneAndUpdate(
 		c.Request.Context(),
 		filter,
 		updateToStock,
@@ -242,7 +242,7 @@ func ModifyStock(c *gin.Context) {
 	if errors.Is(err, mongo.ErrNoDocuments) {
 		// checking if the product exists
 		var foundProduct models.Product
-		if err = config.ProductCollection().FindOne(c.Request.Context(), idFilter).Decode(&foundProduct); err != nil {
+		if err = database.ProductCollection().FindOne(c.Request.Context(), idFilter).Decode(&foundProduct); err != nil {
 			c.IndentedJSON(http.StatusNotFound, gin.H{"message": "product not found"})
 			return
 		}
