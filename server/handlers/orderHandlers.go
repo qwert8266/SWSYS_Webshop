@@ -181,6 +181,84 @@ func GetMyOrders(c *gin.Context) {
 	c.JSON(http.StatusOK, orders)
 }
 
+// GetOrders returns all Orders from MongoDB
+func GetOrders(c *gin.Context) {
+	orderCollection := config.OrderCollection()
+
+	cursor, err := orderCollection.Find(c.Request.Context(), bson.M{})
+	if err != nil {
+		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	var orders []models.Order
+
+	if err = cursor.All(c.Request.Context(), &orders); err != nil {
+		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Make sure that no orders return an empty array
+	if orders == nil {
+		orders = []models.Order{}
+	}
+
+	c.IndentedJSON(http.StatusOK, orders)
+
+}
+
+// UpdateProduct allows modification of existing products values
+func UpdateOrder(c *gin.Context) {
+	orderID, err := uuid.Parse(c.Param("id"))
+	fmt.Println("OrderID aus URL:", orderID)
+	if err != nil {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error parsing order id": err.Error()})
+		return
+	}
+	var updatedOrderData models.Order
+
+	//parsing all incoming data
+	if err := c.BindJSON(&updatedOrderData); err != nil {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error parsing order data": err.Error()})
+		return
+	}
+
+	//trimming strings:
+	status := strings.TrimSpace(updatedOrderData.Status)
+
+	orderCollection := config.OrderCollection()
+
+	result, err := orderCollection.UpdateOne(
+		c.Request.Context(),
+		bson.M{"order_id": orderID},
+		bson.M{
+			"$set": bson.M{
+				"status":     status,
+				"updated_at": time.Now(),
+			},
+		},
+	)
+
+	if err != nil {
+		c.IndentedJSON(http.StatusInternalServerError, gin.H{
+			"error updating order": err.Error(),
+		})
+		return
+	}
+
+	if result.MatchedCount == 0 {
+		c.IndentedJSON(http.StatusNotFound, gin.H{
+			"message": "order not found",
+		})
+		return
+	}
+
+	c.IndentedJSON(http.StatusOK, gin.H{
+		"message": "order updated successfully",
+	})
+
+}
+
 type reservedStock struct {
 	ProductID uuid.UUID
 	Quantity  uint32

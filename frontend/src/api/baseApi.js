@@ -70,7 +70,7 @@ export class BaseApi {
     if (accessToken) {
       requestHeaders.Authorization = `Bearer ${accessToken}`;
     }
-
+    console.log(requestHeaders);
     return requestHeaders;
   }
 

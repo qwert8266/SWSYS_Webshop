@@ -10,5 +10,7 @@ func RegisterOrderRoutes(rg *gin.RouterGroup) {
 	// protected routes/endpoints that only authorized users can access
 	rg.Use(middleware.Authenticate())
 	rg.POST("/", handlers.CreateOrder)
+	rg.PUT("/:id", handlers.UpdateOrder)
 	rg.GET("/me", handlers.GetMyOrders)
+	rg.GET("/", handlers.GetOrders)
 }

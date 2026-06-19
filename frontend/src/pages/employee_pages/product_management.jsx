@@ -18,10 +18,11 @@ function ProductManagement({ category: fixedCategory }){
     const [showSuccessModifyLabel, setShowSuccessModifyLabel] = useState(false);
     const [showSuccessDeleteLabel, setShowSuccessDeleteLabel] = useState(false);
 
-    const [showAreYouSureDialog, setShowAreYouSureDialog] = useState(false);
-    const [showModifyWindow, setShowModifyWindow] = useState(false);
     const [productToDelete, setProductToDelete] = useState(null);
+    const [showAreYouSureDialog, setShowAreYouSureDialog] = useState(false);
+
     const [productToModify, setProductToModify] = useState(null);
+    const [showModifyWindow, setShowModifyWindow] = useState(false);
 
     const { createProduct,updateProduct,deleteProduct,getProducts } = useProd();
 
@@ -239,7 +240,7 @@ function ProductManagement({ category: fixedCategory }){
                                             
                                         </NavLink>
                                     </div>
-                                    {}
+                                    
                                     <div style={{width: "400px"}}>
                                         <h3 className='w-25'>{product.name}</h3>
                                     </div>

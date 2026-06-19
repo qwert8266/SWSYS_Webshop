@@ -1,0 +1,156 @@
+import { NavLink, useParams } from 'react-router-dom';
+import '../categories.css';
+import { useState, useEffect } from 'react';
+import { useAuth } from "../../context/authContext";
+
+import orderApi from "../../api/orderApi";
+import { formatEuro } from '../../utils/orderHelpers';
+
+
+// Übermittelt, Registriert, In Bearbeitung, Unterwegs, Zugestellt, Storniert, Rückerstattung veranlasst/bearbeitet
+function OrderManagement(){
+
+    const { accessToken } = useAuth(() => 
+        localStorage.getItem("Schmidt-Soehne_AT"));
+
+    const [openOrderID, setOpenOrderID] = useState(null);
+
+    const [allOrders, setAllOrders] = useState([]);
+    const [isLoading, setIsLoading] = useState(false);
+    const [loadError, setLoadError] = useState("");
+
+    const [selectedOrder, setSelectedOrder] = useState({
+        orderId: null,
+        status: "",
+    });
+
+    const handleStatusChange = async (orderID,status) => {
+        console.log(allOrders);
+        const updatedOrder = {
+            orderId: orderID,
+            status: status
+        }
+        setSelectedOrder(updatedOrder);
+        await orderApi.updateOrder(updatedOrder, accessToken);
+    }
+
+    useEffect(() => {
+            let ignoreResult = false;
+    
+            async function loadOrder() {
+                setIsLoading(true);
+                setLoadError("");
+                setAllOrders([]);
+    
+                try {
+                    console.log("Token:", accessToken);
+                    const ordersFromDatabase = await orderApi.getAllOrders(accessToken); 
+                    
+                    if (!ignoreResult) {
+                        setAllOrders(ordersFromDatabase)
+                    }
+                } catch (error) {
+                    if (!ignoreResult) {
+                        setLoadError("Produkte konnten nicht aus der Datenbank geladen werden.");
+                    }
+                } finally {
+                    if (!ignoreResult) {
+                        setIsLoading(false);
+                    }
+                }
+                
+            }
+            loadOrder();
+    
+            return () => {
+                ignoreResult = true;
+            };
+        }, [accessToken]);
+    return(
+        <div className='d-flex flex-column align-items-center gap-5'>
+            
+
+            <div className='d-flex flex-column align-items-center'>
+                <label className='fs-1'>Bestellungsverwaltung</label>
+                <label className='fs-3'>Statusänderungen und Rückerstattungen</label>
+            </div>
+
+            {/* Suchleiste */}
+            <div className="navbar-search-shadow">
+                <form
+                    className="navbar-search"
+                    role="search"
+                >
+                    <input
+                    className="navbar-search-input form-control"
+                    type="search"
+                    placeholder="Produkt, Artikelnummer, Hersteller, ..."
+                    aria-label='Suchleiste'
+                    />
+
+                    <button
+                    className="btn btn-logoBlue navbar-search-btn"
+                    type="submit"
+                    aria-label='Suchen'
+                    >
+                    <img
+                        className="navbar-search-icon"
+                        src="/img/search-icon.svg"
+                        alt="suchen"
+                    />
+                    </button>
+                </form>
+            </div>
+
+            <div className='pb-5'>
+                
+                <div className='d-flex flex-column border rounded align-items-center w-auto '>
+                    <div className='d-flex flex-row border border-3 rounded gap-4 ps-3 pe-4 pt-2 align-items-center'>
+                        <div style={{width: "40px", height: "40px"}}></div>
+                        <label className='fs-5 text-center' style={{width: "380px"}}>Order-ID</label>
+                        <label className='fs-5 text-center' style={{width: "150px"}}>Kundenname</label>
+                        <label className='fs-5 text-center' style={{width: "100px"}}>Artikelzahl</label>
+                        <label className='fs-5 text-center' style={{width: "120px"}}>Gesamtkosten</label>
+                        <label className='fs-5 text-center' style={{width: "100px"}}>Bestellt am</label>
+                        <label className='fs-5 text-center' style={{width: "155px"}}>Status</label>
+                        <label className='fs-5 text-center' style={{width: "230px"}}>Rückerstattungsstatus</label>
+                    </div>
+                    {allOrders.map((order) => (
+                    <div className='d-flex flex-row border rounded gap-4 ps-3 pe-4 pt-2 pb-2 align-items-center' key={order.orderId}>
+                        <div className='' style={{width: "40px", height: "40px"}}>
+                            <button className='border rounded fs-5' style={{color: 'white', backgroundColor: "#ffffff"}}
+                            >
+                                <img style={{width: "40px", height: "40px"}} src="/img/dreieck_zu.png" alt="png" />
+                            </button>
+                        </div>
+                        <label className='fs-5' style={{width: "380px"}}>{order.orderId}</label>
+                        {/** TODO: Name zu jeder ID raussuchen. */}
+                        <label className='fs-5' style={{width: "150px"}}>{order.userId}</label>
+                        <label className='fs-5' style={{width: "100px"}}>{order.payment_method}</label>
+                        <label className='fs-5' style={{width: "120px"}}>{formatEuro(order.totalPrice)}</label>
+                        <label className='fs-5' style={{width: "100px"}}>{order.createdAt}</label>
+                        <select className='rounded border fs-5' defaultValue={order.status} onChange={(e) => handleStatusChange(order.orderId, e.target.value)}>
+                            <option>Übermittelt</option>
+                            <option>Registiert</option>
+                            <option>In Bearbeitung</option>
+                            <option>Unterwegs</option>
+                            <option>Zugestellt</option>
+                            <option>Storniert</option>
+                        </select>
+                        <div style={{width: "230px", height:"30px"}}>
+                            <label className='fs-5'>Rückerstattung beantragt</label>
+                        </div>
+                        {/** 
+                        <button className='border rounded fs-5' style={{color: 'white', backgroundColor: "#15406e"}}>Rückerstattung genehmigen</button>
+                        <button className='border rounded fs-5' style={{color: 'white', backgroundColor: "#932009"}}>Rückerstattung ablehnen</button>
+                        */}
+                    </div>
+                    ))}
+                </div>
+                
+            </div>
+        </div>
+    )
+}
+
+export default OrderManagement

@@ -88,7 +88,7 @@ function Navbar() {
             <ul className="navbar-nav mb-2 mb-lg-0 gap-2">
               <li className="nav-item">
                 <NavLink className="nav-link" to="/home">
-                  <a>Home</a>
+                  Home
                 </NavLink>
               </li>
               
@@ -97,7 +97,7 @@ function Navbar() {
                   className="nav-link" 
                   to="/sortiment"
                 >
-                  <a>Sortiment</a>
+                  Sortiment
                 </NavLink>
 
                 <div className="nav-dropdown-menu">
@@ -107,7 +107,7 @@ function Navbar() {
                       className="nav-dropdown-link"
                       to={`/sortiment/${Category.slug}`}
                     >
-                      <a>{Category.name}</a>
+                      {Category.name}
                     </NavLink>
                   ))}
                 </div>
@@ -115,13 +115,13 @@ function Navbar() {
               
               <li className='nav-item'>
                 <NavLink className="nav-link" to="/placeholder">
-                  <a>placeholder</a>
+                  placeholder
                 </NavLink>
               </li>
               
               <li className='nav-item'>
                 <NavLink className="nav-link" to="/contact">
-                  <a>Kontakt</a>
+                  Kontakt
                 </NavLink>
               </li>
             </ul>
@@ -177,7 +177,7 @@ function Navbar() {
 
               <div className="dropdown-menu-custom">
                 <NavLink to="/product_management">Produktverwaltung</NavLink>
-                <NavLink to="/orders">Bestellungen</NavLink>
+                <NavLink to="/order_management">Bestellungen</NavLink>
                 <NavLink to="/marketing">Marketing</NavLink>
                 <NavLink to="/analysis">Analyse-Dashboard</NavLink>
               </div>

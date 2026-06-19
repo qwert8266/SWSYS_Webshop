@@ -6,6 +6,7 @@ import './App.css';
 import ProtectedRoutes from "./routes/protectedRoutes";
 
 import ProductManagement from "./pages/employee_pages/product_management";
+import OrderManagement from "./pages/employee_pages/order_management";
 
 import FourOFour from "./pages/404";
 import CookieBanner from "./components/cookie_banner";
@@ -54,6 +55,12 @@ function App() {
           <Route path="product_management" element={
             <ProtectedRoutes>
               <ProductManagement/>
+            </ProtectedRoutes>
+          }/>
+
+          <Route path="order_management" element={
+            <ProtectedRoutes>
+              <OrderManagement/>
             </ProtectedRoutes>
           }/>
           
