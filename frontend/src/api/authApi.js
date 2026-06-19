@@ -34,6 +34,22 @@ class AuthApi extends BaseApi {
     });
   }
 
+  async requestPasswordReset(email) {
+    return this.request("/user/password-reset/request", {
+      method: "POST",
+      body: email,
+      errorMessage: "Passwort-Reset konnte nicht angefordert werden.",
+    });
+  }
+
+  async confirmPasswordReset({token, password }) {
+    return this.request("/user/password-reset/confirm", {
+      method: "POST",
+      body: token, password,
+      errorMessage: "Passwort konnte nicht zurückgesetzt werden.",
+    });
+  }
+
   // Sends a logout request to the backend
   async logout(accessToken) {
     return this.request("/user/logout", {
@@ -53,68 +69,7 @@ class AuthApi extends BaseApi {
   }
 }
 
- /*
-  async request(path, options = {}) {
-    const { method = "GET", body, headers = {}} = options;
-
-    let response
-    try {
-      response = await fetch(`${this.baseUrl}${path}`, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-          ...headers,
-        },
-        body: body ? JSON.stringify(body) : undefined,
-      });
-
-    } catch (error) {
-      throw new AuthApiError(
-        "Backend nicht erreichbar.",
-        0,
-        { originalError: error.message }
-      );
-    }
-    
-
-    const payload = await this.parseJsonResponse(response);
-
-    if (!response.ok) {
-      throw new AuthApiError(
-        this.getErrorMessage(payload),
-        response.status,
-        payload
-      );
-    }
-
-    return payload;;
-  }
-
-  async parseJsonResponse(response) {
-    const text = await response.text();
-
-    if (!text) {
-      return null;
-    }
-
-    try {
-      return JSON.parse(text);
-    } catch {
-      return text;
-    }
-  }
-
-
-  getErrorMessage(payload) {
-    return (
-      payload?.error ||
-      payload?.message ||
-      "Registrierung fehlgeschlagen. Bitte prüfe deine Eingaben."
-    );
-  }
-}
-*/
-
+ 
 
 const authApi = new AuthApi();
 
