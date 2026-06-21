@@ -2,9 +2,10 @@ import { NavLink, useParams } from 'react-router-dom';
 import '../categories.css';
 import { useState, useEffect } from 'react';
 import { useAuth } from "../../context/authContext";
+import authApi from '../../api/authApi';
 
 import orderApi from "../../api/orderApi";
-import { formatEuro } from '../../utils/orderHelpers';
+import { formatEuro, totalItems } from '../../utils/orderHelpers';
 
 
 // Übermittelt, Registriert, In Bearbeitung, Unterwegs, Zugestellt, Storniert, Rückerstattung veranlasst/bearbeitet
@@ -16,8 +17,10 @@ function OrderManagement(){
     const [openOrderID, setOpenOrderID] = useState(null);
 
     const [allOrders, setAllOrders] = useState([]);
+    const [users, setUsers] = useState({});
     const [isLoading, setIsLoading] = useState(false);
     const [loadError, setLoadError] = useState("");
+    
 
     const [selectedOrder, setSelectedOrder] = useState({
         orderId: null,
@@ -61,6 +64,26 @@ function OrderManagement(){
                 
             }
             loadOrder();
+
+            async function loadUsers(){
+                setIsLoading(true);
+                setLoadError("");
+                try{
+                    const usersFromDatabase = await authApi.getUsers(accessToken);
+                    if (!ignoreResult) {
+                        usersFromDatabase.forEach(user => {
+                            users[user.id] = user;
+                        });
+                    }
+                }catch(error){
+                    setLoadError("Nutzer konnten nicht aus der Datenbank geladen werden.");
+                }finally {
+                    if (!ignoreResult) {
+                        setIsLoading(false);
+                    }
+                }
+            }
+            loadUsers();
     
             return () => {
                 ignoreResult = true;
@@ -125,11 +148,15 @@ function OrderManagement(){
                         </div>
                         <label className='fs-5' style={{width: "380px"}}>{order.orderId}</label>
                         {/** TODO: Name zu jeder ID raussuchen. */}
-                        <label className='fs-5' style={{width: "150px"}}>{order.userId}</label>
-                        <label className='fs-5' style={{width: "100px"}}>{order.payment_method}</label>
-                        <label className='fs-5' style={{width: "120px"}}>{formatEuro(order.totalPrice)}</label>
-                        <label className='fs-5' style={{width: "100px"}}>{order.createdAt}</label>
-                        <select className='rounded border fs-5' defaultValue={order.status} onChange={(e) => handleStatusChange(order.orderId, e.target.value)}>
+                        <label className='fs-5' style={{width: "150px"}}>
+                            {users[order.userId]?.firstName}
+                            {" "}
+                            {users[order.userId]?.lastname}
+                        </label>
+                        <label className='fs-5 text-center' style={{width: "100px"}}>{totalItems(order.items)}</label>
+                        <label className='fs-5 text-center' style={{width: "120px"}}>{formatEuro(order.totalPrice)}</label>
+                        <label className='fs-5' style={{width: "100px"}}>{new Date(order.createdAt).toLocaleString("de-DE")}</label>
+                        <select className='rounded border fs-5 text-center' defaultValue={order.status} onChange={(e) => handleStatusChange(order.orderId, e.target.value)}>
                             <option>Übermittelt</option>
                             <option>Registiert</option>
                             <option>In Bearbeitung</option>

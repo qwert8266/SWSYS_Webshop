@@ -32,8 +32,6 @@ class OrderApi extends BaseApi {
   }
 
   async updateOrder(orderData, accessToken) {
-    console.log(orderData);
-    console.log(orderData.orderId);
     return this.request(`/order/${orderData.orderId}`, {
       method: "PUT",
       body: orderData,accessToken,

@@ -1,7 +1,12 @@
 
 
-export function getTotalItems(){
-  //TODO
+export function totalItems(orderItems){
+  console.log(orderItems);
+  let itemCount = 0;
+  for (let i = 0; i < orderItems.length; i++){
+    itemCount += orderItems[i].quantity;
+  }
+  return((itemCount.toString()) + "x")
 }
 
 export function formatDateAndTime(){
