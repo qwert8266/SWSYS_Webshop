@@ -44,6 +44,7 @@ export class BaseApi {
         0,
         { originalError: error.message }
       );
+      
     }
 
     const payload = await this.parseJsonResponse(response);
@@ -67,9 +68,8 @@ export class BaseApi {
     }
 
     if (accessToken) {
-      requestHeaders.accessToken = `Bearer ${accessToken}`;
+      requestHeaders.Authorization = `Bearer ${accessToken}`;
     }
-
     return requestHeaders;
   }
 

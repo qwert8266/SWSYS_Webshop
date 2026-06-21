@@ -2,6 +2,7 @@ import { React, useEffect, useRef, useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from "../context/authContext";
 import { useCart } from "../context/cartContext";
+import { CATEGORY_CONFIGS } from "../utils/categoryConfig";
 import "../custom.scss";
 
 import './navbar.css';
@@ -11,6 +12,16 @@ function Navbar() {
   const { isAuthenticated, isAuthLoading } = useAuth();
   const { totalQuantity } = useCart();
 
+  const [isEmployee, setIsEmployee] = useState(false);
+
+  useEffect(() => {
+    const roleInLocalStorage = localStorage.getItem("role");
+
+    if (roleInLocalStorage === "employee") {
+        setIsEmployee(true);
+    }
+}, []);
+
   function handleSearchButtonClick(event) {
    
   }
@@ -19,36 +30,8 @@ function Navbar() {
     navigate(isAuthenticated ? "/account-settings" : "/login");
   }
 
-
-  const categories = [
-    {
-      "name": "Angebote",
-      "slug": "angebote"
-    },
-    {
-      "name": "Bier",
-      "slug": "bier"
-    },
-    {
-      "name": "Wein & Sekt",
-      "slug": "wein&sekt"
-    },
-    {
-      "name": "Spirituosen",
-      "slug": "spirituosen"
-    },
-    { "name": "Softgetränke",
-      "slug": "softgetraenke"
-    },
-    {
-      "name": "Wasser",
-      "slug": "wasser"
-    },
-    {
-      "name": "Kaffe & Tee",
-      "slug": "kaffe&tee"
-    }
-  ]
+  //const location = useLocation();
+  const categories = CATEGORY_CONFIGS;
 
   return (
     <nav className="navbar navbar-expand-md bg-body-tertiary" fixed="top">
@@ -105,7 +88,7 @@ function Navbar() {
             <ul className="navbar-nav mb-2 mb-lg-0 gap-2">
               <li className="nav-item">
                 <NavLink className="nav-link" to="/home">
-                  <a>Home</a>
+                  Home
                 </NavLink>
               </li>
               
@@ -114,7 +97,7 @@ function Navbar() {
                   className="nav-link" 
                   to="/sortiment"
                 >
-                  <a>Sortiment</a>
+                  Sortiment
                 </NavLink>
 
                 <div className="nav-dropdown-menu">
@@ -124,7 +107,7 @@ function Navbar() {
                       className="nav-dropdown-link"
                       to={`/sortiment/${Category.slug}`}
                     >
-                      <a>{Category.name}</a>
+                      {Category.name}
                     </NavLink>
                   ))}
                 </div>
@@ -132,13 +115,13 @@ function Navbar() {
               
               <li className='nav-item'>
                 <NavLink className="nav-link" to="/placeholder">
-                  <a>placeholder</a>
+                  placeholder
                 </NavLink>
               </li>
               
               <li className='nav-item'>
                 <NavLink className="nav-link" to="/contact">
-                  <a>Kontakt</a>
+                  Kontakt
                 </NavLink>
               </li>
             </ul>
@@ -151,8 +134,8 @@ function Navbar() {
             <NavLink
               type="button"
               className="btn btn-light border navbar-icon-button"
-              onClick={handleAccountClick}  
-              to="/login"  
+              //onClick={handleAccountClick}  
+              to={isAuthenticated ? "/account-settings" : "/login"}
               title={isAuthenticated ? "Mein Account" : "Anmelden"}      
               aria-label={isAuthenticated ? "Accounteinstellungen" : "Zur Anmeldung"}
             >
@@ -163,6 +146,7 @@ function Navbar() {
               />
             </NavLink>
 
+            {/*location.pathname.startsWith("/employee/") ?():()*/}
             {/* Shopping cart */}
             <NavLink
               type="button"
@@ -178,6 +162,26 @@ function Navbar() {
               />
               {totalQuantity > 0 && <span className="cart-badge">{totalQuantity}</span>}
             </NavLink>
+
+            <div className="dropdown-wrapper">
+              <div
+                className="btn btn-light border navbar-icon-button cart-icon-button"
+                title="Mitarbeiter-Funktionen"
+              >
+                <img
+                  className="navbar-icon "
+                  src="/img/hamburger_icon.png" 
+                  alt="warenkorb icon"
+                />
+              </div>
+
+              <div className="dropdown-menu-custom">
+                <NavLink to="/product_management">Produktverwaltung</NavLink>
+                <NavLink to="/order_management">Bestellungen</NavLink>
+                <NavLink to="/marketing">Marketing</NavLink>
+                <NavLink to="/analysis">Analyse-Dashboard</NavLink>
+              </div>
+            </div>
           </div>
 
         </div>

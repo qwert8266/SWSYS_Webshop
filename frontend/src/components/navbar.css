@@ -196,3 +196,40 @@
     font-weight: 800;
     line-height: 1;
 }
+
+
+.dropdown-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdown-menu-custom {
+    display: none;
+
+    position: absolute;
+    top: 100%;
+    right: 0;
+
+    min-width: 180px;
+
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+
+    z-index: 1000;
+}
+
+.dropdown-wrapper:hover .dropdown-menu-custom {
+    display: flex;
+    flex-direction: column;
+}
+
+.dropdown-menu-custom a {
+    padding: 10px;
+    text-decoration: none;
+    color: black;
+}
+
+.dropdown-menu-custom a:hover {
+    background-color: #f5f5f5;
+}

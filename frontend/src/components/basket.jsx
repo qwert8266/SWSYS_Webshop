@@ -1,5 +1,6 @@
 import { Link, NavLink } from 'react-router-dom';
 import { useCart } from "../context/cartContext";
+import { formatEuro } from '../utils/productHelpers';
 
 
 
@@ -77,10 +78,7 @@ function ShoppingCart() {
                     <h5>{item.name}</h5>
                     
                     <span>
-                      {item.price.toLocaleString("de-DE", {
-                        style: "currency",
-                        currency: "EUR",
-                      })}€
+                      {formatEuro(item.price)}
                     </span>
                   </div>
                   
@@ -113,10 +111,7 @@ function ShoppingCart() {
                     className="text-nowrap text-end flex-shrink-0" 
                     style={{ width: "55px"}}
                   >
-                    {(item.price * item.quantity).toLocaleString("de-DE", {
-                      style: "currency",
-                      currency: "EUR",
-                    })}
+                    {formatEuro(item.price * item.quantity)}
                   </strong>
 
                   <button
@@ -148,10 +143,7 @@ function ShoppingCart() {
               <div className='d-flex justify-content-between gap-3 py-3 border-bottom'>
                 <span>Gesamt</span>
                 <strong>
-                  {totalPrice.toLocaleString("de-DE", {
-                    style: "currency",
-                    currency: "EUR",
-                  })}
+                  {formatEuro(totalPrice)}
                 </strong>
               </div>
 

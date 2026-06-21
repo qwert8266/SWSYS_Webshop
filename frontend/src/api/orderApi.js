@@ -30,6 +30,22 @@ class OrderApi extends BaseApi {
       errorMessage: "Bestellungen konnten nicht geladen werden.",
     });
   }
+
+  async updateOrder(orderData, accessToken) {
+    return this.request(`/order/${orderData.orderId}`, {
+      method: "PUT",
+      body: orderData,accessToken,
+      errorMessage: "Bestellung konnte nicht bearbeitet werden. Bitte versuche es erneut.",
+    });
+  }
+
+  async getAllOrders(accessToken) {
+    return this.request("/order/", {
+      method: "GET",
+      accessToken
+    });
+  }
+
 }
 
 
