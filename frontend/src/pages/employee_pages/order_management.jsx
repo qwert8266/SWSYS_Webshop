@@ -14,7 +14,7 @@ function OrderManagement(){
     const { accessToken } = useAuth(() => 
         localStorage.getItem("Schmidt-Soehne_AT"));
 
-    const [openOrderID, setOpenOrderID] = useState(null);
+    const [openOrderID, setOpenOrderID] = useState("");
 
     const [allOrders, setAllOrders] = useState([]);
     const [users, setUsers] = useState({});
@@ -28,7 +28,6 @@ function OrderManagement(){
     });
 
     const handleStatusChange = async (orderID,status) => {
-        console.log(allOrders);
         const updatedOrder = {
             orderId: orderID,
             status: status
@@ -46,7 +45,6 @@ function OrderManagement(){
                 setAllOrders([]);
     
                 try {
-                    console.log("Token:", accessToken);
                     const ordersFromDatabase = await orderApi.getAllOrders(accessToken); 
                     
                     if (!ignoreResult) {
@@ -139,38 +137,77 @@ function OrderManagement(){
                         <label className='fs-5 text-center' style={{width: "230px"}}>Rückerstattungsstatus</label>
                     </div>
                     {allOrders.map((order) => (
-                    <div className='d-flex flex-row border rounded gap-4 ps-3 pe-4 pt-2 pb-2 align-items-center' key={order.orderId}>
-                        <div className='' style={{width: "40px", height: "40px"}}>
-                            <button className='border rounded fs-5' style={{color: 'white', backgroundColor: "#ffffff"}}
-                            >
-                                <img style={{width: "40px", height: "40px"}} src="/img/dreieck_zu.png" alt="png" />
-                            </button>
+                    <div className='d-flex flex-column'>
+                        <div className='wrapper rounded' style={{border: (openOrderID === order.orderId) ? "3px solid black" : "3px grey",}}>
+                        <div className='d-flex flex-row gap-4 ps-3 pe-4 pt-2 pb-2 align-items-center' key={order.orderId} style={{border: (openOrderID === order.orderId) ? "3px solid black" : "3px grey"}}>
+                            <div className='' style={{width: "40px", height: "40px",borderCollapse: "collapse"}}>
+                                {openOrderID === order.orderId &&
+                                <button className='border rounded fs-5' style={{color: 'white', backgroundColor: "#ffffff"}} onClick={()=>setOpenOrderID("")}>
+                                    <img style={{width: "40px", height: "40px"}} src="/img/dreieck_auf.png" alt="png" />
+                                </button>
+                                }
+                                {openOrderID != order.orderId &&
+                                <button className='border rounded fs-5' style={{color: 'white', backgroundColor: "#ffffff"}} onClick={()=>setOpenOrderID(order.orderId)}>
+                                    <img style={{width: "40px", height: "40px"}} src="/img/dreieck_zu.png" alt="png" />
+                                </button>
+                                }
+                            </div>
+                            <label className='fs-5' style={{width: "380px"}}>{order.orderId}</label>
+                            {/** TODO: Name zu jeder ID raussuchen. */}
+                            <label className='fs-5' style={{width: "150px"}}>
+                                {users[order.userId]?.firstName}
+                                {" "}
+                                {users[order.userId]?.lastname}
+                            </label>
+                            <label className='fs-5 text-center' style={{width: "100px"}}>{totalItems(order.items)}</label>
+                            <label className='fs-5 text-center' style={{width: "120px"}}>{formatEuro(order.totalPrice)}</label>
+                            <label className='fs-5' style={{width: "100px"}}>{new Date(order.createdAt).toLocaleString("de-DE")}</label>
+                            <select className='rounded border fs-5 text-center' defaultValue={order.status} onChange={(e) => handleStatusChange(order.orderId, e.target.value)}>
+                                <option>Übermittelt</option>
+                                <option>Registiert</option>
+                                <option>In Bearbeitung</option>
+                                <option>Unterwegs</option>
+                                <option>Zugestellt</option>
+                                <option>Storniert</option>
+                            </select>
+                            <div style={{width: "230px", height:"30px"}}>
+                                <label className='fs-5'>Rückerstattung beantragt</label>
+                            </div>
+                            
                         </div>
-                        <label className='fs-5' style={{width: "380px"}}>{order.orderId}</label>
-                        {/** TODO: Name zu jeder ID raussuchen. */}
-                        <label className='fs-5' style={{width: "150px"}}>
-                            {users[order.userId]?.firstName}
-                            {" "}
-                            {users[order.userId]?.lastname}
-                        </label>
-                        <label className='fs-5 text-center' style={{width: "100px"}}>{totalItems(order.items)}</label>
-                        <label className='fs-5 text-center' style={{width: "120px"}}>{formatEuro(order.totalPrice)}</label>
-                        <label className='fs-5' style={{width: "100px"}}>{new Date(order.createdAt).toLocaleString("de-DE")}</label>
-                        <select className='rounded border fs-5 text-center' defaultValue={order.status} onChange={(e) => handleStatusChange(order.orderId, e.target.value)}>
-                            <option>Übermittelt</option>
-                            <option>Registiert</option>
-                            <option>In Bearbeitung</option>
-                            <option>Unterwegs</option>
-                            <option>Zugestellt</option>
-                            <option>Storniert</option>
-                        </select>
-                        <div style={{width: "230px", height:"30px"}}>
-                            <label className='fs-5'>Rückerstattung beantragt</label>
-                        </div>
-                        {/** 
-                        <button className='border rounded fs-5' style={{color: 'white', backgroundColor: "#15406e"}}>Rückerstattung genehmigen</button>
-                        <button className='border rounded fs-5' style={{color: 'white', backgroundColor: "#932009"}}>Rückerstattung ablehnen</button>
-                        */}
+                            
+                            {openOrderID === order.orderId &&
+                            <div className='d-flex flex-row'>
+                            <div className='d-flex flex-column' style={{border: "1px solid black", width: "700px",}}>
+                                <div className='d-flex flex-row  gap-4 ps-3 pe-4 pt-2 pb-2 align-items-center' style={{border: "2px solid black" }}>
+                                    <label className='fs-5 text-center' style={{width: "40px"}}></label>
+                                    <label className='fs-5' style={{width: "100px"}}>Artikelname</label>
+                                    <label className='fs-5 text-center' style={{width: "100px"}}>Anzahl</label>
+                                    <label className='fs-5 text-center' style={{width: "100px"}}>Einzelpreis</label>
+                                    <label className='fs-5 text-center' style={{width: "100px"}}>Gesamtpreis</label>
+                                    <label className='fs-5 text-center' style={{width: "100px"}}></label>
+                                </div> 
+                                {order.items.map((item) => (
+                                    <div className='d-flex flex-row gap-4 ps-3 pe-4 pt-2 pb-2 align-items-center'>
+                                        <label className='fs-5 text-center' style={{width: "40px"}}></label>
+                                        <label className='fs-5' style={{width: "100px"}}>{item.name}</label>
+                                        <label className='fs-5 text-center' style={{width: "100px"}}>{item.quantity}x</label>
+                                        <label className='fs-5 text-center' style={{width: "100px"}}>{formatEuro(item.unitPrice)}</label>
+                                        <label className='fs-5 text-center' style={{width: "100px"}}>{formatEuro(item.lineTotalPrice)}</label>
+                                        <label className='fs-5 text-center' style={{width: "100px"}}></label>
+                                        
+                                    </div> 
+                                ))}
+                            </div>
+                            <div className='d-flex flex-row justify-content-end w-100'>
+                                <button className='border rounded fs-5' style={{color: 'white', backgroundColor: "#15406e", width: "145px", height:"70px"}}>Rückerstattung genehmigen</button>
+                                <button className='border rounded fs-5' style={{color: 'white', backgroundColor: "#932009", width: "145px", height:"70px"}}>Rückerstattung ablehnen</button>
+                            </div>
+                            </div>
+                            }
+                            
+                        
+                    </div>
                     </div>
                     ))}
                 </div>
