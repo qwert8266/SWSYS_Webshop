@@ -34,8 +34,8 @@ function App() {
 
         <Routes>
           <Route path="" element={<CookieBanner/>}/>
-          <Route path="/suche" element={<SearchResults />}/>
           <Route path="/home" element={<Home />} />
+          <Route path="/suche" element={<SearchResults />}/>
           <Route path="/register" element={<Register />} />
           <Route path="/login" element={<Login />}/>
           <Route path="/cart" element={<ShoppingCart />} />
