@@ -1,10 +1,12 @@
 import React from "react";
 import { useState } from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import SearchResults from "./pages/searchResults";
 import './App.css';
 
 import ProtectedRoutes from "./routes/protectedRoutes";
 
+import FourOFour from "./pages/404";
 import CookieBanner from "./components/cookie_banner";
 import Register from "./pages/register";
 import Login from "./pages/login"
@@ -12,9 +14,11 @@ import Navbar from './components/navbar';
 import HideNavbar from './components/hideNavbar';
 import Footer from "./components/footer";
 import ShoppingCart from './pages/shoppingCart';
+import Checkout from "./pages/checkout";
 import AccountSettings from "./pages/accountSettings";
+import Contact from "./pages/contact";
 import Category from "./pages/categories";
-import {biere, weine,schnäpse, top_banners } from "./pages/categories"
+//import {biere, weine,schnäpse, top_banners } from "./pages/categories"
 import Product from "./pages/product";
 import {produkte} from "./pages/product";
 import Home from './pages/home';
@@ -31,20 +35,33 @@ function App() {
         <Routes>
           <Route path="" element={<CookieBanner/>}/>
           <Route path="/home" element={<Home />} />
+          <Route path="/suche" element={<SearchResults />}/>
           <Route path="/register" element={<Register />} />
           <Route path="/login" element={<Login />}/>
           <Route path="/cart" element={<ShoppingCart />} />
+          <Route path="/contact" element={<Contact/>}/>
+          <Route path="/cart/checkout" element={
+            <ProtectedRoutes>
+              <Checkout/>
+            </ProtectedRoutes>
+          }/>
           <Route path="account-settings" element={
             <ProtectedRoutes>
               <AccountSettings/>
             </ProtectedRoutes>
-            }
-          />
-          <Route path="/bier" element={<Category key="bier" products={biere} banner={top_banners[0]} category={"bier"}/>} />
-          <Route path="/wein" element={<Category key="wein" products={weine} banner={top_banners[1]} category={"wein"}/>} />
-          <Route path="/schnaps" element={<Category key="schnaps" products={schnäpse} banner={top_banners[2]} category={"schnaps"}/>} />
+          }/>
+          
+          <Route path="/sortiment" element={<Navigate to="/sortiment/bier" replace/>}/>
+          <Route path="/sortiment/:categorySlug" element={<Category />}/>
+          <Route path="/sortiment/:categorySlug/:productId" element={<Product />}/>
+          
+          
+          <Route path="/bier" element={<Category category="bier" />} /> 
+          <Route path="/wein" element={<Category category="wein" />} />
+          <Route path="/schnaps" element={<Category category="schnaps" />} />
           <Route path="/:category/:productName"  element={<Product />} />
-          {/*<Route path="/test" element={<Test/>} /> */}
+
+          <Route path="*" element={<FourOFour />}/>
 
         </Routes>
         <Footer></Footer>

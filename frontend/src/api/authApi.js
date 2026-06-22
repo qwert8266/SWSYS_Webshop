@@ -1,17 +1,19 @@
-const API_BASE_URL = "http://localhost:3001"; //ProcessingInstruction.env.REACT_BASE_URL || 
+import { ApiError, BaseApi } from "./baseApi";
 
-export class AuthApiError extends Error {
+
+export class AuthApiError extends ApiError {
   constructor(message, status, payload) {
-    super(message);
+    super(message, status, payload);
     this.name = "AuthApiError";
-    this.status = status;
-    this.payload = payload;
   }
 }
 
-class AuthApi {
-  constructor(baseUrl = API_BASE_URL) {
-    this.baseUrl = baseUrl.replace(/\/$/, "");
+class AuthApi extends BaseApi {
+  constructor() {
+    super({
+      defaultErrorMessage: "Authentifizierung fehlgeschlagen. Bitte prüfe deine Eingaben.",
+      ErrorClass: AuthApiError,
+    });
   }
 
   // Sends the register form data to the backend endpoint
@@ -19,6 +21,7 @@ class AuthApi {
     return this.request("/user/register", {
       method: "POST",
       body: userData,
+      errorMessage: "Registrierung fehlgeschlagen. Bitte prüfe deine Eingaben.",
     });
   }
 
@@ -27,6 +30,7 @@ class AuthApi {
     return this.request("/user/login", {
       method: "POST",
       body: credentials,
+      errorMessage: "Anmeldung fehlgeschlagen. Bitte prüfe deine Eingaben.",
     });
   }
 
@@ -34,23 +38,22 @@ class AuthApi {
   async logout(accessToken) {
     return this.request("/user/logout", {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
+      accessToken,
+      errorMessage: "Abmeldung fehlgeschlagen.",
     });
   } 
 
   // Loads the currently logged-in user by the stored access token
   async getCurrentUser(accessToken) {
-    return this.request("(user/me", {
+    return this.request("/user/me", {
       method: "GET",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
+      accessToken,
+      errorMessage: "Benutzerdaten konnten nich geladen werden.",
     }); 
   }
+}
 
-
+ /*
   async request(path, options = {}) {
     const { method = "GET", body, headers = {}} = options;
 
@@ -110,6 +113,8 @@ class AuthApi {
     );
   }
 }
+*/
+
 
 const authApi = new AuthApi();
 

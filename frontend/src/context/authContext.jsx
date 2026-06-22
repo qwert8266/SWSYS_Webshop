@@ -10,11 +10,15 @@ export function AuthProvider({ children }) {
   const [accessToken, setAccessToken] = useState(() => 
     localStorage.getItem(ACCESS_TOKEN_KEY)
   );
+  const [isAuthLoading, setIsAuthLoading] = useState(() =>
+    Boolean(localStorage.getItem(ACCESS_TOKEN_KEY))
+  );
 
   // Stores the backend authResponse after login or registration
   const saveAuthResponse = useCallback((authResponse) => {
     setUser(authResponse.user);
     setAccessToken(authResponse.accessToken);
+    setIsAuthLoading(false);
     localStorage.setItem(ACCESS_TOKEN_KEY, authResponse.accessToken);
     localStorage.setItem(REFRESH_TOKEN_KEY, authResponse.refreshToken);
     return authResponse;
@@ -24,6 +28,7 @@ export function AuthProvider({ children }) {
   const clearAuthState = useCallback(() => {
     setUser(null);
     setAccessToken(null);
+    setIsAuthLoading(false);
     localStorage.removeItem(ACCESS_TOKEN_KEY);
     localStorage.removeItem(REFRESH_TOKEN_KEY);
   }, []);
@@ -61,15 +66,25 @@ export function AuthProvider({ children }) {
   // via the protected backend endpoint  
   useEffect(() => {
     if (!accessToken || user) {
+      setIsAuthLoading(false);
       return;
     }
 
     async function loadCurrentUser() {
+      setIsAuthLoading(true);
+
       try {
         const currentUser = await authApi.getCurrentUser(accessToken);
         setUser(currentUser);
       } catch (error) {
-        clearAuthState();
+        // only delete tokens when error is serious enough  
+        if (error.status === 401 || error.status === 403) {
+          clearAuthState();
+        } else {
+          console.warn("Benutzerdaten konnten nicht geladen werden.", error);
+        }
+      } finally {
+        setIsAuthLoading(false);
       }
     }
 
@@ -83,9 +98,10 @@ export function AuthProvider({ children }) {
       register,
       login,
       logout,
+      isAuthLoading,
       isAuthenticated: Boolean(accessToken),
     }),
-    [user, accessToken, register, login, logout]
+    [user, accessToken, register, login, logout, isAuthLoading]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
