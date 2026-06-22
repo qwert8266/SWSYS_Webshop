@@ -76,58 +76,73 @@ function ResetPassword() {
           <div className="registerform-input row g-2">
             
             <h2 className="h4 mb-5 text-center">Passwort zurücksetzen</h2>
-            {error && <p className="auth-error">{error}</p>}
-            {successMessage && <p className="auth-success">{successMessage}</p>}
-            
-            <div className="row align-items-center mb-3">
-              <label className="col-sm-5 col-form-label">
-                Neues Passwort
-              </label>
-              <div className="col-sm-7">
-                <input
-                  className='form-control'
-                  type="password"
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  autoComplete='new-password'
-                  minLength={8}
-                  required
-                />
-              </div>
-            </div>
 
-            <div className="row align-items-center mb-4">
-              <label className="col-sm-5 col-form-label">
-                Neues Passwort wiederholen
-              </label>
-              <div className="col-sm-7">
-                <input
-                  className='form-control'
-                  type="password"
-                  name="repeatPassword"
-                  value={formData.repeatPassword}
-                  onChange={handleChange}
-                  autoComplete='new-password'
-                  minLength={8}
-                  required
-                />
-              </div>
-            </div>
+            {isResetSuccessful ? (
+              <>
+                {successMessage && <p className="auth-success">{successMessage}</p>}
 
-            <button 
-              className="btn btn-primary btn-lg submit-register-btn" 
-              type="submit"
-              disabled={isSubmitting || !token}  
-            >
-              {isSubmitting ? "Passwort wird geändert..." : "Passwort ändern"}
-            </button>
-            
-            <div className="col-sm-12 text-center">
-              <p>
-                Zurück zur <Link to="/login">Anmeldung</Link> 
-              </p>
-            </div>
+                <div className="col-sm-12 text-center">
+                  <p>
+                    Zurück zur <Link to="/login">Anmeldung</Link> 
+                  </p>
+                </div>
+              </>
+            ) : (
+              <>
+                {error && <p className="auth-error">{error}</p>}
+                
+                <div className="row align-items-center mb-3">
+                  <label className="col-sm-5 col-form-label">
+                    Neues Passwort
+                  </label>
+                  <div className="col-sm-7">
+                    <input
+                      className='form-control'
+                      type="password"
+                      name="password"
+                      value={formData.password}
+                      onChange={handleChange}
+                      autoComplete='new-password'
+                      minLength={8}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="row align-items-center mb-4">
+                  <label className="col-sm-5 col-form-label">
+                    Neues Passwort wiederholen
+                  </label>
+                  <div className="col-sm-7">
+                    <input
+                      className='form-control'
+                      type="password"
+                      name="repeatPassword"
+                      value={formData.repeatPassword}
+                      onChange={handleChange}
+                      autoComplete='new-password'
+                      minLength={8}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <button 
+                  className="btn btn-primary btn-lg submit-register-btn" 
+                  type="submit"
+                  disabled={isSubmitting || !token}  
+                >
+                  {isSubmitting ? "Passwort wird geändert..." : "Passwort ändern"}
+                </button>
+                
+                <div className="col-sm-12 text-center">
+                  <p>
+                    Zurück zur <Link to="/login">Anmeldung</Link> 
+                  </p>
+                </div>
+          
+              </>
+            )}
 
           </div>
         </div>
