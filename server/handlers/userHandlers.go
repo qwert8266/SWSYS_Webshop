@@ -412,7 +412,7 @@ func checkIncomingData(c *gin.Context, rr models.RegisterRequest) (models.Regist
 func RequestPasswordReset(c *gin.Context) {
 	var request models.PasswordResetRequest
 	if err := c.BindJSON(&request); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "E-Mail-Adresse ist erforderlich"}) //err.Error()
 		return
 	}
 
@@ -430,7 +430,7 @@ func RequestPasswordReset(c *gin.Context) {
 			c.JSON(http.StatusOK, genericResponse)
 			return
 		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Passwort zurücksetzen ist zurzeit nicht verfügbar."}) //err.Error()
 		return
 	}
 
@@ -458,9 +458,15 @@ func RequestPasswordReset(c *gin.Context) {
 		return
 	}
 	passwordResetBaseURL := os.Getenv("PASSWORD_RESET_BASE_URL")
-	//resetURL := buildPasswordResetURL(request.BaseURL, resetToken)
-	resetURL := passwordResetBaseURL + "/confirm" + "?token=" + resetToken
-	fmt.Printf("[Password Reset]\nUser: %s\nToken: %s\nURL: %s\nExpiresAt: %s\n", user.Email, resetToken, resetURL, resetTokenExpiresAt.Format(time.RFC3339))
+	resetURL := buildPasswordResetURL(passwordResetBaseURL, resetToken)
+	//resetURL := passwordResetBaseURL + "?token=" + resetToken
+	fmt.Printf(
+		"[Password Reset]\nUser: %s\nToken: %s\nURL: %s\nExpiresAt: %s\n",
+		user.Email,
+		resetToken,
+		resetURL,
+		resetTokenExpiresAt.Format(time.RFC3339),
+	)
 
 	c.JSON(http.StatusOK, genericResponse)
 }
@@ -517,11 +523,11 @@ func ConfirmPasswordReset(c *gin.Context) {
 		bson.M{
 			"$set": bson.M{
 				"password_hash": passwordHash,
-				"update_at":     now,
+				"updated_at":    now,
 			},
 			"$unset": bson.M{
-				"password_reset_token_hash":      "",
-				"pasword_reset_token_expires_at": "",
+				"password_reset_token_hash":       "",
+				"password_reset_token_expires_at": "",
 			},
 		},
 	)
@@ -559,5 +565,5 @@ func buildPasswordResetURL(baseURL string, resetToken string) string {
 		separator = "&"
 	}
 
-	return strings.TrimRight(baseURL, "/"+separator+"token="+url.QueryEscape(resetToken))
+	return strings.TrimRight(baseURL, "/") + separator + "token=" + url.QueryEscape(resetToken)
 }

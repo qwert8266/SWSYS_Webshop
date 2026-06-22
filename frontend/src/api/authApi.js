@@ -37,7 +37,7 @@ class AuthApi extends BaseApi {
   async requestPasswordReset(email) {
     return this.request("/user/password-reset/request", {
       method: "POST",
-      body: email,
+      body: { email },
       errorMessage: "Passwort-Reset konnte nicht angefordert werden.",
     });
   }
@@ -45,7 +45,7 @@ class AuthApi extends BaseApi {
   async confirmPasswordReset({token, password }) {
     return this.request("/user/password-reset/confirm", {
       method: "POST",
-      body: token, password,
+      body: { token, password },
       errorMessage: "Passwort konnte nicht zurückgesetzt werden.",
     });
   }

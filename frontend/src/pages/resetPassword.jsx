@@ -6,6 +6,7 @@ import "../App.css";
 function ResetPassword() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [successMessage, setSuccessMessage] = useState("");
+    const [isResetSuccessful, setIsResetSuccessful] = useState(false);
     const [error, setError] = useState("");
 
     // Get the One-time-Token from the URL 
@@ -54,7 +55,9 @@ function ResetPassword() {
             token,
             password: formData.password,
         });
+        
         setSuccessMessage("Dein Passwort wurde erfolgreich geändert. Du kannst dich jetzt mit deinem neuen Passwort anmelden.");
+        setIsResetSuccessful(true);
     } catch (err) {
       setError(err.message);
     } finally {

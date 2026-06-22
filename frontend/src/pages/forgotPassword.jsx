@@ -19,7 +19,7 @@ function ForgotPassword() {
 
     const trimmedEmail = email.trim().toLowerCase();
 
-    if  (EMAIL_REGEX.test(trimmedEmail)) {
+    if  (!EMAIL_REGEX.test(trimmedEmail)) {
       setError(ERROR_INVALID_EMAIL);
       return;
     }

@@ -11,7 +11,7 @@ const HideNavbar = ({ children }) => {
       '/login',
       '/register',
       '/forgot-password',
-      'reset-password'
+      '/reset-password'
     ]
 
     if (pagesWithoutNavbar.includes(location.pathname)) {
