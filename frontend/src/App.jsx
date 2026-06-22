@@ -31,9 +31,9 @@ function App() {
         <HideNavbar>
           <Navbar />
         </HideNavbar>
-
+        <CookieBanner/>
         <Routes>
-          <Route path="" element={<CookieBanner/>}/>
+          <Route path="/" element={<Home />} />
           <Route path="/home" element={<Home />} />
           <Route path="/suche" element={<SearchResults />}/>
           <Route path="/register" element={<Register />} />

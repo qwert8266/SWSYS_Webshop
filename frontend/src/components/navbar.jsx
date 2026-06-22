@@ -126,7 +126,7 @@ function handleShowAllResults() {
     <nav className="navbar navbar-expand-md bg-body-tertiary" fixed="top">
       <div className="container-fluid navbar-container">
         {/* Logo */}
-        <NavLink className="navbar-brand" to="/">
+        <NavLink className="navbar-brand" to="/home">
           <img className="navbar-logo" src="/img/nav_logo.svg" alt="logo" /> 
         </NavLink>
 
