@@ -1,6 +1,7 @@
 import React from "react";
 import { useState } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import SearchResults from "./pages/searchResults";
 import './App.css';
 
 import ProtectedRoutes from "./routes/protectedRoutes";
@@ -33,6 +34,7 @@ function App() {
 
         <Routes>
           <Route path="" element={<CookieBanner/>}/>
+          <Route path="/suche" element={<SearchResults />}/>
           <Route path="/home" element={<Home />} />
           <Route path="/register" element={<Register />} />
           <Route path="/login" element={<Login />}/>

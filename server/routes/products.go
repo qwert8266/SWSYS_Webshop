@@ -9,6 +9,7 @@ func RegisterProductRoutes(products *gin.RouterGroup) {
 
 	// retrieving products:
 	products.GET("/", handlers.GetProducts)
+	products.GET("/search", handlers.SearchProducts)
 	products.GET("/category/:category", handlers.GetProductByCategory)
 	products.GET("/:id", handlers.GetProductByID)
 
