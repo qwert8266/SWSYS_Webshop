@@ -50,6 +50,15 @@ class AuthApi extends BaseApi {
     });
   }
 
+  async changePassword(accessToken, passwordData) {
+    return this.request("/user/me/password", {
+      method: "PATCH",
+      body: passwordData,
+      accessToken,
+      errorMessage: "Passwort konnte nicht geändert werden.",
+    });
+  }
+
   // Sends a logout request to the backend
   async logout(accessToken) {
     return this.request("/user/logout", {

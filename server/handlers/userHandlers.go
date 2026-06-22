@@ -409,6 +409,74 @@ func checkIncomingData(c *gin.Context, rr models.RegisterRequest) (models.Regist
 	return rr, nil
 }
 
+func ChangeOwnPassword(c *gin.Context) {
+	claims, ok := middleware.ClaimsFromContext(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Nicht angemeldet."})
+		return
+	}
+
+	var request models.ChangePasswordRequest
+	if err := c.BindJSON(&request); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Ungültige Eingabe"})
+		return
+	}
+
+	if request.CurrentPassword == "" || request.NewPassword == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Aktuelles Passwort und neues Passwort sind erforderlich."})
+		return
+	}
+
+	if len(request.NewPassword) < 8 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Das neue Passwort muss mindestens 8 Zeichen lang sein."})
+		return
+	}
+
+	if request.CurrentPassword == request.NewPassword {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Das neue Passwort muss sich vom aktuellen Passwort unterscheiden."})
+		return
+	}
+
+	user, err := findUserByID(c, claims.UserID)
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Benutzer konnte nicht gefunden werden."})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Benutzer konnte nicht geladen werden."})
+		}
+		return
+	}
+
+	if !helpers.VerifyPassword(user.PasswordHash, request.CurrentPassword) {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Das aktuelle Password ist falsch."})
+		return
+	}
+	newPasswordHash, err := generateHash(c, request.NewPassword)
+	if err != nil {
+		return
+	}
+
+	result, err := config.UserCollection().UpdateOne(
+		c.Request.Context(),
+		bson.M{"id": claims.UserID},
+		bson.M{
+			"$set": bson.M{
+				"password_hash": newPasswordHash,
+				"updated_at":    time.Now().UTC(),
+			}},
+	)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Passwort konnte nicht geändert werden."})
+		return
+	}
+	if result.MatchedCount == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Benutzer wurde nicht gefunden"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Passwort wurde erfolgreich geändert."})
+}
+
 func RequestPasswordReset(c *gin.Context) {
 	var request models.PasswordResetRequest
 	if err := c.BindJSON(&request); err != nil {

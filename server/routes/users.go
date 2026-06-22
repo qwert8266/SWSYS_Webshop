@@ -18,6 +18,7 @@ func RegisterUserRoutes(rg *gin.RouterGroup) {
 
 	// Protected endpoint to read the currently logged-in account
 	rg.GET("/me", middleware.Authenticate(), handlers.GetCurrentUser)
+	rg.PATCH("/me/password", middleware.Authenticate(), handlers.ChangeOwnPassword)
 
 	users := rg.Group("/users")
 	{

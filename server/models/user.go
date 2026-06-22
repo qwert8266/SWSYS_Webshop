@@ -31,6 +31,11 @@ type LoginCredentials struct {
 	Password string `json:"password"`
 }
 
+type ChangePasswordRequest struct {
+	CurrentPassword string `json:"currentPassword"`
+	NewPassword     string `json:"newPassword"`
+}
+
 // PasswordResetRequest is sent when a user requests a password reset link
 type PasswordResetRequest struct {
 	Email string `json:"email"`
