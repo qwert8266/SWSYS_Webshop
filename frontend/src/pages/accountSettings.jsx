@@ -2,37 +2,12 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/authContext";
 
-import "./accountSettings.css";
+import authApi from '../api/authApi';
 import orderApi from '../api/orderApi';
 import { formatEuro } from '../utils/productHelpers';
 
+import "./accountSettings.css";
 
-/*const exampleOrders = [
-  {
-    id: "XYZ-QVW007",
-    order_date: "24.04.2026",
-    status: "Zugestellt",
-    delivery_date: "10.05.2025",
-    total: "89,80 €",
-    items: "12 Artikel"
-  },
-  {
-    id: "XYZ-QVW008",
-    order_date: "14.04.2026",
-    status: "In Bearbeitung",
-    delivery_date: "",
-    total: "89,80 €",
-    items: "1 Artikel"
-  },
-  {
-    id: "XYZ-QVW009",
-    order_date: "30.04.2026",
-    status: "Versendet",
-    delivery_date: "",
-    total: "8,80 €",
-    items: "12 Artikel"
-  }
-]*/
 
 function normalizeOrderResponse(response) {
   if (Array.isArray(response)) {
@@ -46,7 +21,6 @@ function normalizeOrderResponse(response) {
   if (Array.isArray(response.data)) {
     return response.data;
   }
-
 
   return [];
 }
@@ -76,6 +50,15 @@ function AccountSettings() {
   const [orders, setOrders] = useState([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [ordersError, setOrdersError] = useState("");
+  
+  const [passwordError, setPasswordError] = useState("");
+  const [passwordSuccess, setPasswordSuccess] = useState("");
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: "",
+    newPassword: "",
+    repeatNewPassword: "",
+  });
+
 
   const userInitial = useMemo(() => {
     return user?.email?.trim()?.charAt(0)?.toUpperCase() || "U";
@@ -125,6 +108,63 @@ function AccountSettings() {
   function handleLogout() {
     logout();
     navigate("/");
+  }
+
+  function handlePasswordInputChange(event) {
+    const { name, value } = event.target;
+
+    setPasswordForm((currentForm) => ({
+      ...currentForm,
+      [name]: value,
+    }));
+
+    setPasswordError("");
+    //setPasswordSuccess("");
+  }
+
+  async function handlePasswordSubmit(event) {
+    event.preventDefault();
+
+    const currentPassword = passwordForm.currentPassword;
+    const newPassword = passwordForm.newPassword;
+    const repeatNewPassword = passwordForm.repeatNewPassword;
+
+    //## Excaption handling ##//
+    if (!currentPassword || !newPassword || !repeatNewPassword) {
+      setPasswordError("Bitte fülle alle Passwortfelder aus.");
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      setPasswordError("Das neue Passwort muss mindestens 8 Zeichen lang sein.");
+      return;
+    }
+
+    if (currentPassword === newPassword) {
+      setPasswordError("Das neue Passwort muss sich von aktuellen Passwort unterscheiden.");
+      return;
+    }
+
+    if (newPassword !== repeatNewPassword) {
+      setPasswordError("Die neuen Passwörter stimmen nicht überein.");
+      return;
+    }
+
+    setPasswordError("");
+    
+    try {
+      const response = await authApi.changePassword(accessToken, {currentPassword, newPassword});
+
+      setPasswordForm({
+        currentPassword: "",
+        newPassword: "",
+        repeatNewPassword: "",
+      })
+      setPasswordSuccess(response?.message || "Passwort wurde erfolgreich geändert.");
+    } catch (error) {
+      setPasswordError(error.message || "Passwort konnte nicht geändert werden.");
+    } 
+
   }
   
   return (
@@ -305,40 +345,96 @@ function AccountSettings() {
               <div className="settings-section">
                 <h3>Kontoinformationen ändern</h3>
                 <p className="account-info-text">
-                  Aktualisieren  
+                  Hier kannst du deine Kontodaten aktualisieren  
                 </p>
 
                 <div className="settings-grid">
                   <label>
-                    Neue E-Mail-Adresse 
-                    <input type="email" defaultValue={/*user?.email ||*/ ""} />
+                    Lieferadresse
                   </label>
-
-                  <label></label>
-
-                  <label>
-                    Aktuelles Passwort 
-                    <input type="password" placeholder='Aktuelles Passwort' />
-                  </label>
-                  <label>
-                    Neues Passwort 
-                    <input type="password" placeholder='Neues Passwort' />
-                  </label>
-
-                  <label></label>
-
-                  <label>
-                    Neues Passwort bestätigen 
-                    <input type="password" placeholder='Passwort wiederholen' />
-                  </label>
-
-                  <button className="btn btn-primary" type="button">
-                    Kontoinformationen speichern
+                  <p></p>
+                  <p>
+                    "Kleine Gasse 15, 29188 Bremen, Deutschland"
+                  </p>
+                  <button
+                    className='btn text-primary w-25'
+                  >
+                    ändern
                   </button>
+                  
+                  
+                  <label>
+                    Neue E-Mail-Adresse 
+                    <input type="email" value={user?.email || ""} />
+                  </label>
+                </div>
+                  
+                <div className='settings-section'>
+                  <div className='account-card-header compact border-top pt-3 border-bottom-0'>
+                    <div>
+                      <h3>Password ändern</h3>
+                      <p className='account-info-text'>
+                        Gib zuerst dein aktuelles Passwort ein und lege dann ein neues fest.
+                      </p>
+                    </div>
+                  </div>
+
+                  <form className='settings-form' onSubmit={handlePasswordSubmit}>
+                    <div className='settings-grid'>
+                      <label>
+                        Aktuelles Passwort 
+                        <input 
+                          autoComplete='current-password'
+                          name="currentPassword"
+                          type="password"
+                          onChange={handlePasswordInputChange}
+                          value={passwordForm.currentPassword} 
+                          placeholder='Aktuelles Passwort' 
+                        />
+                      </label>
+
+                      <label/>
+
+                      <label>
+                        Neues Passwort 
+                        <input 
+                          autoComplete='new-password'
+                          name="newPassword"
+                          type="password" 
+                          onChange={handlePasswordInputChange}
+                          value={passwordForm.newPassword}
+                          placeholder='Neues Passwort' 
+                        />
+                      </label>
+
+                      <label>
+                        Neues Passwort bestätigen 
+                        <input 
+                          autoComplete='new-password'
+                          name="repeatNewPassword"
+                          type="password"
+                          onChange={handlePasswordInputChange}
+                          value={passwordForm.repeatNewPassword}
+                          placeholder='Passwort wiederholen' 
+                        />
+                      </label>
+                    </div>
+
+                    {passwordError && <p className='form-message error text-danger'>{passwordError}</p>}
+                    {passwordSuccess && <p className='form-message text-success'>{passwordSuccess}</p>}
+
+                    <div className='settings-action'>
+                      <button className='btn btn-primary' type="submit">
+                        Password ändern
+                      </button>
+                    </div>
+
+
+                  </form>
                 </div>
 
                 <div className="settings-section security-settings">
-                  <div className="account-card-header compact">
+                  <div className="account-card-header compact border-top pt-3 mt-4 border-bottom-0">
                     <div>
                       <h3>Sicherheitseinstellungen</h3>
                       <p className="account-info-text">

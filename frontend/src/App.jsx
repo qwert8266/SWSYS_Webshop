@@ -9,7 +9,9 @@ import ProtectedRoutes from "./routes/protectedRoutes";
 import FourOFour from "./pages/404";
 import CookieBanner from "./components/cookie_banner";
 import Register from "./pages/register";
-import Login from "./pages/login"
+import Login from "./pages/login";
+import ForgotPassword from "./pages/forgotPassword";
+import ResetPassword from "./pages/resetPassword";
 import Navbar from './components/navbar';
 import HideNavbar from './components/hideNavbar';
 import Footer from "./components/footer";
@@ -18,11 +20,9 @@ import Checkout from "./pages/checkout";
 import AccountSettings from "./pages/accountSettings";
 import Contact from "./pages/contact";
 import Category from "./pages/categories";
-//import {biere, weine,schnäpse, top_banners } from "./pages/categories"
 import Product from "./pages/product";
 import {produkte} from "./pages/product";
 import Home from './pages/home';
-//import Test from './pages/test';
 
 function App() {
   return (
@@ -38,6 +38,8 @@ function App() {
           <Route path="/suche" element={<SearchResults />}/>
           <Route path="/register" element={<Register />} />
           <Route path="/login" element={<Login />}/>
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/cart" element={<ShoppingCart />} />
           <Route path="/contact" element={<Contact/>}/>
           <Route path="/cart/checkout" element={

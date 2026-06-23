@@ -11,11 +11,14 @@ func RegisterUserRoutes(rg *gin.RouterGroup) {
 	// Authentication endpoints
 	rg.POST("/register", handlers.AddNewUser)
 	rg.POST("/login", handlers.LoginUser)
+	rg.POST("/password-reset/request", handlers.RequestPasswordReset)
+	rg.POST("/password-reset/confirm", handlers.ConfirmPasswordReset)
 	// Protected so the backend can validate the submitted Bearer token before the frontend removes it from localStorage
 	rg.POST("/logout", middleware.Authenticate(), handlers.LogoutUser)
 
 	// Protected endpoint to read the currently logged-in account
 	rg.GET("/me", middleware.Authenticate(), handlers.GetCurrentUser)
+	rg.PATCH("/me/password", middleware.Authenticate(), handlers.ChangeOwnPassword)
 
 	users := rg.Group("/users")
 	{
