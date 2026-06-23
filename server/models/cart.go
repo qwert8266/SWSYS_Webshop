@@ -17,6 +17,12 @@ type IncomingCartData struct {
 }
 
 type CartItem struct {
-	ProductID string `bson:"product_id" json:"productID"`
-	Quantity  uint32 `bson:"quantity" json:"quantity"`
+	ProductID uuid.UUID `bson:"product_id" json:"productID"`
+	Quantity  uint32    `bson:"quantity" json:"quantity"`
+}
+type CartItemError struct {
+	ProductID uuid.UUID `json:"productID"`
+	Reason    string    `json:"reason"`
+	Available uint32    `json:"available,omitempty"` // only meaningful for stock issues
+	Requested uint32    `json:"requested,omitempty"`
 }
