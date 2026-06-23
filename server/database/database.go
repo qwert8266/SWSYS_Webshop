@@ -88,3 +88,5 @@ func UserCollection() *mongo.Collection {
 func OrderCollection() *mongo.Collection {
 	return collection("orders")
 }
+
+func CartCollection() *mongo.Collection { return collection("carts") }
