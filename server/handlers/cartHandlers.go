@@ -59,9 +59,10 @@ func UpdateCart(c *gin.Context) {
 		distinctIds[item.ProductID] = struct{}{}
 	}
 
+	ids := slices.Collect(maps.Keys(distinctIds))
 	// checking db for valid ids and sufficient stock
 	cursor, err := database.ProductCollection().
-		Find(c.Request.Context(), bson.M{"product_id": bson.M{"$in": slices.Collect(maps.Keys(distinctIds))}},
+		Find(c.Request.Context(), bson.M{"product_id": bson.M{"$in": ids}},
 			options.Find().SetProjection(bson.M{"product_id": 1, "stock": 1, "_id": 0}))
 	if err != nil {
 		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -70,7 +71,7 @@ func UpdateCart(c *gin.Context) {
 
 	// parsing product info from database
 	var products []models.Product
-	if err = cursor.All(c.Request.Context(), &[]models.Product{}); err != nil {
+	if err = cursor.All(c.Request.Context(), &products); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
