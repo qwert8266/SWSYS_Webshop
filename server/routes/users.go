@@ -6,26 +6,36 @@ import (
 	"github.com/qwert8266/SWSYS_Webshop/server/middleware"
 )
 
-func RegisterUserRoutes(rg *gin.RouterGroup) {
+func RegisterUserRoutes(userRoutes *gin.RouterGroup) {
 
-	// Authentication endpoints
-	rg.POST("/register", handlers.AddNewUser)
-	rg.POST("/login", handlers.LoginUser)
-	rg.POST("/password-reset/request", handlers.RequestPasswordReset)
-	rg.POST("/password-reset/confirm", handlers.ConfirmPasswordReset)
-	// Protected so the backend can validate the submitted Bearer token before the frontend removes it from localStorage
-	rg.POST("/logout", middleware.Authenticate(), handlers.LogoutUser)
-
-	// Protected endpoint to read the currently logged-in account
-	rg.GET("/me", middleware.Authenticate(), handlers.GetCurrentUser)
-	rg.PATCH("/me/password", middleware.Authenticate(), handlers.ChangeOwnPassword)
-
-	users := rg.Group("/users")
+	// public routes which do not need authentication
+	public := userRoutes.Group("")
 	{
-		users.GET("/", handlers.GetUsers)
-		users.GET("/:id", handlers.GetUserByID)
-		users.PATCH("/:id", handlers.ModifyUser)
+		// Authentication endpoints
+		public.POST("/register", handlers.AddNewUser)
+		public.POST("/login", handlers.LoginUser)
+		public.POST("/password-reset/request", handlers.RequestPasswordReset)
+		public.POST("/password-reset/confirm", handlers.ConfirmPasswordReset)
+	}
 
-		users.DELETE("/:id", handlers.DeleteUser)
+	// protected user routes
+	protected := userRoutes.Group("")
+	protected.Use(middleware.Authenticate())
+	{
+		// Protected so the backend can validate the submitted Bearer token before the frontend removes it from localStorage
+		protected.POST("/logout", handlers.LogoutUser)
+		protected.GET("/me", handlers.GetCurrentUser)
+		protected.PATCH("/me/password", handlers.ChangeOwnPassword)
+
+		// routes modifying users are only allowed for admins
+		adminRoutes := protected.Group("")
+		adminRoutes.Use(middleware.RoleAuth("admin", "owner"))
+		{
+			adminRoutes.GET("/", handlers.GetUsers)
+			adminRoutes.GET("/:id", handlers.GetUserByID)
+			adminRoutes.PATCH("/:id", handlers.ModifyUser)
+			adminRoutes.DELETE("/:id", handlers.DeleteUser)
+			adminRoutes.PUT("/:id/role", handlers.UpdateUserRoleHandler)
+		}
 	}
 }

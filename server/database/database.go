@@ -1,13 +1,16 @@
-package config
+package database
 
 import (
 	"context"
+	"errors"
 	"log"
 	"os"
 	"strings"
 	"time"
 
 	"github.com/joho/godotenv"
+	"github.com/qwert8266/SWSYS_Webshop/server/models"
+	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
@@ -15,7 +18,7 @@ import (
 // DB contains the shared MongoDB client after main() has initialized it.
 var DB *mongo.Client
 
-// LoadEnv loading enviroment variables from .env file.
+// LoadEnv loading environment variables from .env file.
 func LoadEnv() {
 	err := godotenv.Load()
 	if err != nil {
@@ -63,8 +66,8 @@ func DisconnectDB(client *mongo.Client) {
 	}
 }
 
-// DatabaseName returns the configured MongoDB database name
-func DatabaseName() string {
+// Name DatabaseName returns the configured MongoDB database name
+func Name() string {
 	return strings.TrimSpace(os.Getenv("MONGODB_DATABASE"))
 }
 
@@ -73,13 +76,11 @@ func collection(name string) *mongo.Collection {
 	if DB == nil {
 		log.Fatal("MongoDB client is not initialized.")
 	}
-	return DB.Database(DatabaseName()).Collection(name)
+	return DB.Database(Name()).Collection(name)
 }
 
 // ProductCollection returns the products collection of the webshop database
-func ProductCollection() *mongo.Collection {
-	return collection("products")
-}
+func ProductCollection() *mongo.Collection { return collection("products") }
 
 // UserCollection returns the users collection of the webshop database
 func UserCollection() *mongo.Collection {
@@ -89,4 +90,27 @@ func UserCollection() *mongo.Collection {
 // OrderCollection returns the orders collection of the webshop database
 func OrderCollection() *mongo.Collection {
 	return collection("orders")
+}
+
+func CartCollection() *mongo.Collection { return collection("carts") }
+
+func AddOwnerIfNotExist() (string, error) {
+	result := UserCollection().FindOne(context.TODO(), bson.M{"role": "owner"})
+	if result.Err() != nil {
+		if !errors.Is(result.Err(), mongo.ErrNoDocuments) {
+			// return the error
+			return "", result.Err()
+		}
+		// if no owner exists add one
+		owner := models.CreateOwner(os.Getenv("OWNER_PASSWORD"))
+		_, err := UserCollection().InsertOne(context.TODO(), owner)
+		if err != nil {
+			return "", err
+		}
+
+		return "owner created successfully", nil
+	}
+
+	// if the owner already exists return nothing
+	return "", nil
 }

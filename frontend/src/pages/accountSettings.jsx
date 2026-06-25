@@ -107,7 +107,7 @@ function AccountSettings() {
 
   function handleLogout() {
     logout();
-    navigate("/");
+    navigate("/home");
   }
 
   function handlePasswordInputChange(event) {
