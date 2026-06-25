@@ -45,6 +45,20 @@ services:
       retries: 3
       start_period: 10s
 
+  mailpit:
+    image: axllent/mailpit
+    restart: unless-stopped
+    volumes:
+        - mailpit-data:/data
+    ports:
+        - 8025:8025   # Web-Oberfläche
+        - 1025:1025   # SMTP-Port
+    environment:
+        TZ: Europe/Berlin
+        MP_MAX_MESSAGES: 5000
+        MP_DATABASE: /data/mailpit.db
+
 volumes:
   mongo-data:
   mongo-config:
+  mailpit-data:

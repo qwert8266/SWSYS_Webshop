@@ -20,6 +20,7 @@ import (
 	"github.com/qwert8266/SWSYS_Webshop/server/helpers"
 	"github.com/qwert8266/SWSYS_Webshop/server/middleware"
 	"github.com/qwert8266/SWSYS_Webshop/server/models"
+	"github.com/qwert8266/SWSYS_Webshop/server/services"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
@@ -584,6 +585,14 @@ func RequestPasswordReset(c *gin.Context) {
 		resetURL,
 		resetTokenExpiresAt.Format(time.RFC3339),
 	)
+
+	// Password-Reset-Link per Email senden
+	if err := services.SendPasswordResetEmail(user.FirstName, user.Email, resetURL); err != nil {
+		fmt.Printf("[Password Reset Mail Error] %v\n", err)
+
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Reset-Mail konnte nicht gesendet werden"})
+		return
+	}
 
 	c.JSON(http.StatusOK, genericResponse)
 }
