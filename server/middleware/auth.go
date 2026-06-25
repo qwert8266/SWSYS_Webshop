@@ -48,14 +48,14 @@ func RoleAuth(roles ...string) gin.HandlerFunc {
 		// retrieve the token from the context
 		claims, ok := ClaimsFromContext(c)
 		if !ok {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Nicht angemeldet."})
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Nicht angemeldet."})
 			return
 		}
 
 		var user models.User
 		err := database.UserCollection().FindOne(c.Request.Context(), bson.M{"id": claims.UserID}).Decode(&user)
 		if err != nil {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Nutzer wurde nicht gefunden."})
+			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"error": "Nutzer wurde nicht gefunden."})
 			return
 		}
 
@@ -69,11 +69,9 @@ func RoleAuth(roles ...string) gin.HandlerFunc {
 		}
 
 		if !roleAllowed {
-			c.JSON(http.StatusForbidden, gin.H{"error": "Forbidden: insufficient permissions"})
-			c.Abort()
+			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "Forbidden: insufficient permissions"})
 			return
 		}
-
 		c.Next()
 	}
 }

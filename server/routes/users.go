@@ -26,7 +26,7 @@ func RegisterUserRoutes(userRoutes *gin.RouterGroup) {
 
 		// routes modifying users are only allowed for admins
 		adminRoutes := protected.Group("")
-		adminRoutes.Use(middleware.RoleAuth("admin"))
+		adminRoutes.Use(middleware.RoleAuth("admin", "owner"))
 		{
 			adminRoutes.GET("/", handlers.GetUsers)
 			adminRoutes.GET("/:id", handlers.GetUserByID)
