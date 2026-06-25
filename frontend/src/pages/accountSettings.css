@@ -292,3 +292,28 @@ div {
 .small-padding{
     padding-right: 10px;
 }
+
+
+.account-card-header.compact {
+    padding-bottom: 14px;
+    margin-bottom: 14px;
+}
+
+.account-info-text {
+    margin: 8px 0 0;
+    color: #64748b;
+    line-height: 1.5;
+}
+
+.settings-grid label {
+    display: grid;
+    gap: 8px;
+    font-weight: 700;
+}
+
+.settings-grid input {
+    width: 100%;
+    border: 1px solid #cbd5e1;
+    border-radius: 12px;
+    padding: 11px 12px;
+}

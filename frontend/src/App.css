@@ -21,7 +21,7 @@
  * Login- & Registerform *
  *************************/
 .auth-page {
-  min-height: 950px;
+  min-height: 650px;
 }
 
  .auth-page img {
@@ -86,7 +86,7 @@
 
 /********************/
 .registerform .registerform-body {
-  min-height: 600px;
+  min-height: 360px;
   text-align: left;
 }
 

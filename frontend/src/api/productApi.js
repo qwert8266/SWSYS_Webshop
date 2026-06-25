@@ -20,6 +20,11 @@ class ProductApi extends BaseApi {
   async getProductById(productId) {
     return this.request(`/products/${encodeURIComponent(productId)}`);
   }
+  async searchProducts(query) {
+  const params = new URLSearchParams({ q: query });
+
+  return this.request(`/products/search?${params.toString()}`);
+  }
 }
 
 const productApi = new ProductApi();

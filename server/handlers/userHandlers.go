@@ -1,9 +1,16 @@
 package handlers
 
 import (
+	"crypto/rand"
+	"crypto/sha256"
+	"encoding/base64"
+	"encoding/hex"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/mail"
+	"net/url"
+	"os"
 	"strings"
 	"time"
 
@@ -449,4 +456,231 @@ func UpdateUserRoleHandler(c *gin.Context) {
 	} else {
 		c.JSON(http.StatusOK, gin.H{"message": "Role updated successfully"})
 	}
+}
+
+func ChangeOwnPassword(c *gin.Context) {
+	claims, ok := middleware.ClaimsFromContext(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Nicht angemeldet."})
+		return
+	}
+
+	var request models.ChangePasswordRequest
+	if err := c.BindJSON(&request); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Ungültige Eingabe"})
+		return
+	}
+
+	if request.CurrentPassword == "" || request.NewPassword == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Aktuelles Passwort und neues Passwort sind erforderlich."})
+		return
+	}
+
+	if len(request.NewPassword) < 8 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Das neue Passwort muss mindestens 8 Zeichen lang sein."})
+		return
+	}
+
+	if request.CurrentPassword == request.NewPassword {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Das neue Passwort muss sich vom aktuellen Passwort unterscheiden."})
+		return
+	}
+
+	user, err := findUserByID(c, claims.UserID)
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Benutzer konnte nicht gefunden werden."})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Benutzer konnte nicht geladen werden."})
+		}
+		return
+	}
+
+	if !helpers.VerifyPassword(user.PasswordHash, request.CurrentPassword) {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Das aktuelle Password ist falsch."})
+		return
+	}
+	newPasswordHash, err := generateHash(c, request.NewPassword)
+	if err != nil {
+		return
+	}
+
+	result, err := config.UserCollection().UpdateOne(
+		c.Request.Context(),
+		bson.M{"id": claims.UserID},
+		bson.M{
+			"$set": bson.M{
+				"password_hash": newPasswordHash,
+				"updated_at":    time.Now().UTC(),
+			}},
+	)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Passwort konnte nicht geändert werden."})
+		return
+	}
+	if result.MatchedCount == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Benutzer wurde nicht gefunden"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Passwort wurde erfolgreich geändert."})
+}
+
+func RequestPasswordReset(c *gin.Context) {
+	var request models.PasswordResetRequest
+	if err := c.BindJSON(&request); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "E-Mail-Adresse ist erforderlich"}) //err.Error()
+		return
+	}
+
+	email := strings.TrimSpace(strings.ToLower(request.Email))
+	if email == "" || !isEmailValid(email) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Gültige E-Mail-Adresse ist erforderlich."})
+		return
+	}
+
+	genericResponse := gin.H{"message": fmt.Sprintf("Wir haben Ihnen eine E-Mail an %s mit weiteren Anweisungen gesendet. Die Zustellung kann bis zu 3 Minuten dauern. Bitte überprüfen Sie auch ihren Spam-Ordner.", request.Email)}
+
+	user, err := findUserByEmail(c, email)
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			c.JSON(http.StatusOK, genericResponse)
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Passwort zurücksetzen ist zurzeit nicht verfügbar."}) //err.Error()
+		return
+	}
+
+	resetToken, resetTokenHash, err := generatePasswordResetToken()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Reset-Token konnte nicht erzeugt werden."})
+		return
+	}
+
+	now := time.Now().UTC()
+	passwordResetTokenTTL := 30 * time.Minute
+	resetTokenExpiresAt := now.Add(passwordResetTokenTTL)
+
+	_, err = config.UserCollection().UpdateOne(
+		c.Request.Context(),
+		bson.M{"id": user.ID},
+		bson.M{"$set": bson.M{
+			"password_reset_token_hash":       resetTokenHash,
+			"password_reset_token_expires_at": resetTokenExpiresAt,
+			"updated_at":                      now,
+		}},
+	)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Reset-Token konnte nicht gespeichert werden."})
+		return
+	}
+	passwordResetBaseURL := os.Getenv("PASSWORD_RESET_BASE_URL")
+	resetURL := buildPasswordResetURL(passwordResetBaseURL, resetToken)
+	//resetURL := passwordResetBaseURL + "?token=" + resetToken
+	fmt.Printf(
+		"[Password Reset]\nUser: %s\nToken: %s\nURL: %s\nExpiresAt: %s\n",
+		user.Email,
+		resetToken,
+		resetURL,
+		resetTokenExpiresAt.Format(time.RFC3339),
+	)
+
+	c.JSON(http.StatusOK, genericResponse)
+}
+
+func ConfirmPasswordReset(c *gin.Context) {
+	var request models.PasswordResetConfirmRequest
+	if err := c.BindJSON(&request); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	resetToken := strings.TrimSpace(request.Token)
+	if resetToken == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Reset-Token erforderlich."})
+		return
+	}
+
+	if len(request.Password) < 8 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Passwort mit mindestens 8 Zeichen erforderlich."})
+		return
+	}
+
+	var user models.User
+	now := time.Now().UTC()
+	resetTokenHash := hashPasswordResetToken(resetToken)
+
+	err := config.UserCollection().FindOne(
+		c.Request.Context(),
+		bson.M{
+			"password_reset_token_hash":       resetTokenHash,
+			"password_reset_token_expires_at": bson.M{"$gt": now},
+		},
+	).Decode(&user)
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Reset-Token ist ungültig oder abgelaufen."})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	passwordHash, err := generateHash(c, request.Password)
+	if err != nil {
+		return
+	}
+
+	result, err := config.UserCollection().UpdateOne(
+		c.Request.Context(),
+		bson.M{
+			"id":                        user.ID,
+			"password_reset_token_hash": resetTokenHash,
+		},
+		bson.M{
+			"$set": bson.M{
+				"password_hash": passwordHash,
+				"updated_at":    now,
+			},
+			"$unset": bson.M{
+				"password_reset_token_hash":       "",
+				"password_reset_token_expires_at": "",
+			},
+		},
+	)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Passwort konnte nicht aktualisiert werden."})
+		return
+	}
+	if result.MatchedCount == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Reset-Token wurde bereits verwendet oder ist ungültig."})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Passwort wurde erfolgreich zurückgesetzt."})
+}
+
+func generatePasswordResetToken() (string, string, error) {
+	randomBytes := make([]byte, 32)
+	if _, err := rand.Read(randomBytes); err != nil {
+		return "", "", err
+	}
+
+	resetToken := base64.RawURLEncoding.EncodeToString(randomBytes)
+	return resetToken, hashPasswordResetToken(resetToken), nil
+}
+
+func hashPasswordResetToken(resetToken string) string {
+	hash := sha256.Sum256([]byte(resetToken))
+	return hex.EncodeToString(hash[:])
+}
+
+func buildPasswordResetURL(baseURL string, resetToken string) string {
+	baseURL = strings.TrimSpace(baseURL)
+	separator := "?"
+	if strings.Contains(baseURL, "?") {
+		separator = "&"
+	}
+
+	return strings.TrimRight(baseURL, "/") + separator + "token=" + url.QueryEscape(resetToken)
 }
