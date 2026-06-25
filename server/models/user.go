@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"golang.org/x/crypto/bcrypt"
 )
 
 // RegisterRequest matches the form fields sent by frontend/src/pages/register.jsx
@@ -106,17 +105,4 @@ func ToPublicUser(user User) PublicUser {
 	}
 }
 
-var AllowedRoles = []string{"customer", "worker", "admin", "owner"}
-
-func CreateOwner(password string) User {
-
-	passwordHash, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-
-	return User{
-		ID:   uuid.New(),
-		Role: "owner",
-
-		Email:        "owner",
-		PasswordHash: string(passwordHash),
-	}
-}
+var AllowedRoles = []string{"admin", "customer", "worker", "user"}
