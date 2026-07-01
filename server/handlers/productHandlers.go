@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -89,7 +90,7 @@ func CreateProduct(c *gin.Context) {
 	var incomingProduct models.ProductData
 
 	//parsing all incoming data
-	if err := c.BindJSON(&incomingProduct); err != nil {
+	if err := json.Unmarshal([]byte(c.PostForm("data")), &incomingProduct); err != nil {
 		c.IndentedJSON(http.StatusBadRequest, gin.H{"error parsing product data": err.Error()})
 		return
 	}
@@ -97,7 +98,6 @@ func CreateProduct(c *gin.Context) {
 	//trimming strings:
 	name := strings.TrimSpace(incomingProduct.Name)
 	description := strings.TrimSpace(incomingProduct.Description)
-	image := strings.TrimSpace(incomingProduct.Image)
 	normalizedCategory := strings.ToLower(strings.TrimSpace(incomingProduct.Category))
 
 	// creating new user and generating a new user ID.
@@ -105,7 +105,7 @@ func CreateProduct(c *gin.Context) {
 		ProductID:   uuid.New(),
 		Name:        name,
 		Description: description,
-		Image:       image,
+		Images:      incomingProduct.Images,
 		Price:       incomingProduct.Price,
 		Stock:       incomingProduct.Stock,
 		Category:    normalizedCategory,
@@ -141,14 +141,13 @@ func UpdateProduct(c *gin.Context) {
 	//trimming strings:
 	name := strings.TrimSpace(updatedProductData.Name)
 	description := strings.TrimSpace(updatedProductData.Description)
-	image := strings.TrimSpace(updatedProductData.Image)
 	normalizedCategory := strings.ToLower(strings.TrimSpace(updatedProductData.Category))
 
 	//updateOne() needs to be told how to modify the Document in the collection. (in this case using $set)
 	updatedProduct := bson.D{
 		{"$set", bson.D{{"name", name}}},
 		{"$set", bson.D{{"description", description}}},
-		{"$set", bson.D{{"image", image}}},
+		{"$set", bson.D{{"image", updatedProductData.Images}}},
 		{"$set", bson.D{{"price", updatedProductData.Price}}},
 		{"$set", bson.D{{"stock", updatedProductData.Stock}}},
 		{"$set", bson.D{{"category", normalizedCategory}}},
@@ -215,7 +214,7 @@ func ModifyStock(c *gin.Context) {
 	if operation.Value > 0 {
 		message.WriteString(fmt.Sprintf("stock amount increased by %d", operation.Value))
 	} else if operation.Value < 0 {
-		//adding a minimum stock to the filter to prevent modification if stock is insufficient
+		//adding a minimum stock to the filter to prevent modification if stock is not enough
 		filter = bson.M{
 			"product_id": productID,
 			"stock": bson.M{
@@ -264,7 +263,7 @@ func SearchProducts(c *gin.Context) {
 		return
 	}
 
-	cursor, err := config.ProductCollection().Find(
+	cursor, err := database.ProductCollection().Find(
 		c.Request.Context(),
 		bson.M{},
 	)
@@ -337,7 +336,6 @@ func productSearchScore(product models.Product, query string) (int, bool) {
 		{Value: product.Name, Penalty: 0},
 		{Value: product.Category, Penalty: 15},
 		{Value: product.Description, Penalty: 30},
-		{Value: product.Image, Penalty: 40},
 	}
 
 	bestScore := 1_000_000
@@ -509,7 +507,7 @@ func levenshteinDistance(a string, b string) int {
 				replaceCost++
 			}
 
-			currentRow[j+1] = min(insertCost, deleteCost, replaceCost)
+			currentRow[j+1] = minimum(insertCost, deleteCost, replaceCost)
 		}
 
 		previousRow, currentRow = currentRow, previousRow
@@ -518,7 +516,7 @@ func levenshteinDistance(a string, b string) int {
 	return previousRow[len(bRunes)]
 }
 
-func min(values ...int) int {
+func minimum(values ...int) int {
 	smallest := values[0]
 
 	for _, value := range values[1:] {

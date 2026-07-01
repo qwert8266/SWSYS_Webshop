@@ -5,6 +5,10 @@ services:
       dockerfile: Dockerfile
     ports:
       - "3000:3000"
+    volumes:
+      - product-images:/images/
+    networks:
+      - internal
     restart: unless-stopped
     depends_on:
       server:
@@ -16,6 +20,10 @@ services:
       dockerfile: Dockerfile
     ports:
       - "3001:3001"
+    volumes:
+      - product-images:/images/
+    networks:
+      - internal
     env_file:
       - ./server/.env
     restart: unless-stopped
@@ -37,6 +45,8 @@ services:
       - mongo-config:/data/configdb
     ports:
       - "27017:27017"
+    networks:
+      - internal
     restart: unless-stopped
     healthcheck:
       test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
@@ -51,8 +61,10 @@ services:
     volumes:
         - mailpit-data:/data
     ports:
-        - 8025:8025   # Web-Oberfläche
-        - 1025:1025   # SMTP-Port
+        - "8025:8025"   # Web-Oberfläche
+        - "1025:1025"   # SMTP-Port
+    networks:
+      - internal
     environment:
         TZ: Europe/Berlin
         MP_MAX_MESSAGES: 5000
@@ -62,3 +74,7 @@ volumes:
   mongo-data:
   mongo-config:
   mailpit-data:
+  product-images:
+
+networks:
+  internal:

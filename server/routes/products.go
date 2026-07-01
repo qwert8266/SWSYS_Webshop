@@ -19,7 +19,7 @@ func RegisterProductRoutes(productRoutes *gin.RouterGroup) {
 	protectedProductRoutes.Use(middleware.Authenticate())
 	protectedProductRoutes.Use(middleware.RoleAuth("admin", "worker", "owner"))
 	{
-		//endpoints for modifying productRoutes should only be accessible to logged in employees and be protected though middleware:
+		//endpoints for modifying productRoutes should only be accessible to logged-in employees and be protected though middleware:
 		protectedProductRoutes.POST("/", handlers.CreateProduct)
 		protectedProductRoutes.PUT("/:id", handlers.UpdateProduct)
 		protectedProductRoutes.PATCH("/:id", handlers.ModifyStock)
