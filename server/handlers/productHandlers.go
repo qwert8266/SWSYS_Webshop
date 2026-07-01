@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 	"time"
@@ -87,12 +89,38 @@ func GetProductByCategory(c *gin.Context) {
 
 // CreateProduct creates a new product and generates an uuid for it.
 func CreateProduct(c *gin.Context) {
-	var incomingProduct models.ProductData
+	newProductID := uuid.New()
 
 	//parsing all incoming data
+	form, err := c.MultipartForm()
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error retrieving form": err.Error()})
+		return
+	}
+	var incomingProduct models.ProductData
 	if err := json.Unmarshal([]byte(c.PostForm("data")), &incomingProduct); err != nil {
 		c.IndentedJSON(http.StatusBadRequest, gin.H{"error parsing product data": err.Error()})
 		return
+	}
+
+	// adding image if provided
+	images := form.File["image"]
+	var imagePaths []string
+	if images == nil {
+		for _, image := range images {
+			// if an image is provided, a new directory is created and the image is saved
+			directory := filepath.Join("/images/", newProductID.String())
+			imagePaths = append(imagePaths, directory+image.Filename)
+
+			if err = os.MkdirAll(directory, os.ModePerm); err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error creating directory": err.Error()})
+				return
+			}
+			if err = c.SaveUploadedFile(image, directory+image.Filename); err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error creating file": err.Error()})
+				return
+			}
+		}
 	}
 
 	//trimming strings:
@@ -102,10 +130,10 @@ func CreateProduct(c *gin.Context) {
 
 	// creating new user and generating a new user ID.
 	newProduct := models.Product{
-		ProductID:   uuid.New(),
+		ProductID:   newProductID,
 		Name:        name,
 		Description: description,
-		Images:      incomingProduct.Images,
+		Images:      imagePaths,
 		Price:       incomingProduct.Price,
 		Stock:       incomingProduct.Stock,
 		Category:    normalizedCategory,
@@ -147,7 +175,6 @@ func UpdateProduct(c *gin.Context) {
 	updatedProduct := bson.D{
 		{"$set", bson.D{{"name", name}}},
 		{"$set", bson.D{{"description", description}}},
-		{"$set", bson.D{{"image", updatedProductData.Images}}},
 		{"$set", bson.D{{"price", updatedProductData.Price}}},
 		{"$set", bson.D{{"stock", updatedProductData.Stock}}},
 		{"$set", bson.D{{"category", normalizedCategory}}},

@@ -19,12 +19,11 @@ type Product struct {
 }
 
 type ProductData struct {
-	Name        string   `json:"name"`
-	Description string   `json:"description"`
-	Images      []string `json:"images"`
-	Price       uint32   `json:"price"` //price is stored in Cents
-	Stock       uint32   `json:"stock"`
-	Category    string   `json:"category"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Price       uint32 `json:"price"` //price is stored in Cents
+	Stock       uint32 `json:"stock"`
+	Category    string `json:"category"`
 }
 
 type StockOperation struct {
