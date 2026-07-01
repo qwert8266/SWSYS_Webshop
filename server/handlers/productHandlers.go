@@ -110,13 +110,14 @@ func CreateProduct(c *gin.Context) {
 		for _, image := range images {
 			// if an image is provided, a new directory is created and the image is saved
 			directory := filepath.Join("/images/", newProductID.String())
-			imagePaths = append(imagePaths, directory+"_"+image.Filename)
+			dst := filepath.Join(directory, image.Filename)
+			imagePaths = append(imagePaths, dst)
 
 			if err = os.MkdirAll(directory, os.ModePerm); err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{"error creating directory": err.Error()})
 				return
 			}
-			if err = c.SaveUploadedFile(image, directory+"_"+image.Filename); err != nil {
+			if err = c.SaveUploadedFile(image, dst); err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{"error creating file": err.Error()})
 				return
 			}
