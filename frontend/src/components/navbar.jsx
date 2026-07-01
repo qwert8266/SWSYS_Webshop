@@ -9,7 +9,7 @@ import './navbar.css';
 
 function Navbar() {
   const navigate = useNavigate();
-  const { isAuthenticated, isAuthLoading } = useAuth();
+  const { isAuthenticated, isAuthLoading, user } = useAuth();
   const { totalQuantity } = useCart();
 
   const [isEmployee, setIsEmployee] = useState(false);
@@ -163,6 +163,7 @@ function Navbar() {
               {totalQuantity > 0 && <span className="cart-badge">{totalQuantity}</span>}
             </NavLink>
 
+            {user.Role === "worker" || "admin" &&
             <div className="dropdown-wrapper">
               <div
                 className="btn btn-light border navbar-icon-button cart-icon-button"
@@ -182,6 +183,7 @@ function Navbar() {
                 <NavLink to="/analysis">Analyse-Dashboard</NavLink>
               </div>
             </div>
+            }
           </div>
 
         </div>

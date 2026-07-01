@@ -183,7 +183,7 @@ func GetMyOrders(c *gin.Context) {
 
 // GetOrders returns all Orders from MongoDB
 func GetOrders(c *gin.Context) {
-	orderCollection := config.OrderCollection()
+	orderCollection := database.OrderCollection()
 
 	cursor, err := orderCollection.Find(c.Request.Context(), bson.M{})
 	if err != nil {
@@ -226,7 +226,7 @@ func UpdateOrder(c *gin.Context) {
 	//trimming strings:
 	status := strings.TrimSpace(updatedOrderData.Status)
 
-	orderCollection := config.OrderCollection()
+	orderCollection := database.OrderCollection()
 
 	result, err := orderCollection.UpdateOne(
 		c.Request.Context(),
