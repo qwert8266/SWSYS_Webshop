@@ -6,11 +6,19 @@ import (
 	"github.com/qwert8266/SWSYS_Webshop/server/middleware"
 )
 
-func RegisterOrderRoutes(rg *gin.RouterGroup) {
+func RegisterOrderRoutes(orderRoutes *gin.RouterGroup) {
 	// protected routes/endpoints that only authorized users can access
-	rg.Use(middleware.Authenticate())
-	rg.POST("/", handlers.CreateOrder)
-	rg.PUT("/:id", handlers.UpdateOrder)
-	rg.GET("/me", handlers.GetMyOrders)
-	rg.GET("/", handlers.GetOrders)
+	orderRoutes.Use(middleware.Authenticate())
+	orderRoutes.POST("/", handlers.CreateOrder)
+	orderRoutes.PUT("/:id", handlers.UpdateOrder)
+	orderRoutes.GET("/me", handlers.GetMyOrders)
+	orderRoutes.GET("/", handlers.GetOrders)
+
+	protectedOrderRoutes := orderRoutes.Group("")
+	protectedOrderRoutes.Use(middleware.RoleAuth("admin", "worker"))
+	{
+		//TODO:
+		//protectedOrderRoutes.GET("", handlers.GetAllOrders)
+		//protectedOrderRoutes.GET("", handlers.GetActiveOrders)
+	}
 }

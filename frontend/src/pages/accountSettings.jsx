@@ -124,7 +124,7 @@ function AccountSettings() {
 
   function handleLogout() {
     logout();
-    navigate("/");
+    navigate("/home");
   }
   
   return (

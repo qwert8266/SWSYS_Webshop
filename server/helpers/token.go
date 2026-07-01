@@ -31,6 +31,7 @@ const (
 type Claims struct {
 	UserID    uuid.UUID `json:"userId"`
 	Email     string    `json:"email"`
+	Role      string    `json:"role"`
 	TokenType string    `json:"tokenType"`
 	ExpiresAt int64     `json:"expiresAt"`
 	IssuedAt  int64     `json:"issuedAt"`
