@@ -6,7 +6,7 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - product-images:/images/
+      - product-images:/SWSYS_Webshop/frontend/public/img/product_images
     networks:
       - internal
     restart: unless-stopped

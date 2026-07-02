@@ -42,7 +42,7 @@ type PasswordResetRequest struct {
 	Email string `json:"email"`
 }
 
-// PasswortResetConfirmRequest is sent from the password reset page
+// PasswordResetConfirmRequest is sent from the password reset page
 type PasswordResetConfirmRequest struct {
 	Token    string `json:"token"`
 	Password string `json:"password"`

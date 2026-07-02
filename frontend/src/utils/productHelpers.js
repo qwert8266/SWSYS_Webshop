@@ -2,7 +2,7 @@
 const FALLBACK_PRODUCT_IMAGE = "becks.png";
 
 export function getProductImagePath(product) {
-  const image = product?.image || FALLBACK_PRODUCT_IMAGE;
+  const image = product?.images[0] || FALLBACK_PRODUCT_IMAGE;
 
   if (String(image).startsWith("/")) {
     return image;

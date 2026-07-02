@@ -115,7 +115,7 @@ func CreateOrder(c *gin.Context) {
 
 		reservedItems = append(reservedItems, reservedStock{ProductID: productID, Quantity: requestedItem.Quantity})
 
-		lineTotal := uint32(product.Price) * uint32(requestedItem.Quantity)
+		lineTotal := product.Price * requestedItem.Quantity
 		totalPrice += lineTotal
 		orderItems = append(orderItems, models.OrderItem{
 			ProductID:      product.ProductID,
@@ -193,7 +193,7 @@ func rollbackReservedStock(c *gin.Context, reservedItems []reservedStock) {
 			c.Request.Context(),
 			bson.M{"product_id": item.ProductID},
 			bson.M{
-				"$inc": bson.M{"stock": uint32(item.Quantity)},
+				"$inc": bson.M{"stock": item.Quantity},
 				"$set": bson.M{"updated_at": time.Now().UTC()},
 			},
 		)
