@@ -12,16 +12,6 @@ function Navbar() {
   const { isAuthenticated, isAuthLoading, user } = useAuth();
   const { totalQuantity } = useCart();
 
-  const [isEmployee, setIsEmployee] = useState(false);
-
-  useEffect(() => {
-    const roleInLocalStorage = localStorage.getItem("role");
-
-    if (roleInLocalStorage === "employee") {
-        setIsEmployee(true);
-    }
-}, []);
-
   function handleSearchButtonClick(event) {
    
   }
@@ -33,6 +23,8 @@ function Navbar() {
   //const location = useLocation();
   const categories = CATEGORY_CONFIGS;
 
+  console.log(user);
+  console.log(user?.Role);
   return (
     <nav className="navbar navbar-expand-md bg-body-tertiary" fixed="top">
       <div className="container-fluid navbar-container">
@@ -163,7 +155,7 @@ function Navbar() {
               {totalQuantity > 0 && <span className="cart-badge">{totalQuantity}</span>}
             </NavLink>
 
-            { isAuthenticated && (user?.Role === "worker" || user?.Role === "admin") &&
+            { isAuthenticated && (user?.role === "worker" || user?.role === "admin") &&
             <div className="dropdown-wrapper">
               <div
                 className="btn btn-light border navbar-icon-button cart-icon-button"

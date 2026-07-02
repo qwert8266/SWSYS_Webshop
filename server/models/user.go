@@ -73,6 +73,7 @@ type PublicUser struct {
 	CompanyName  string    `json:"companyName,omitempty"`
 	Address      Address   `json:"address"`
 	Email        string    `json:"email"`
+	Role         string    `json:"role"`
 	CreatedAt    time.Time `json:"createdAt"`
 	UpdatedAt    time.Time `json:"updatedAt"`
 }
@@ -100,6 +101,7 @@ func ToPublicUser(user User) PublicUser {
 		CompanyName:  user.CompanyName,
 		Address:      user.Address,
 		Email:        user.Email,
+		Role:         user.Role,
 		CreatedAt:    user.CreatedAt,
 		UpdatedAt:    user.UpdatedAt,
 	}
