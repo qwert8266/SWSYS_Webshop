@@ -11,6 +11,7 @@ func RegisterOrderRoutes(orderRoutes *gin.RouterGroup) {
 	orderRoutes.Use(middleware.Authenticate())
 	orderRoutes.POST("/", handlers.CreateOrder)
 	orderRoutes.GET("/me", handlers.GetMyOrders)
+	orderRoutes.POST("/:id/return-request", handlers.RequestOrderReturn)
 
 	protectedOrderRoutes := orderRoutes.Group("")
 	protectedOrderRoutes.Use(middleware.RoleAuth("admin", "worker", "owner"))

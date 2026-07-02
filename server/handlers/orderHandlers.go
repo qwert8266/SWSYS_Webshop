@@ -209,3 +209,135 @@ func normalizeOrderAddress(address models.Address) models.Address {
 		Country:     strings.TrimSpace(address.Country),
 	}
 }
+
+func RequestOrderReturn(c *gin.Context) {
+	claims, ok := middleware.ClaimsFromContext(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Nicht angemeldet."})
+		return
+	}
+
+	orderID, err := uuid.Parse(strings.TrimSpace(c.Param("id")))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Ungültige Bestellnummer."})
+		return
+	}
+
+	var request models.ReturnOrderRequest
+	if err := c.BindJSON(&request); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Rücksendedaten konnten nicht gelesen werden."})
+		return
+	}
+
+	reason := strings.TrimSpace(request.Reason)
+	message := strings.TrimSpace(request.Message)
+
+	if reason == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Bitte gib einen Rücksendegrund an."})
+		return
+	}
+
+	if len(request.Items) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Bitte wähle mindestens einen Artikel aus."})
+		return
+	}
+
+	filter := bson.M{
+		"order_id": orderID,
+		"user_id":  claims.UserID,
+	}
+
+	var order models.Order
+	if err := database.OrderCollection().FindOne(c.Request.Context(), filter).Decode(&order); err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Bestellung wurde nicht gefunden."})
+			return
+		}
+
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	if order.Status == "Rücksendung beantragt" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Für diese Bestellung wurde bereits eine Rücksendung beantragt."})
+		return
+	}
+
+	orderedQuantities := make(map[string]uint32)
+	orderedNames := make(map[string]string)
+
+	for _, item := range order.Items {
+		productID := item.ProductID.String()
+		orderedQuantities[productID] = item.Quantity
+		orderedNames[productID] = item.Name
+	}
+
+	returnItems := make([]models.ReturnRequestItem, 0, len(request.Items))
+
+	for _, item := range request.Items {
+		productID := strings.TrimSpace(item.ProductID)
+
+		if productID == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Ein Rücksendeartikel enthält keine Produkt-ID."})
+			return
+		}
+
+		maxQuantity, exists := orderedQuantities[productID]
+		if !exists {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Ein Rücksendeartikel gehört nicht zu dieser Bestellung."})
+			return
+		}
+
+		if item.Quantity == 0 || item.Quantity > maxQuantity {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Ungültige Rücksendemenge."})
+			return
+		}
+
+		name := strings.TrimSpace(item.Name)
+		if name == "" {
+			name = orderedNames[productID]
+		}
+
+		returnItems = append(returnItems, models.ReturnRequestItem{
+			ProductID: productID,
+			Name:      name,
+			Quantity:  item.Quantity,
+		})
+	}
+
+	now := time.Now().UTC()
+
+	returnRequest := models.ReturnRequest{
+		ReturnID:  uuid.New(),
+		Items:     returnItems,
+		Reason:    reason,
+		Message:   message,
+		Status:    "beantragt",
+		CreatedAt: now,
+	}
+
+	update := bson.M{
+		"$set": bson.M{
+			"status":     "Rücksendung beantragt",
+			"updated_at": now,
+		},
+		"$push": bson.M{
+			"return_requests": returnRequest,
+		},
+	}
+
+	var updatedOrder models.Order
+	err = database.OrderCollection().FindOneAndUpdate(
+		c.Request.Context(),
+		filter,
+		update,
+		options.FindOneAndUpdate().SetReturnDocument(options.After),
+	).Decode(&updatedOrder)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Rücksendung konnte nicht gespeichert werden."})
+		return
+	}
+
+	c.JSON(http.StatusOK, updatedOrder)
+}
