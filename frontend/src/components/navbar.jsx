@@ -163,7 +163,7 @@ function Navbar() {
               {totalQuantity > 0 && <span className="cart-badge">{totalQuantity}</span>}
             </NavLink>
 
-            {user.Role === "worker" || "admin" &&
+            { isAuthenticated && (user?.Role === "worker" || user?.Role === "admin") &&
             <div className="dropdown-wrapper">
               <div
                 className="btn btn-light border navbar-icon-button cart-icon-button"
