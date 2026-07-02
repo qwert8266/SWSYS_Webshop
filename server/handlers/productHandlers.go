@@ -264,7 +264,7 @@ func SearchProducts(c *gin.Context) {
 		return
 	}
 
-	cursor, err := config.ProductCollection().Find(
+	cursor, err := database.ProductCollection().Find(
 		c.Request.Context(),
 		bson.M{},
 	)

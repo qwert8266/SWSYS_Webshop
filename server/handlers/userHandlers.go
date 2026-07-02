@@ -506,7 +506,7 @@ func ChangeOwnPassword(c *gin.Context) {
 		return
 	}
 
-	result, err := config.UserCollection().UpdateOne(
+	result, err := database.UserCollection().UpdateOne(
 		c.Request.Context(),
 		bson.M{"id": claims.UserID},
 		bson.M{
@@ -562,7 +562,7 @@ func RequestPasswordReset(c *gin.Context) {
 	passwordResetTokenTTL := 30 * time.Minute
 	resetTokenExpiresAt := now.Add(passwordResetTokenTTL)
 
-	_, err = config.UserCollection().UpdateOne(
+	_, err = database.UserCollection().UpdateOne(
 		c.Request.Context(),
 		bson.M{"id": user.ID},
 		bson.M{"$set": bson.M{
@@ -619,7 +619,7 @@ func ConfirmPasswordReset(c *gin.Context) {
 	now := time.Now().UTC()
 	resetTokenHash := hashPasswordResetToken(resetToken)
 
-	err := config.UserCollection().FindOne(
+	err := database.UserCollection().FindOne(
 		c.Request.Context(),
 		bson.M{
 			"password_reset_token_hash":       resetTokenHash,
@@ -640,7 +640,7 @@ func ConfirmPasswordReset(c *gin.Context) {
 		return
 	}
 
-	result, err := config.UserCollection().UpdateOne(
+	result, err := database.UserCollection().UpdateOne(
 		c.Request.Context(),
 		bson.M{
 			"id":                        user.ID,
