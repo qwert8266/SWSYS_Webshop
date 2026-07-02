@@ -1,15 +1,10 @@
 
-
 export function totalItems(orderItems){
   let itemCount = 0;
   for (let i = 0; i < orderItems.length; i++){
     itemCount += orderItems[i].quantity;
   }
   return((itemCount.toString()) + "x")
-}
-
-export function formatDateAndTime(){
-  //TODO
 }
 
 export function formatEuro(valueInCents) {

@@ -23,8 +23,6 @@ function Navbar() {
   //const location = useLocation();
   const categories = CATEGORY_CONFIGS;
 
-  console.log(user);
-  console.log(user?.Role);
   return (
     <nav className="navbar navbar-expand-md bg-body-tertiary" fixed="top">
       <div className="container-fluid navbar-container">

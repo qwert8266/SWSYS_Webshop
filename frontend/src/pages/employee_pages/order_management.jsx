@@ -16,6 +16,8 @@ function OrderManagement(){
 
     const [openOrderID, setOpenOrderID] = useState("");
 
+    const { isAuthenticated, isAuthLoading, user } = useAuth();
+
     const [allOrders, setAllOrders] = useState([]);
     const [users, setUsers] = useState({});
     const [isLoading, setIsLoading] = useState(false);
@@ -69,9 +71,13 @@ function OrderManagement(){
                 try{
                     const usersFromDatabase = await authApi.getUsers(accessToken);
                     if (!ignoreResult) {
+                        const usersMap = {};
                         usersFromDatabase.forEach(user => {
-                            users[user.id] = user;
+                            usersMap[user.id] = user;
                         });
+                        setUsers(usersMap);
+                        console.log(usersFromDatabase);
+                        console.log(allOrders);
                     }
                 }catch(error){
                     setLoadError("Nutzer konnten nicht aus der Datenbank geladen werden.");
@@ -87,6 +93,8 @@ function OrderManagement(){
                 ignoreResult = true;
             };
         }, [accessToken]);
+
+
     return(
         <div className='d-flex flex-column align-items-center gap-5'>
             
@@ -153,7 +161,7 @@ function OrderManagement(){
                                 }
                             </div>
                             <label className='fs-5' style={{width: "380px"}}>{order.orderId}</label>
-                            {/** TODO: Name zu jeder ID raussuchen. */}
+                        
                             <label className='fs-5' style={{width: "150px"}}>
                                 {users[order.userId]?.firstName}
                                 {" "}
