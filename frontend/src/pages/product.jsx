@@ -6,6 +6,8 @@ import { useEffect, useState } from 'react';
 import productApi from '../api/productApi';
 import { getCategoryConfig } from '../utils/categoryConfig';
 import { formatEuro, normalizeProduct } from '../utils/productHelpers';
+import FavoriteButton from '../components/favoriteButton';
+import '../components/favoriteButton.css';
 
 /*export const produkte = [
   { name: "Becks", id: "001", price: "14.99", rating: 3.8, image: "becks.png", category: "bier", quantity: 0},
@@ -145,6 +147,20 @@ function Product(){
                         >
                             <img className="cart-at-product" src={`/img/cart-icon_white.png`} alt="In den Warenkorb" />
                         </button>
+                    </div>
+                    <div className="product-page-actions">
+                        <FavoriteButton
+                            productId={product.id}
+                            listType="favorite"
+                            className="with-label"
+                            showLabel
+                        />
+                        <FavoriteButton
+                            productId={product.id}
+                            listType="wishlist"
+                            className="with-label"
+                            showLabel
+                        />
                     </div>
                 </div>
             </div>

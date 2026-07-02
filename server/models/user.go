@@ -57,24 +57,29 @@ type User struct {
 
 	Role string `bson:"role" json:"role"`
 
+	FavoriteProductIDs []uuid.UUID `bson:"favorite_product_ids,omitempty" json:"favoriteProductIds"`
+	WishlistProductIDs []uuid.UUID `bson:"wishlist_product_ids,omitempty" json:"wishlistProductIds"`
+
 	CreatedAt time.Time `bson:"created_at" json:"createdAt"`
 	UpdatedAt time.Time `bson:"updated_at" json:"updatedAt"`
 }
 
 // PublicUser is the safe account representation returned to the frontend
 type PublicUser struct {
-	ID           uuid.UUID `json:"id"`
-	CustomerType string    `json:"customerType"`
-	Salutation   string    `json:"salutation"`
-	FirstName    string    `json:"firstName"`
-	LastName     string    `json:"lastname"`
-	BirthDate    string    `json:"birthDate,omitempty"`
-	Phone        string    `json:"phone,omitempty"`
-	CompanyName  string    `json:"companyName,omitempty"`
-	Address      Address   `json:"address"`
-	Email        string    `json:"email"`
-	CreatedAt    time.Time `json:"createdAt"`
-	UpdatedAt    time.Time `json:"updatedAt"`
+	ID                 uuid.UUID   `json:"id"`
+	CustomerType       string      `json:"customerType"`
+	Salutation         string      `json:"salutation"`
+	FirstName          string      `json:"firstName"`
+	LastName           string      `json:"lastname"`
+	BirthDate          string      `json:"birthDate,omitempty"`
+	Phone              string      `json:"phone,omitempty"`
+	CompanyName        string      `json:"companyName,omitempty"`
+	Address            Address     `json:"address"`
+	Email              string      `json:"email"`
+	FavoriteProductIDs []uuid.UUID `json:"favoriteProductIds"`
+	WishlistProductIDs []uuid.UUID `json:"wishlistProductIds"`
+	CreatedAt          time.Time   `json:"createdAt"`
+	UpdatedAt          time.Time   `json:"updatedAt"`
 }
 
 // AuthResponse is returned after registration and login
@@ -90,19 +95,28 @@ type AuthResponse struct {
 // ToPublicUser converts the persisted User into the safe API representation
 func ToPublicUser(user User) PublicUser {
 	return PublicUser{
-		ID:           user.ID,
-		CustomerType: user.CustomerType,
-		Salutation:   user.Salutation,
-		FirstName:    user.FirstName,
-		LastName:     user.LastName,
-		BirthDate:    user.BirthDate,
-		Phone:        user.Phone,
-		CompanyName:  user.CompanyName,
-		Address:      user.Address,
-		Email:        user.Email,
-		CreatedAt:    user.CreatedAt,
-		UpdatedAt:    user.UpdatedAt,
+		ID:                 user.ID,
+		CustomerType:       user.CustomerType,
+		Salutation:         user.Salutation,
+		FirstName:          user.FirstName,
+		LastName:           user.LastName,
+		BirthDate:          user.BirthDate,
+		Phone:              user.Phone,
+		CompanyName:        user.CompanyName,
+		Address:            user.Address,
+		Email:              user.Email,
+		FavoriteProductIDs: NormalizeProductIDs(user.FavoriteProductIDs),
+		WishlistProductIDs: NormalizeProductIDs(user.WishlistProductIDs),
+		CreatedAt:          user.CreatedAt,
+		UpdatedAt:          user.UpdatedAt,
 	}
+}
+
+func NormalizeProductIDs(ids []uuid.UUID) []uuid.UUID {
+	if ids == nil {
+		return []uuid.UUID{}
+	}
+	return ids
 }
 
 var AllowedRoles = []string{"admin", "customer", "worker", "user"}

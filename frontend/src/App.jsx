@@ -1,6 +1,6 @@
 import React from "react";
 import { useState } from "react";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import './App.css';
 
 import ProtectedRoutes from "./routes/protectedRoutes";
@@ -17,6 +17,7 @@ import Checkout from "./pages/checkout";
 import AccountSettings from "./pages/accountSettings";
 import Contact from "./pages/contact";
 import Category from "./pages/categories";
+import Sortiment from "./pages/sortiment";
 //import {biere, weine,schnäpse, top_banners } from "./pages/categories"
 import Product from "./pages/product";
 import {produkte} from "./pages/product";
@@ -49,7 +50,7 @@ function App() {
             </ProtectedRoutes>
           }/>
           
-          <Route path="/sortiment" element={<Navigate to="/sortiment/bier" replace/>}/>
+          <Route path="/sortiment" element={<Sortiment />}/>
           <Route path="/sortiment/:categorySlug" element={<Category />}/>
           <Route path="/sortiment/:categorySlug/:productId" element={<Product />}/>
           
