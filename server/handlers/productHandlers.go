@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"path/filepath"
 	"sort"
 	"strings"
 	"time"
@@ -94,11 +95,16 @@ func CreateProduct(c *gin.Context) {
 		return
 	}
 
+	validProductData, err := checkIncomingProductData(c, incomingProduct)
 	//trimming strings:
-	name := strings.TrimSpace(incomingProduct.Name)
-	description := strings.TrimSpace(incomingProduct.Description)
-	image := strings.TrimSpace(incomingProduct.Image)
-	normalizedCategory := strings.ToLower(strings.TrimSpace(incomingProduct.Category))
+	name := strings.TrimSpace(validProductData.Name)
+	description := strings.TrimSpace(validProductData.Description)
+	image := strings.TrimSpace(validProductData.Image)
+	normalizedCategory := strings.ToLower(strings.TrimSpace(validProductData.Category))
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 
 	// creating new user and generating a new user ID.
 	newProduct := models.Product{
@@ -185,6 +191,36 @@ func DeleteProduct(c *gin.Context) {
 	} else {
 		c.IndentedJSON(http.StatusNoContent, gin.H{"message": "product deleted"})
 	}
+}
+
+// category combobox
+func checkIncomingProductData(c *gin.Context, pd models.ProductData) (models.ProductData, error) {
+	if pd.Name == "" {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Name ungültig"})
+		return pd, errors.New("name invalid")
+	}
+
+	if ext := strings.ToLower(filepath.Ext(pd.Image)); ext != ".png" && ext != ".jpg" && ext != ".jpeg" {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Image ungültig"})
+		return pd, errors.New("image invalid")
+	}
+
+	if pd.Price <= 0 {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Preis ungültig"})
+		return pd, errors.New("price invalid")
+	}
+
+	if pd.Stock < 0 {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Stock ungültig"})
+		return pd, errors.New("stock invalid")
+	}
+
+	if pd.Category == "" {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Kategorie ungültig"})
+		return pd, errors.New("category invalid")
+	}
+
+	return pd, nil
 }
 
 // ModifyStock is used to increase or decrease the stock of the specified product
