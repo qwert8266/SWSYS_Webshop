@@ -68,42 +68,47 @@ function Login(){
       <form className="registerform card shadow-sm border-0" onSubmit={handleLogin}>
          <hr className="my-2" /> {/* Trennlinie */}
             <h3 className="h5 mb-3">Wilkommen zurück!</h3>
+            {error && <p className="auth-error">{error}</p>}
 
             <div className="row align-items-center mb-3">
-        <label className="col-sm-2 col-form-label">
-            E-Mail
-        </label>
+                <label className="col-sm-2 col-form-label">
+                    E-Mail
+                </label>
 
-        <div className="col-sm-9">
-            <input
-            className="form-control"
-            type="email"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            autoComplete="email"
-            placeholder="schmidt@t-online.de"
-            />
-        </div>
+                <div className="col-sm-9">
+                    <input
+                    className="form-control"
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    autoComplete="email"
+                    placeholder="schmidt@t-online.de"
+                    />
+                </div>
+            </div>
+
+        <div className="row align-items-center mb-0">
+            <label className="col-sm-2 col-form-label">
+                Passwort
+            </label>
+
+            <div className="col-sm-9">
+                <input
+                className="form-control"
+                type="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                autoComplete="current-password"
+                minLength={8}
+                />
+            </div>
         </div>
 
-        <div className="row align-items-center mb-3">
-        <label className="col-sm-2 col-form-label">
-            Passwort
-        </label>
-
-        <div className="col-sm-9">
-            <input
-            className="form-control"
-            type="password"
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
-            autoComplete="current-password"
-            minLength={8}
-            />
-        </div>
-        </div>
+        <p className="mb-3">
+            <Link to="/forgot-password">Passwort vergessen?</Link>
+        </p>
 
         <button 
             className="btn btn-primary btn-lg submit-register-btn" 

@@ -15,6 +15,7 @@ type Order struct {
 	PaymentMethod   string      `bson:"payment_method" json:"paymentMethod"`
 	Status          string      `bson:"status" json:"status"`
 	TotalPrice      uint32      `bson:"total_price" json:"totalPrice"`
+	ReturnRequests  []ReturnRequest `bson:"return_requests,omitempty" json:"returnRequests,omitempty"`
 	CreatedAt       time.Time   `bson:"created_at" json:"createdAt"`
 	UpdatedAt       time.Time   `bson:"updated_at" json:"updatedAt"`
 }
@@ -39,4 +40,25 @@ type CreateOrderRequest struct {
 type CreateOrderItemRequest struct {
 	ProductID string `json:"product_id"`
 	Quantity  uint32 `json:"quantity"`
+}
+
+type ReturnOrderRequest struct {
+	Reason  string              `json:"reason"`
+	Message string              `json:"message"`
+	Items   []ReturnRequestItem `json:"items"`
+}
+
+type ReturnRequest struct {
+	ReturnID  uuid.UUID           `bson:"return_id" json:"returnId"`
+	Items     []ReturnRequestItem `bson:"items" json:"items"`
+	Reason    string              `bson:"reason" json:"reason"`
+	Message   string              `bson:"message" json:"message"`
+	Status    string              `bson:"status" json:"status"`
+	CreatedAt time.Time           `bson:"created_at" json:"createdAt"`
+}
+
+type ReturnRequestItem struct {
+	ProductID string `bson:"product_id" json:"productId"`
+	Name      string `bson:"name" json:"name"`
+	Quantity  uint32 `bson:"quantity" json:"quantity"`
 }

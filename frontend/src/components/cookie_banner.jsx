@@ -52,7 +52,6 @@ useEffect(() => {
                     </div>
                 </div>
             )}
-            <div>Homeseite</div>
         </>
     )
 }

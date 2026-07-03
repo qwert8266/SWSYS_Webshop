@@ -46,6 +46,15 @@ class OrderApi extends BaseApi {
     });
   }
 
+
+  async requestReturn(orderId, returnData, accessToken) {
+  return this.request(`/order/${encodeURIComponent(orderId)}/return-request`, {
+    method: "POST",
+    body: returnData,
+    accessToken,
+    errorMessage: "Rücksendung konnte nicht beantragt werden.",
+  });
+}
 }
 
 

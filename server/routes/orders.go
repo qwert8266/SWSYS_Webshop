@@ -12,6 +12,7 @@ func RegisterOrderRoutes(orderRoutes *gin.RouterGroup) {
 	orderRoutes.POST("/", handlers.CreateOrder)
 	orderRoutes.PUT("/:id", handlers.UpdateOrder)
 	orderRoutes.GET("/me", handlers.GetMyOrders)
+	orderRoutes.POST("/:id/return-request", handlers.RequestOrderReturn)
 	orderRoutes.GET("/", handlers.GetOrders)
 
 	protectedOrderRoutes := orderRoutes.Group("")

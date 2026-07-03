@@ -44,6 +44,11 @@ class ProductApi extends BaseApi {
       errorMessage: "Produkt konnte nicht gelöscht werden.",
     });
   }
+  async searchProducts(query) {
+  const params = new URLSearchParams({ q: query });
+
+  return this.request(`/products/search?${params.toString()}`);
+  }
 }
 
 const productApi = new ProductApi();
