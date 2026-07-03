@@ -6,6 +6,9 @@ import './App.css';
 
 import ProtectedRoutes from "./routes/protectedRoutes";
 
+import ProductManagement from "./pages/employee_pages/product_management";
+import OrderManagement from "./pages/employee_pages/order_management";
+
 import FourOFour from "./pages/404";
 import CookieBanner from "./components/cookie_banner";
 import Register from "./pages/register";
@@ -52,6 +55,18 @@ function App() {
               <AccountSettings/>
             </ProtectedRoutes>
           }/>
+
+          <Route path="product_management" element={
+            <ProtectedRoutes>
+              <ProductManagement/>
+            </ProtectedRoutes>
+          }/>
+
+          <Route path="order_management" element={
+            <ProtectedRoutes>
+              <OrderManagement/>
+            </ProtectedRoutes>
+          }/>
           
           <Route path="/sortiment" element={<Navigate to="/sortiment/bier" replace/>}/>
           <Route path="/sortiment/:categorySlug" element={<Category />}/>
@@ -62,7 +77,7 @@ function App() {
           <Route path="/wein" element={<Category category="wein" />} />
           <Route path="/schnaps" element={<Category category="schnaps" />} />
           <Route path="/:category/:productName"  element={<Product />} />
-
+          
           <Route path="*" element={<FourOFour />}/>
 
         </Routes>

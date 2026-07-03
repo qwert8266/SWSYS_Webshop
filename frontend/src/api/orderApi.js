@@ -31,6 +31,22 @@ class OrderApi extends BaseApi {
     });
   }
 
+  async updateOrder(orderData, accessToken) {
+    return this.request(`/order/${orderData.orderId}`, {
+      method: "PUT",
+      body: orderData,accessToken,
+      errorMessage: "Bestellung konnte nicht bearbeitet werden. Bitte versuche es erneut.",
+    });
+  }
+
+  async getAllOrders(accessToken) {
+    return this.request("/order/", {
+      method: "GET",
+      accessToken
+    });
+  }
+
+
   async requestReturn(orderId, returnData, accessToken) {
   return this.request(`/order/${encodeURIComponent(orderId)}/return-request`, {
     method: "POST",

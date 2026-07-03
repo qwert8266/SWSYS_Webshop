@@ -24,7 +24,15 @@ services:
         condition: service_healthy
     healthcheck:
       # CMD format for health check command
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://0.0.0.0:3001/health"]
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://0.0.0.0:3001/health",
+        ]
       interval: 10s
       timeout: 10s
       retries: 3
@@ -49,14 +57,14 @@ services:
     image: axllent/mailpit
     restart: unless-stopped
     volumes:
-        - mailpit-data:/data
+      - mailpit-data:/data
     ports:
-        - 8025:8025   # Web-Oberfläche
-        - 1025:1025   # SMTP-Port
+      - 8025:8025 # Web-Oberfläche
+      - 1025:1025 # SMTP-Port
     environment:
-        TZ: Europe/Berlin
-        MP_MAX_MESSAGES: 5000
-        MP_DATABASE: /data/mailpit.db
+      TZ: Europe/Berlin
+      MP_MAX_MESSAGES: 5000
+      MP_DATABASE: /data/mailpit.db
 
 volumes:
   mongo-data:

@@ -70,7 +70,6 @@ export class BaseApi {
     if (accessToken) {
       requestHeaders.Authorization = `Bearer ${accessToken}`;
     }
-
     return requestHeaders;
   }
 

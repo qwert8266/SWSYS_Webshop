@@ -451,7 +451,7 @@ func UpdateUserRoleHandler(c *gin.Context) {
 	update := bson.M{"$set": bson.M{"role": roleUpdate.Role}}
 
 	if result, err := userCollection.UpdateOne(c.Request.Context(), bson.M{"id": userID}, update); err != nil {
-		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error updating product": err.Error()})
+		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error updating user": err.Error()})
 	} else if result.MatchedCount == 0 {
 		c.IndentedJSON(http.StatusNotFound, gin.H{"message": "user not found"})
 	} else {
