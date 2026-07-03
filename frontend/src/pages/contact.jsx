@@ -46,6 +46,39 @@ function Contact(){
                             </select>
                         </div>
 
+                        {reasonForContact === "Großbestellung" &&
+                        <div className='großbestellung_container'>
+                            <label className='blue_text_long'>Ausgewählte Produkte</label>
+                            <div className='added_product_container'>
+                                <div className='added_product'>
+                                    <label> 6x Becks</label>
+                                    <label> 6x19.99€</label>
+                                    <label> 120.00€</label>
+                                </div>
+                            </div>
+                            <div className='search_container'>
+                                <div className='search_wrapper'>
+                                    <input  className="search_input" 
+                                            type="text" 
+                                            placeholder='Produkte suchen...'
+                                            value={search}
+                                            onChange={(e)=>setSearch(e.target.value)}/>
+                                    {search && (
+                                        <div className="suggestions">
+                                            {suggestions.map(product => (
+                                                <div key={product.id} onClick={()=>setSearch(product.name)}>
+                                                    {product.name}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                                <input className="search_input_count" type="text" placeholder='Anzahl'/>
+                                <button className='addButton'>+</button>
+                            </div>
+                        </div>
+                        }
+
                         <div className='beschreibung_div'>
                             <label className='blue_text'>Beschreibung</label>
                             <textarea className="input_beschreibung" placeholder='Tragen Sie hier Ihr Anliegen ein...'/>
@@ -77,38 +110,7 @@ function Contact(){
                             </div>
                         }
 
-                        {reasonForContact === "Großbestellung" &&
-                        <div className='großbestellung_container'>
-                            <label className='blue_text_long'>Ausgewählte Produkte</label>
-                            <div className='added_product_container'>
-                                <div className='added_product'>
-                                    <label> 6x Becks</label>
-                                    <label> 6x19.99E</label>
-                                    <label> 120.00E</label>
-                                </div>
-                            </div>
-                            <div className='search_container'>
-                                <div className='search_wrapper'>
-                                    <input  className="search_input" 
-                                            type="text" 
-                                            placeholder='Produkte suchen...'
-                                            value={search}
-                                            onChange={(e)=>setSearch(e.target.value)}/>
-                                    {search && (
-                                        <div className="suggestions">
-                                            {suggestions.map(product => (
-                                                <div key={product.id} onClick={()=>setSearch(product.name)}>
-                                                    {product.name}
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-                                <input className="search_input_count" type="text" placeholder='Anzahl'/>
-                                <button className='addButton'>+</button>
-                            </div>
-                        </div>
-                        }
+                        
                         <div>
                             <button className='blue_button' onClick={()=>{setSentFrom(true)}}>Jetzt abschicken</button>
                         </div>
@@ -118,7 +120,7 @@ function Contact(){
             </div>
             <div>
         {sentForm &&
-            <div className='successful_order2'>
+            <div className='successful_order2 pb-5'>
                 {reasonForContact === "Karriere" &&
                 <div className='sentIt'>
                     <label className='success_label2'>Vielen Dank für Ihre Bewerbung!</label>
@@ -137,9 +139,11 @@ function Contact(){
                     <label className='success_label_minor2'>Bei Rückfragen werden wir uns bei dir melden.</label>
                 </div>
                 }
-                <NavLink to="/home">
-                    <button className='success_button' >Zurück zu unseren Produkten</button>
-                </NavLink>
+                <div className='sentIt'>
+                    <NavLink to="/home">
+                        <button className='success_button' >Zurück zu unseren Produkten</button>
+                    </NavLink>
+                </div>
             </div>
         }
         </div>
