@@ -24,6 +24,56 @@ function Contact(){
 
     const[reasonForContact, setReasonForContact] = useState("");
     const[sentForm, setSentFrom] = useState(false)
+    const[triedToSend, setTriedToSend] = useState(false)
+
+    const [formData, setFormData] = useState({
+    description: "",
+    email: "",
+    phone: "",
+    });
+
+    const handleChange = (event) => {
+        const { name, value } = event.target;
+
+        setFormData({
+        ...formData,
+        [name]: value
+        });
+    };
+
+    async function handleSubmit(formData) {
+    
+        let hasErrors = false;
+
+        if(reasonForContact === ""){
+            hasErrors = true;
+        }
+
+        if(formData.description === ""){
+            hasErrors = true;
+        }
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if(!emailRegex.test(formData.email)){
+            hasErrors = true;
+        }
+        if(formData.phone.length < 11){
+            hasErrors = true;
+        }
+
+        if(hasErrors){
+            setTriedToSend(true)
+            setTimeout(() => {
+                setTriedToSend(false);
+            }, 5000)
+            
+        }else{
+            setSentFrom(true)
+        }
+
+        
+        
+    }
 
 
     return(
@@ -81,19 +131,19 @@ function Contact(){
 
                         <div className='beschreibung_div'>
                             <label className='blue_text'>Beschreibung</label>
-                            <textarea className="input_beschreibung" placeholder='Tragen Sie hier Ihr Anliegen ein...'/>
+                            <textarea className="input_beschreibung" placeholder='Tragen Sie hier Ihr Anliegen ein...' name="description" onChange={handleChange}/>
                         </div>
 
                         <div className='contact_info'>
                             <label className='blue_text'>Kontakt</label>
                             <div className='align_left'>
                                 <label className='blue_text'>Email</label>
-                                <input className="inputs" placeholder='example@mail.com'/>
+                                <input className="inputs" placeholder='example@mail.com' name="email" onChange={handleChange}/>
                             </div>
 
                             <div className='align_left'>
                                 <label className='blue_text'>Telefonnummer</label>
-                                <input className="inputs" placeholder='0173 1234567'/>
+                                <input className="inputs" placeholder='0173 1234567' name="phone" onChange={handleChange}/>
                             </div>
                         </div>
                         {reasonForContact === "Karriere" &&
@@ -109,10 +159,15 @@ function Contact(){
                                 </div>
                             </div>
                         }
-
+                        {triedToSend &&
+                        <div className="d-flex flex-column border rounded align-items-center justify-content-center " style={{height: "80px", width:"100%", alignItems: 'center', backgroundColor: 'red', color: 'white'}}>
+                            <label className='fs-3'>Das hat leider nicht geklappt.</label>
+                            <label className='fs-3'>Bitte überprüfen sie Ihre Eingaben.</label>
+                        </div>
+                        }
                         
                         <div>
-                            <button className='blue_button' onClick={()=>{setSentFrom(true)}}>Jetzt abschicken</button>
+                            <button className='blue_button' onClick={()=>{handleSubmit(formData)}}>Jetzt abschicken</button>
                         </div>
                     </div>
                 </div>

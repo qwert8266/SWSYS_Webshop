@@ -18,6 +18,7 @@ function ProductManagement({ category: fixedCategory }){
     const [showSuccessCreateLabel, setShowSuccessCreateLabel] = useState(false);
     const [showSuccessModifyLabel, setShowSuccessModifyLabel] = useState(false);
     const [showSuccessDeleteLabel, setShowSuccessDeleteLabel] = useState(false);
+    const [showNotSuccessfulLabel, setShowNotSuccessfulLabel] = useState(false);
 
     const [productToDelete, setProductToDelete] = useState(null);
     const [showAreYouSureDialog, setShowAreYouSureDialog] = useState(false);
@@ -70,7 +71,16 @@ function ProductManagement({ category: fixedCategory }){
     };
 
     const handleCreateProduct = async () => {
-        await createProduct(productData, accessToken);
+        try{
+            await createProduct(productData, accessToken);
+        }catch{
+            setShowNotSuccessfulLabel(true)
+            setTimeout(() => {
+            setShowNotSuccessfulLabel(false);
+            }, 5000)
+            return
+        }
+        
         setShowSuccessCreateLabel(true);
 
         setTimeout(() => {
@@ -79,7 +89,16 @@ function ProductManagement({ category: fixedCategory }){
     }
 
     const handleUpdateProduct = async () => {
-        await updateProduct(productDataModify, accessToken)
+        try{
+            await updateProduct(productDataModify, accessToken)
+        }catch{
+            setShowNotSuccessfulLabel(true)
+            setTimeout(() => {
+            setShowNotSuccessfulLabel(false);
+            }, 5000)
+            return
+        }
+        
         setShowSuccessModifyLabel(true);
 
         setTimeout(() => {
@@ -88,7 +107,16 @@ function ProductManagement({ category: fixedCategory }){
     }
 
     const handleDeleteProduct = async (productID) => {
-        await deleteProduct(productID, accessToken)
+        try{
+            await deleteProduct(productID, accessToken)
+        }catch{
+           setShowNotSuccessfulLabel(true)
+            setTimeout(() => {
+            setShowNotSuccessfulLabel(false);
+            }, 5000)
+            return 
+        }
+    
         setShowSuccessDeleteLabel(true);
 
         setTimeout(() => {
@@ -139,26 +167,38 @@ function ProductManagement({ category: fixedCategory }){
                     Hinzufügen, bearbeiten oder entfernen von Produkten.
                 </div>
                 {!clickedAddProductButton &&
-                <button className="btn text-white fs-5 align-self-center" style={{ backgroundColor: "#15406e" }} onClick={() => setClickedAddProductButton(true)}>Produkt hinzufügen</button>
-                }
-                <div style={{height: "80px",width: "40%"}}>
-                    {showSuccessCreateLabel &&
-                        <div className="d-flex border rounded align-items-center justify-content-center " style={{height: "80px", width:"100%", alignItems: 'center', backgroundColor: 'green', color: 'white'}}>
-                            <label className='fs-3'>Produkt hinzugefügt. Fürs Anzeigen bitte Seite neu laden.</label>
-                        </div>
-                    }
-                    {showSuccessModifyLabel &&
-                        <div className="d-flex border rounded align-items-center justify-content-center " style={{height: "80px", width:"100%", alignItems: 'center', backgroundColor: 'green', color: 'white'}}>
-                            <label className='fs-3'>Produkt angepasst. Fürs Anzeigen bitte Seite neu laden.</label>
-                        </div>
-                    }
-
-                    {showSuccessDeleteLabel &&
-                        <div className="d-flex border rounded align-items-center justify-content-center " style={{height: "80px", width:"100%", alignItems: 'center', backgroundColor: 'green', color: 'white'}}>
-                            <label className='fs-3'>Produkt gelöscht. Fürs Anzeigen bitte Seite neu laden.</label>
-                        </div>
-                    }
+                <div className="d-flex flex-column align-items-center" style={{width: "600px"}}>
+                    <div className='pb-5'>
+                        <button className="btn text-white fs-5 align-self-center" style={{ backgroundColor: "#15406e" }} onClick={() => setClickedAddProductButton(true)}>Produkt hinzufügen</button>
+                    </div>
+                    <div style={{height: "80px",width: "100%"}}>
+                        {showSuccessCreateLabel &&
+                            <div className="d-flex flex-column border rounded align-items-center justify-content-center " style={{height: "80px", width:"100%", alignItems: 'center', backgroundColor: 'green', color: 'white'}}>
+                                <label className='fs-3'>Produkt hinzugefügt.</label>
+                                <label className='fs-3'>Fürs Anzeigen bitte Seite neu laden.</label>
+                            </div>
+                        }
+                        {showSuccessModifyLabel &&
+                            <div className="d-flex flex-column border rounded align-items-center justify-content-center " style={{height: "80px", width:"100%", alignItems: 'center', backgroundColor: 'green', color: 'white'}}>
+                                <label className='fs-3'>Produkt angepasst.</label>
+                                <label className='fs-3'>Fürs Anzeigen bitte Seite neu laden.</label>
+                            </div>
+                        }
+                        {showSuccessDeleteLabel &&
+                            <div className="d-flex flex-column border rounded align-items-center justify-content-center " style={{height: "80px", width:"100%", alignItems: 'center', backgroundColor: 'green', color: 'white'}}>
+                                <label className='fs-3'>Produkt gelöscht.</label>
+                                <label className='fs-3'>Fürs Anzeigen bitte Seite neu laden.</label>
+                            </div>
+                        }
+                        {showNotSuccessfulLabel &&
+                            <div className="d-flex flex-column border rounded align-items-center justify-content-center " style={{height: "80px", width:"100%", alignItems: 'center', backgroundColor: 'red', color: 'white'}}>
+                                <label className='fs-3'>Es gab einen Fehler.</label>
+                                <label className='fs-3'>Bitte Eingaben prüfen!</label>
+                            </div>
+                        }
+                    </div>
                 </div>
+                }
             </div>
             {isLoading && <p className="category-info">Produkte werden geladen...</p>}
             {loadError && <p className='category-info text-danger'>{loadError}</p>}
@@ -168,7 +208,7 @@ function ProductManagement({ category: fixedCategory }){
             )}
 
             {clickedAddProductButton &&
-            <div className='d-flex justify-content-center'>
+            <div className='d-flex justify-content-center pb-5'>
                 <div className='d-flex flex-column align-items-center border rounded pt-2 w-50'>
                     <div className='d-flex flex-row align-items-center pb-2'>
                         <label className='fs-5 me-3' style={{ width: "150px" }}>Produktname</label>
@@ -192,7 +232,17 @@ function ProductManagement({ category: fixedCategory }){
                     </div>
                     <div className='d-flex flex-row align-items-center pb-2'>
                         <label className='fs-5 me-3' style={{ width: "150px" }}>Kategorie</label>
-                        <input className='fs-5 border rounded ' type="text" placeholder='Kategorie' name='category' value={productData.category} onChange={handleChange}/>
+                        <select className="fs-5 border rounded" style={{ width: "230px" }} placeholder='Kategorie' name='category' value={productData.category} onChange={handleChange}>
+                            <option value="">Kategorie auswählen</option>
+                            <option value="bier">Bier</option>
+                            <option value="wein">Wein & Sekt</option>
+                            <option value="schnaps">Spirituosen</option>
+                            <option value="softdrinks">Softgetränke</option>
+                            <option value="wasser">Wasser</option>
+                            <option value="kaffe-tee">Kaffee & Tee</option>
+                        </select>
+
+                        {/**<input className='fs-5 border rounded ' type="text" placeholder='Kategorie' name='category' value={productData.category} onChange={handleChange}/>*/}
                     </div>
                     
                     <div className='pb-2'>
@@ -203,7 +253,7 @@ function ProductManagement({ category: fixedCategory }){
             <div className="d-flex flex-column align-items-center">
                 <div className="d-flex flex-column align-items-center w-75">
                     {/* Suchleiste */}
-                    <div className="navbar-search-shadow">
+                    <div className="navbar-search-shadow pb-3">
                         <form
                             className="navbar-search"
                             role="search"
@@ -345,7 +395,7 @@ function ProductManagement({ category: fixedCategory }){
                     </div>
                     <div className='d-flex flex-row align-items-center pb-2'>
                         <label className='fs-5 me-3' style={{ width: "150px" }}>Preis</label>
-                        <input className='fs-5 border rounded ' type="text" placeholder='Preis(in Cent)' name='price' defaultValue={productToModify.price} onChange={handleChange2}/>
+                        <input className='fs-5 border rounded ' type="text" placeholder='Preis(in Cent)' name='price' defaultValue={productToModify.price*100} onChange={handleChange2}/>
                     </div>
                     <div className='d-flex flex-row align-items-center pb-2'>
                         <label className='fs-5 me-3' style={{ width: "150px" }}>Stock</label>
