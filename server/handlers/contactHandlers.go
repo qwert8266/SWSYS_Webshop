@@ -51,6 +51,10 @@ func SubmitContactRequest(c *gin.Context) {
 	}
 
 	// Kontaktanfrage in der Datenbank speichern
+	if _, err := config.ContactRequestCollection().InsertOne(c.Request.Context(), contactRequest); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Kontaktanfrage konnte nicht gespeichert werden."})
+		return
+	}
 
 	if err := services.SendContactRequestEmployeeEmail(contactRequest); err != nil {
 		log.Printf("Mitarbeiter-Email für %s konnte nicht gesendet werden: %v", referenceNumber, err)
@@ -153,4 +157,22 @@ func contactNameFrom(user models.User) string {
 		return companyName
 	}
 	return ""
+}
+
+func GetContactRequests(c *gin.Context) {
+	contactRequestCollection := config.ContactRequestCollection()
+
+	cursor, err := contactRequestCollection.Find(c.Request.Context(), bson.M{})
+	if err != nil {
+		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	var contactRequests []models.ContactRequest
+
+	if err = cursor.All(c.Request.Context(), &contactRequests); err != nil {
+		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.IndentedJSON(http.StatusOK, contactRequests)
 }

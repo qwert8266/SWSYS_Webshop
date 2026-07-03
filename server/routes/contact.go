@@ -7,4 +7,5 @@ import (
 
 func RegisterContactRoutes(rg *gin.RouterGroup) {
 	rg.POST("", handlers.SubmitContactRequest)
+	rg.GET("", handlers.GetContactRequests)
 }
