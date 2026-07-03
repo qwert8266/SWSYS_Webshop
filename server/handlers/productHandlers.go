@@ -144,11 +144,12 @@ func UpdateProduct(c *gin.Context) {
 		return
 	}
 
+	validProductData, err := checkIncomingProductData(c, updatedProductData)
 	//trimming strings:
-	name := strings.TrimSpace(updatedProductData.Name)
-	description := strings.TrimSpace(updatedProductData.Description)
-	image := strings.TrimSpace(updatedProductData.Image)
-	normalizedCategory := strings.ToLower(strings.TrimSpace(updatedProductData.Category))
+	name := strings.TrimSpace(validProductData.Name)
+	description := strings.TrimSpace(validProductData.Description)
+	image := strings.TrimSpace(validProductData.Image)
+	normalizedCategory := strings.ToLower(strings.TrimSpace(validProductData.Category))
 
 	//updateOne() needs to be told how to modify the Document in the collection. (in this case using $set)
 	updatedProduct := bson.D{
@@ -193,7 +194,6 @@ func DeleteProduct(c *gin.Context) {
 	}
 }
 
-// category combobox
 func checkIncomingProductData(c *gin.Context, pd models.ProductData) (models.ProductData, error) {
 	if pd.Name == "" {
 		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Name ungültig"})
