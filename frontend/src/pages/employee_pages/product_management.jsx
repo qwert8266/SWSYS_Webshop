@@ -1,6 +1,7 @@
 import { NavLink, useParams } from 'react-router-dom';
 import '../categories.css';
 import { useState, useEffect } from 'react';
+import { useAuth } from "../../context/authContext";
 
 import productApi from "../../api/productApi";
 import { useProd } from "../../context/productContext";
@@ -25,6 +26,7 @@ function ProductManagement({ category: fixedCategory }){
     const [showModifyWindow, setShowModifyWindow] = useState(false);
 
     const { createProduct,updateProduct,deleteProduct,getProducts } = useProd();
+    const { user, accessToken, logout } = useAuth();
 
     const [productData, setProductData] = useState({
         id: 0,
@@ -46,6 +48,7 @@ function ProductManagement({ category: fixedCategory }){
         category: "",
     });
 
+    
     const handleChange = (event) => {
     const { name, value } = event.target;
 
@@ -67,7 +70,7 @@ function ProductManagement({ category: fixedCategory }){
     };
 
     const handleCreateProduct = async () => {
-        await createProduct(productData);
+        await createProduct(productData, accessToken);
         setShowSuccessCreateLabel(true);
 
         setTimeout(() => {
@@ -76,7 +79,7 @@ function ProductManagement({ category: fixedCategory }){
     }
 
     const handleUpdateProduct = async () => {
-        await updateProduct(productDataModify)
+        await updateProduct(productDataModify, accessToken)
         setShowSuccessModifyLabel(true);
 
         setTimeout(() => {
@@ -85,7 +88,7 @@ function ProductManagement({ category: fixedCategory }){
     }
 
     const handleDeleteProduct = async (productID) => {
-        await deleteProduct(productID)
+        await deleteProduct(productID, accessToken)
         setShowSuccessDeleteLabel(true);
 
         setTimeout(() => {

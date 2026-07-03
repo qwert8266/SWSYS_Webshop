@@ -21,26 +21,26 @@ class ProductApi extends BaseApi {
     return this.request(`/products/${encodeURIComponent(productId)}`);
   }
 
-  async createProduct(productData) {
+  async createProduct(productData,accessToken) {
     return this.request("/products/product_management", {
       method: "POST",
-      body: productData,
+      body: productData,accessToken,
       errorMessage: "Produkt konnte nicht hinzugefügt werden. Bitte überprüfe deine Eingaben.",
     });
   }
 
-  async updateProduct(productData) {
+  async updateProduct(productData,accessToken) {
     return this.request(`/products/${productData.id}`, {
       method: "PUT",
-      body: productData,
+      body: productData,accessToken,
       errorMessage: "Produkt konnte nicht bearbeitet werden. Bitte versuche es erneut.",
     });
   }
 
-  async deleteProduct(uuid) {
+  async deleteProduct(uuid,accessToken) {
     return this.request(`/products/${uuid}`, {
       method: "DELETE",
-      body: uuid,
+      body: uuid,accessToken,
       errorMessage: "Produkt konnte nicht gelöscht werden.",
     });
   }

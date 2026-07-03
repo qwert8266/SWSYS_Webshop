@@ -7,18 +7,18 @@ const ProductContext = createContext(null);
 export function ProductProvider({children}){
 
 
-    const createProduct = useCallback(async (productData) => {
-        return await productApi.createProduct(productData);
+    const createProduct = useCallback(async (productData,accessToken) => {
+        return await productApi.createProduct(productData,accessToken);
         }, []
     );
 
-    const updateProduct = useCallback(async (productData) => {
-        return await productApi.updateProduct(productData);
+    const updateProduct = useCallback(async (productData,accessToken) => {
+        return await productApi.updateProduct(productData,accessToken);
         }, []
     );
 
-    const deleteProduct = useCallback(async (uuid) => {
-        return await productApi.deleteProduct(uuid);
+    const deleteProduct = useCallback(async (uuid,accessToken) => {
+        return await productApi.deleteProduct(uuid,accessToken);
         }, []
     );
 
