@@ -1,8 +1,6 @@
 package models
 
 import (
-	"time"
-
 	"github.com/google/uuid"
 )
 
@@ -25,6 +23,6 @@ type ContactRequest struct {
 	Email           string    `bson:"email" json:"email"`
 	Phone           string    `bson:"phone" json:"phone"`
 	Status          string    `bson:"status" json:"status"`
-	CreatedAt       time.Time `bson:"created_at" json:"createdAt"`
-	UpdatedAt       time.Time `bson:"updated_at" json:"updatedAt"`
+	CreatedAt       string    `bson:"created_at" json:"createdAt"`
+	UpdatedAt       string    `bson:"updated_at" json:"updatedAt"`
 }

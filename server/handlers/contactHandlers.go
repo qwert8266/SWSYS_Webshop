@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"math/rand"
 	"net/http"
 	"net/mail"
 	"strings"
@@ -11,8 +12,11 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/qwert8266/SWSYS_Webshop/server/config"
+	"github.com/qwert8266/SWSYS_Webshop/server/helpers"
 	"github.com/qwert8266/SWSYS_Webshop/server/models"
 	"github.com/qwert8266/SWSYS_Webshop/server/services"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 func SubmitContactRequest(c *gin.Context) {
@@ -28,16 +32,17 @@ func SubmitContactRequest(c *gin.Context) {
 		return
 	}
 
-	now := time.Now().UTC()
-	now.Format("Datetime")
+	now := (time.Now().UTC()).Format("2006-01-02 15:04")
 	referenceNumber := generateContactReferenceNumber(now)
+
+	contactName := resolveContactName(c)
 
 	contactRequest := models.ContactRequest{
 		ID:              uuid.New(),
 		ReferenceNumber: referenceNumber,
 		Reason:          validRequest.Reason,
 		Description:     validRequest.Description,
-		Name:            validRequest.Name,
+		Name:            contactName,
 		Email:           validRequest.Email,
 		Phone:           validRequest.Phone,
 		Status:          "offen",
@@ -59,7 +64,6 @@ func SubmitContactRequest(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, gin.H{"message": "Die Kontaktanfrage wurde erolgreich abgesendet und wird in kürze von einem Mitarbeiter bearbeitet."})
-	// Die Kontaktanfrage ist erolgreich bei uns eingegangen und wird in kürze von einem Mitarbeiter bearbeitet. Wir melden uns bei Ihnen? ...
 }
 
 func validContactRequest(request models.ContactFormRequest) (models.ContactFormRequest, error) {
@@ -90,9 +94,63 @@ func validContactRequest(request models.ContactFormRequest) (models.ContactFormR
 	return validRequest, nil
 }
 
-func generateContactReferenceNumber(now time.Time) string {
-	dateStr := now.Format(time.DateTime)
-	randomPart := make([]byte, 4)
+func generateContactReferenceNumber(now string) string {
 
-	return fmt.Sprintf("REF-%s-%s", dateStr, randomPart) //strings.ToUpper()
+	var letterBytes = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	randomPart := make([]byte, 4)
+	for i := range randomPart {
+		randomPart[i] = letterBytes[rand.Intn(len(letterBytes))]
+	}
+
+	return fmt.Sprintf("REF-%s-%v", now, randomPart) //strings.ToUpper()
+}
+
+func resolveContactName(c *gin.Context) string {
+	const guestName = "Gast"
+
+	authHeader := strings.TrimSpace(c.GetHeader("Authorization"))
+	if authHeader == "" {
+		return guestName
+	}
+
+	token := strings.TrimSpace(strings.TrimPrefix(authHeader, "Bearer "))
+	if token == "" || token == authHeader {
+		return guestName
+	}
+
+	claims, err := helpers.ValidateToken(token, config.JWTSecret(), helpers.AccessTokenType)
+	if err != nil {
+		return guestName
+	}
+
+	var user models.User
+	err = config.UserCollection().FindOne(
+		c.Request.Context(),
+		bson.M{"id": claims.UserID},
+	).Decode(&user)
+	if err != nil {
+		return guestName
+	}
+
+	name := contactNameFrom(user)
+	if name == "" {
+		return guestName
+	}
+
+	return name
+}
+
+func contactNameFrom(user models.User) string {
+	firstName := strings.TrimSpace(user.FirstName)
+	lastName := strings.TrimSpace(user.LastName)
+	fullName := strings.TrimSpace(firstName + " " + lastName)
+	if fullName != "" {
+		return fullName
+	}
+
+	companyName := strings.TrimSpace(user.CompanyName)
+	if companyName != "" {
+		return companyName
+	}
+	return ""
 }

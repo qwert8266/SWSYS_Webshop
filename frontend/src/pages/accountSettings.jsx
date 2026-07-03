@@ -372,7 +372,7 @@ function AccountSettings() {
                 <div className='settings-section'>
                   <div className='account-card-header compact border-top pt-3 border-bottom-0'>
                     <div>
-                      <h3>Password ändern</h3>
+                      <h3>Passwort ändern</h3>
                       <p className='account-info-text'>
                         Gib zuerst dein aktuelles Passwort ein und lege dann ein neues fest.
                       </p>

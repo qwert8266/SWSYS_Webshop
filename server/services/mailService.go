@@ -54,7 +54,7 @@ type ContactEmployeeTemplateData struct {
 	Name            string
 	Email           string
 	Phone           string
-	CreatedAt       time.Time
+	CreatedAt       string
 	Year            int
 	CSS             template.CSS
 }
