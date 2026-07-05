@@ -123,26 +123,6 @@ func CreateProduct(c *gin.Context) {
 		}
 	}
 
-	// adding image if provided
-	images := form.File["image"]
-	var imagePaths []string
-	if images != nil {
-		for _, image := range images {
-			// if an image is provided, a new directory is created and the image is saved
-			directory := filepath.Join("/images/", newProductID.String())
-			imagePaths = append(imagePaths, filepath.Join(newProductID.String(), image.Filename))
-
-			if err = os.MkdirAll(directory, os.ModePerm); err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"error creating directory": err.Error()})
-				return
-			}
-			if err = c.SaveUploadedFile(image, filepath.Join(directory, image.Filename)); err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"error creating file": err.Error()})
-				return
-			}
-		}
-	}
-
 	validProductData, err := checkIncomingProductData(c, incomingProduct)
 
 	//trimming strings:
@@ -236,6 +216,12 @@ func DeleteProduct(c *gin.Context) {
 	} else if result.DeletedCount == 0 {
 		c.IndentedJSON(http.StatusNotFound, gin.H{"message": "product not found"})
 	} else {
+		directory := filepath.Join("/images", id.String())
+		if err := os.RemoveAll(directory); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Bilder konnten nicht gelöscht werden",
+			})
+		}
 		c.IndentedJSON(http.StatusNoContent, gin.H{"message": "product deleted"})
 	}
 }
@@ -246,10 +232,10 @@ func checkIncomingProductData(c *gin.Context, pd models.ProductData) (models.Pro
 		return pd, errors.New("name invalid")
 	}
 
-	if ext := strings.ToLower(filepath.Ext(pd.Image)); ext != ".png" && ext != ".jpg" && ext != ".jpeg" {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Image ungültig"})
-		return pd, errors.New("image invalid")
-	}
+	//if ext := strings.ToLower(filepath.Ext(pd.Image)); ext != ".png" && ext != ".jpg" && ext != ".jpeg" {
+	//	c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Image ungültig"})
+	//	return pd, errors.New("image invalid")
+	//}
 
 	if pd.Price <= 0 {
 		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Preis ungültig"})
