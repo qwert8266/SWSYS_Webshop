@@ -85,38 +85,84 @@ func GetProductByCategory(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, products)
 }
 
-// CreateProduct creates a new product and generates an uuid for it.
-func CreateProduct(c *gin.Context) {
-	var incomingProduct models.ProductData
+func getIncomingProductData(c *gin.Context) (models.ProductData, error) {
+	var updatedProductData models.ProductData
 
 	//parsing all incoming data
-	if err := c.BindJSON(&incomingProduct); err != nil {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error parsing product data": err.Error()})
-		return
+	if err := c.BindJSON(&updatedProductData); err != nil {
+		return updatedProductData, err
 	}
 
-	validProductData, err := checkIncomingProductData(c, incomingProduct)
-	//trimming strings:
-	name := strings.TrimSpace(validProductData.Name)
-	description := strings.TrimSpace(validProductData.Description)
-	image := strings.TrimSpace(validProductData.Image)
-	normalizedCategory := strings.ToLower(strings.TrimSpace(validProductData.Category))
+	validProductData, err := checkIncomingProductData(c, updatedProductData)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
+		return updatedProductData, err
+	}
+	//trimming strings:
+	validProductData.Name = strings.TrimSpace(validProductData.Name)
+	validProductData.Description = strings.TrimSpace(validProductData.Description)
+	validProductData.Image = strings.TrimSpace(validProductData.Image)
+	validProductData.Category = strings.ToLower(strings.TrimSpace(validProductData.Category))
+
+	return validProductData, nil
+}
+
+func checkIncomingProductData(c *gin.Context, pd models.ProductData) (models.ProductData, error) {
+	if pd.Name == "" {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Name ungültig"})
+		return pd, errors.New("name invalid")
 	}
 
+	if ext := strings.ToLower(filepath.Ext(pd.Image)); ext != ".png" && ext != ".jpg" && ext != ".jpeg" {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Image ungültig"})
+		return pd, errors.New("image invalid")
+	}
+
+	for _, variant := range pd.ProductVariants {
+		if variant.Price <= 0 {
+			c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Preis ungültig"})
+			return pd, errors.New("price invalid")
+		}
+		if variant.Volume <= 0 {
+			c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Volumen ungültig"})
+			return pd, errors.New("volume invalid")
+		}
+		if variant.PackSize <= 0 {
+			c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Gebindegröße ungültig"})
+			return pd, errors.New("pack size invalid")
+		}
+		if variant.Stock < 0 {
+			c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Stock ungültig"})
+			return pd, errors.New("stock invalid")
+		}
+	}
+
+	if pd.Category == "" {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Kategorie ungültig"})
+		return pd, errors.New("category invalid")
+	}
+
+	return pd, nil
+}
+
+// CreateProduct creates a new product and generates an uuid for it.
+func CreateProduct(c *gin.Context) {
+	incomingProduct, err := getIncomingProductData(c)
+	if err != nil {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 	// creating new user and generating a new user ID.
 	newProduct := models.Product{
 		ProductID:   uuid.New(),
-		Name:        name,
-		Description: description,
-		Image:       image,
-		Price:       incomingProduct.Price,
-		Stock:       incomingProduct.Stock,
-		Category:    normalizedCategory,
-		CreatedAt:   time.Now(),
-		UpdatedAt:   time.Now(),
+		Name:        incomingProduct.Name,
+		Description: incomingProduct.Description,
+		Image:       incomingProduct.Image,
+
+		ProductVariants: incomingProduct.ProductVariants,
+
+		Category:  incomingProduct.Category,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
 	}
 
 	// adding the new user to the collection
@@ -136,29 +182,20 @@ func UpdateProduct(c *gin.Context) {
 		c.IndentedJSON(http.StatusBadRequest, gin.H{"error parsing product id": err.Error()})
 		return
 	}
-	var updatedProductData models.ProductData
 
-	//parsing all incoming data
-	if err := c.BindJSON(&updatedProductData); err != nil {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error parsing product data": err.Error()})
+	updatedProductData, err := getIncomingProductData(c)
+	if err != nil {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	validProductData, err := checkIncomingProductData(c, updatedProductData)
-	//trimming strings:
-	name := strings.TrimSpace(validProductData.Name)
-	description := strings.TrimSpace(validProductData.Description)
-	image := strings.TrimSpace(validProductData.Image)
-	normalizedCategory := strings.ToLower(strings.TrimSpace(validProductData.Category))
-
 	//updateOne() needs to be told how to modify the Document in the collection. (in this case using $set)
 	updatedProduct := bson.D{
-		{"$set", bson.D{{"name", name}}},
-		{"$set", bson.D{{"description", description}}},
-		{"$set", bson.D{{"image", image}}},
-		{"$set", bson.D{{"price", updatedProductData.Price}}},
-		{"$set", bson.D{{"stock", updatedProductData.Stock}}},
-		{"$set", bson.D{{"category", normalizedCategory}}},
+		{"$set", bson.D{{"name", updatedProductData.Name}}},
+		{"$set", bson.D{{"description", updatedProductData.Description}}},
+		{"$set", bson.D{{"image", updatedProductData.Image}}},
+		{"$set", bson.D{{"product_variants", updatedProductData.ProductVariants}}},
+		{"$set", bson.D{{"category", updatedProductData.Category}}},
 		{"$set", bson.D{{"updated_at", time.Now()}}},
 	}
 
@@ -194,35 +231,6 @@ func DeleteProduct(c *gin.Context) {
 	}
 }
 
-func checkIncomingProductData(c *gin.Context, pd models.ProductData) (models.ProductData, error) {
-	if pd.Name == "" {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Name ungültig"})
-		return pd, errors.New("name invalid")
-	}
-
-	if ext := strings.ToLower(filepath.Ext(pd.Image)); ext != ".png" && ext != ".jpg" && ext != ".jpeg" {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Image ungültig"})
-		return pd, errors.New("image invalid")
-	}
-
-	if pd.Price <= 0 {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Preis ungültig"})
-		return pd, errors.New("price invalid")
-	}
-
-	if pd.Stock < 0 {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Stock ungültig"})
-		return pd, errors.New("stock invalid")
-	}
-
-	if pd.Category == "" {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Kategorie ungültig"})
-		return pd, errors.New("category invalid")
-	}
-
-	return pd, nil
-}
-
 // ModifyStock is used to increase or decrease the stock of the specified product
 func ModifyStock(c *gin.Context) {
 	//retrieving the product ID
@@ -242,6 +250,12 @@ func ModifyStock(c *gin.Context) {
 	// filtering for product specified
 	filter := bson.M{
 		"product_id": productID,
+		"product_variants": bson.M{
+			"$elemMatch": bson.M{
+				"volume":    operation.Volume,
+				"pack_size": operation.PackSize,
+			},
+		},
 	}
 	idFilter := filter
 
@@ -254,8 +268,14 @@ func ModifyStock(c *gin.Context) {
 		//adding a minimum stock to the filter to prevent modification if stock is insufficient
 		filter = bson.M{
 			"product_id": productID,
-			"stock": bson.M{
-				"$gte": -operation.Value,
+			"product_variants": bson.M{
+				"$elemMatch": bson.M{
+					"volume":    operation.Volume,
+					"pack_size": operation.PackSize,
+					"stock": bson.M{
+						"$gte": -operation.Value,
+					},
+				},
 			},
 		}
 		message.WriteString(fmt.Sprintf("stock amount decreased by %d", -operation.Value))
@@ -268,11 +288,16 @@ func ModifyStock(c *gin.Context) {
 	var product models.Product
 
 	// creating update to stock
-	updateToStock := bson.D{{"$inc", bson.D{{"stock", operation.Value}}}}
+	update := bson.M{
+		"$inc": bson.M{
+			"product_variants.$.stock": operation.Value,
+		},
+	}
+
 	err = database.ProductCollection().FindOneAndUpdate(
 		c.Request.Context(),
 		filter,
-		updateToStock,
+		update,
 		options.FindOneAndUpdate().SetReturnDocument(options.After),
 	).Decode(&product)
 
@@ -283,10 +308,10 @@ func ModifyStock(c *gin.Context) {
 			c.IndentedJSON(http.StatusNotFound, gin.H{"message": "product not found"})
 			return
 		}
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "insufficient stock", "available": foundProduct.Stock})
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "insufficient stock", "available": foundProduct})
 		return
 	}
-	c.IndentedJSON(http.StatusOK, gin.H{"message": message.String(), "new_stock": product.Stock})
+	c.IndentedJSON(http.StatusOK, gin.H{"message": message.String(), "new_product": product})
 }
 
 func SearchProducts(c *gin.Context) {

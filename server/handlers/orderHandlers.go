@@ -104,7 +104,7 @@ func CreateOrder(c *gin.Context) {
 				c.JSON(http.StatusBadRequest, gin.H{
 					"error":     fmt.Sprintf("Nicht genug Bestand für %s.", existingProduct.Name),
 					"productId": productID,
-					"available": existingProduct.Stock,
+					"available": existingProduct,
 				})
 				return
 			}
@@ -115,13 +115,14 @@ func CreateOrder(c *gin.Context) {
 
 		reservedItems = append(reservedItems, reservedStock{ProductID: productID, Quantity: requestedItem.Quantity})
 
-		lineTotal := uint32(product.Price) * uint32(requestedItem.Quantity)
+		//TODO: fix variants
+		lineTotal := (product.ProductVariants[0].Price) * (requestedItem.Quantity)
 		totalPrice += lineTotal
 		orderItems = append(orderItems, models.OrderItem{
 			ProductID:      product.ProductID,
 			Name:           product.Name,
 			Quantity:       requestedItem.Quantity,
-			UnitPrice:      product.Price,
+			UnitPrice:      product.ProductVariants[0].Price,
 			LineTotalPrice: lineTotal,
 		})
 	}
