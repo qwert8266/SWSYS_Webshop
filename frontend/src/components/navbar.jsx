@@ -314,7 +314,7 @@ function handleShowAllResults() {
               {totalQuantity > 0 && <span className="cart-badge">{totalQuantity}</span>}
             </NavLink>
 
-            { isAuthenticated && (user?.role === "worker" || user?.role === "admin") &&
+            { isAuthenticated && (user?.role === "worker" || user?.role === "admin" || user?.role === "owner") &&
             <div className="dropdown-wrapper">
               <div
                 className="btn btn-light border navbar-icon-button cart-icon-button"
