@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 
 import productApi from '../api/productApi';
 import { getCategoryConfig } from '../utils/categoryConfig';
-import { formatEuro, normalizeProduct } from '../utils/productHelpers';
+import { formatEuro,getProductImagePath, normalizeProduct } from '../utils/productHelpers';
 import FourOFour from './404';
 
 /*export const produkte = [
@@ -101,6 +101,20 @@ function Product(){
         setCartMessage(`${product.name} wurde in den Warenkorb gelegt.`);
     }
 
+    const [slideIndex, setSlideIndex] = useState(0);
+
+    useEffect(() => {
+        if (!product?.images?.length) return;
+
+        const interval = setInterval(() => {
+            setSlideIndex((current) =>
+                (current + 1) % product.images.length
+            );
+        }, 5000);
+
+        return () => clearInterval(interval);
+    }, [product]);
+
     {if(productNotFound || !selectedCategory){
         return <FourOFour/>
     }}
@@ -123,10 +137,36 @@ function Product(){
             {cartMessage && <p className='text-success'>{cartMessage}</p>}
             
             <div className='product-page-top'>
-                <div >
-                    <img className='product-picture' src={`/img/product_images/${product.images[0]}` } alt={product.name} />
-                </div>
+                <div className='d-flex flex-column'>
+                    <div className="slideshow-container">
+                        {product.images.map((image, index) => (
+                            <div
+                                key={index}
+                                className={`mySlides slide-fade ${
+                                    index === slideIndex ? "active-slide" : ""
+                                }`}
+                            >
+                                <img
+                                    src={getProductImagePath({ images: [image] })}
+                                    alt={product.name}
+                                    style={{ width: "600px", height: "600px" }}
+                                />
+                            </div>
+                        ))}
+                    </div>
 
+                    <div style={{ textAlign: "center" }}>
+                        {product.images.map((_, index) => (
+                            <span
+                                key={index}
+                                className={`dot ${
+                                    index === slideIndex ? "active-dot" : ""
+                                }`}
+                                onClick={() => setSlideIndex(index)}
+                            />
+                        ))}
+                    </div>
+                </div>
                 <div className='product-information'> 
                     <div className='blue-header'>
                         <strong>{product.name}</strong><p> -- {selectedCategory.name} (Kategorie)</p>
