@@ -124,7 +124,7 @@ function Product(){
             
             <div className='product-page-top'>
                 <div >
-                    <img className='product-picture' src={`/img/product_images/${product.image}` }alt={product.name} />
+                    <img className='product-picture' src={`/img/product_images/${product.images[0]}` } alt={product.name} />
                 </div>
 
                 <div className='product-information'> 

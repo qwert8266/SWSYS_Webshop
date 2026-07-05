@@ -1,5 +1,4 @@
 import React from "react";
-import { useState } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import SearchResults from "./pages/searchResults";
 import './App.css';
@@ -24,7 +23,6 @@ import AccountSettings from "./pages/accountSettings";
 import Contact from "./pages/contact";
 import Category from "./pages/categories";
 import Product from "./pages/product";
-import {produkte} from "./pages/product";
 import Home from './pages/home';
 
 function App() {
