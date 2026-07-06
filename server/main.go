@@ -20,7 +20,7 @@ func main() {
 
 	server.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"http://localhost:3000", "http://localhost:3001"},
-		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"}, //only used methods should be allowed
+		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE"}, //only used methods should be allowed
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
 		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: true,
@@ -32,6 +32,7 @@ func main() {
 	routes.RegisterUserRoutes(server.Group("/user"))
 	routes.RegisterProductRoutes(server.Group("/products"))
 	routes.RegisterOrderRoutes(server.Group("/order"))
+	routes.RegisterCategoryRoutes(server.Group("/category"))
 
 	// the addr is explicitly 0.0.0.0 because if the application is running inside a container,
 	//it must handle requests from outside the container.

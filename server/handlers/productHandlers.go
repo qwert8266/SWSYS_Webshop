@@ -100,10 +100,16 @@ func CreateProduct(c *gin.Context) {
 	name := strings.TrimSpace(validProductData.Name)
 	description := strings.TrimSpace(validProductData.Description)
 	image := strings.TrimSpace(validProductData.Image)
-	normalizedCategory := strings.ToLower(strings.TrimSpace(validProductData.Category))
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
+	}
+
+	for _, category := range validProductData.Categories {
+		if !category.IsValid() {
+			c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "invalid category"})
+			return
+		}
 	}
 
 	// creating new user and generating a new user ID.
@@ -114,7 +120,7 @@ func CreateProduct(c *gin.Context) {
 		Image:       image,
 		Price:       incomingProduct.Price,
 		Stock:       incomingProduct.Stock,
-		Category:    normalizedCategory,
+		Categories:  incomingProduct.Categories,
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),
 	}
@@ -145,11 +151,11 @@ func UpdateProduct(c *gin.Context) {
 	}
 
 	validProductData, err := checkIncomingProductData(c, updatedProductData)
+
 	//trimming strings:
 	name := strings.TrimSpace(validProductData.Name)
 	description := strings.TrimSpace(validProductData.Description)
 	image := strings.TrimSpace(validProductData.Image)
-	normalizedCategory := strings.ToLower(strings.TrimSpace(validProductData.Category))
 
 	//updateOne() needs to be told how to modify the Document in the collection. (in this case using $set)
 	updatedProduct := bson.D{
@@ -158,7 +164,7 @@ func UpdateProduct(c *gin.Context) {
 		{"$set", bson.D{{"image", image}}},
 		{"$set", bson.D{{"price", updatedProductData.Price}}},
 		{"$set", bson.D{{"stock", updatedProductData.Stock}}},
-		{"$set", bson.D{{"category", normalizedCategory}}},
+		{"$set", bson.D{{"category", updatedProductData.Categories}}},
 		{"$set", bson.D{{"updated_at", time.Now()}}},
 	}
 
@@ -215,11 +221,12 @@ func checkIncomingProductData(c *gin.Context, pd models.ProductData) (models.Pro
 		return pd, errors.New("stock invalid")
 	}
 
-	if pd.Category == "" {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Kategorie ungültig"})
-		return pd, errors.New("category invalid")
+	for _, category := range pd.Categories {
+		if !category.IsValid() {
+			c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Kategorie ungültig"})
+			return pd, fmt.Errorf("category %s is invalid", category.Name)
+		}
 	}
-
 	return pd, nil
 }
 
@@ -371,7 +378,7 @@ func productSearchScore(product models.Product, query string) (int, bool) {
 
 	fields := []searchableField{
 		{Value: product.Name, Penalty: 0},
-		{Value: product.Category, Penalty: 15},
+		{Value: product.Categories[0].Name, Penalty: 15},
 		{Value: product.Description, Penalty: 30},
 		{Value: product.Image, Penalty: 40},
 	}

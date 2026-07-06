@@ -76,15 +76,18 @@ func collection(name string) *mongo.Collection {
 	return DB.Database(Name()).Collection(name)
 }
 
-// ProductCollection returns the products collection of the webshop database
+// ProductCollection returns the product collection of the webshop database
 func ProductCollection() *mongo.Collection { return collection("products") }
 
-// UserCollection returns the users collection of the webshop database
+// UserCollection returns the user collection of the webshop database
 func UserCollection() *mongo.Collection {
 	return collection("users")
 }
 
-// OrderCollection returns the orders collection of the webshop database
+// OrderCollection returns the order collection of the webshop database
 func OrderCollection() *mongo.Collection {
 	return collection("orders")
 }
+
+// CategoryCollection returns the category collection of the webshop database
+func CategoryCollection() *mongo.Collection { return collection("categories") }
