@@ -44,3 +44,22 @@ func AddCategory(c *gin.Context) {
 		}
 	}
 }
+
+func DeleteCategory(c *gin.Context) {
+	var category models.Category
+	if err := c.ShouldBindJSON(&category); err != nil {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if category.IsValid() {
+		result, err := database.CategoryCollection().DeleteOne(c.Request.Context(), bson.M{"name": category.Name})
+		if err != nil {
+			c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		} else if result.DeletedCount == 0 {
+			c.IndentedJSON(http.StatusNotFound, gin.H{"error": "Category not found"})
+		} else {
+			c.IndentedJSON(http.StatusNoContent, gin.H{"message": "category deleted"})
+		}
+	}
+}
