@@ -152,6 +152,10 @@ func UpdateProduct(c *gin.Context) {
 	}
 
 	validProductData, err := checkIncomingProductData(c, updatedProductData)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 
 	//trimming strings:
 	name := strings.TrimSpace(validProductData.Name)
