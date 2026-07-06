@@ -293,6 +293,7 @@ func ModifyStock(c *gin.Context) {
 		"$inc": bson.M{
 			"product_variants.$.stock": operation.Value,
 		},
+		"$set": bson.M{"updated_at": time.Now().UTC()},
 	}
 
 	// performing the update to the stock as a single operation
@@ -572,7 +573,7 @@ func levenshteinDistance(a string, b string) int {
 				replaceCost++
 			}
 
-			currentRow[j+1] = min(insertCost, deleteCost, replaceCost)
+			currentRow[j+1] = minimum(insertCost, deleteCost, replaceCost)
 		}
 
 		previousRow, currentRow = currentRow, previousRow
@@ -581,7 +582,7 @@ func levenshteinDistance(a string, b string) int {
 	return previousRow[len(bRunes)]
 }
 
-func min(values ...int) int {
+func minimum(values ...int) int {
 	smallest := values[0]
 
 	for _, value := range values[1:] {
