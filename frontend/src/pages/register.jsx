@@ -58,13 +58,6 @@ function Register() {
     setError("");
     setIsSubmitting(true);
 
-    /*const trimmedEmail = formData.email.trim().toLowerCase();
-    if (!EMAIL_REGEX.test(trimmedEmail)) {
-      setError(ERROR_INVALID_EMAIL);
-      setIsSubmitting(false);
-      return;
-    }*/
-
     try {
       await register(formData);
       navigate("/account");
@@ -525,7 +518,7 @@ function Register() {
       >
         {isSubmitting ? "Registrierung läuft..." : "Registrieren"}
       </button>
-      <p>
+      <p className="text-center">
         Bereits registriert?  <Link to="/login">Anmelden</Link> 
       </p>
 

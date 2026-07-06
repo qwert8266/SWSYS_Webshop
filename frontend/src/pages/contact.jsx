@@ -24,6 +24,56 @@ function Contact(){
 
     const[reasonForContact, setReasonForContact] = useState("");
     const[sentForm, setSentFrom] = useState(false)
+    const[triedToSend, setTriedToSend] = useState(false)
+
+    const [formData, setFormData] = useState({
+    description: "",
+    email: "",
+    phone: "",
+    });
+
+    const handleChange = (event) => {
+        const { name, value } = event.target;
+
+        setFormData({
+        ...formData,
+        [name]: value
+        });
+    };
+
+    async function handleSubmit(formData) {
+    
+        let hasErrors = false;
+
+        if(reasonForContact === ""){
+            hasErrors = true;
+        }
+
+        if(formData.description === ""){
+            hasErrors = true;
+        }
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if(!emailRegex.test(formData.email)){
+            hasErrors = true;
+        }
+        if(formData.phone.length < 11){
+            hasErrors = true;
+        }
+
+        if(hasErrors){
+            setTriedToSend(true)
+            setTimeout(() => {
+                setTriedToSend(false);
+            }, 5000)
+            
+        }else{
+            setSentFrom(true)
+        }
+
+        
+        
+    }
 
 
     return(
@@ -46,45 +96,14 @@ function Contact(){
                             </select>
                         </div>
 
-                        <div className='beschreibung_div'>
-                            <label className='blue_text'>Beschreibung</label>
-                            <textarea className="input_beschreibung" placeholder='Tragen Sie hier Ihr Anliegen ein...'/>
-                        </div>
-
-                        <div className='contact_info'>
-                            <label className='blue_text'>Kontakt</label>
-                            <div className='align_left'>
-                                <label className='blue_text'>Email</label>
-                                <input className="inputs" placeholder='example@mail.com'/>
-                            </div>
-
-                            <div className='align_left'>
-                                <label className='blue_text'>Telefonnummer</label>
-                                <input className="inputs" placeholder='0173 1234567'/>
-                            </div>
-                        </div>
-                        {reasonForContact === "Karriere" &&
-                            <div className='career_info'>
-                                <div>
-                                    <label className='blue_text'>Anschreiben</label>
-                                    <input className="file-input" type="file" />
-                                </div>
-
-                                <div>
-                                    <label className='blue_text'>Lebenslauf</label>
-                                    <input className="file-input" type="file" />
-                                </div>
-                            </div>
-                        }
-
                         {reasonForContact === "Großbestellung" &&
                         <div className='großbestellung_container'>
                             <label className='blue_text_long'>Ausgewählte Produkte</label>
                             <div className='added_product_container'>
                                 <div className='added_product'>
                                     <label> 6x Becks</label>
-                                    <label> 6x19.99E</label>
-                                    <label> 120.00E</label>
+                                    <label> 6x19.99€</label>
+                                    <label> 120.00€</label>
                                 </div>
                             </div>
                             <div className='search_container'>
@@ -109,8 +128,46 @@ function Contact(){
                             </div>
                         </div>
                         }
+
+                        <div className='beschreibung_div'>
+                            <label className='blue_text'>Beschreibung</label>
+                            <textarea className="input_beschreibung" placeholder='Tragen Sie hier Ihr Anliegen ein...' name="description" onChange={handleChange}/>
+                        </div>
+
+                        <div className='contact_info'>
+                            <label className='blue_text'>Kontakt</label>
+                            <div className='align_left'>
+                                <label className='blue_text'>Email</label>
+                                <input className="inputs" placeholder='example@mail.com' name="email" onChange={handleChange}/>
+                            </div>
+
+                            <div className='align_left'>
+                                <label className='blue_text'>Telefonnummer</label>
+                                <input className="inputs" placeholder='0173 1234567' name="phone" onChange={handleChange}/>
+                            </div>
+                        </div>
+                        {reasonForContact === "Karriere" &&
+                            <div className='career_info'>
+                                <div>
+                                    <label className='blue_text'>Anschreiben</label>
+                                    <input className="file-input" type="file" />
+                                </div>
+
+                                <div>
+                                    <label className='blue_text'>Lebenslauf</label>
+                                    <input className="file-input" type="file" />
+                                </div>
+                            </div>
+                        }
+                        {triedToSend &&
+                        <div className="d-flex flex-column border rounded align-items-center justify-content-center " style={{height: "80px", width:"100%", alignItems: 'center', backgroundColor: 'red', color: 'white'}}>
+                            <label className='fs-3'>Das hat leider nicht geklappt.</label>
+                            <label className='fs-3'>Bitte überprüfen sie Ihre Eingaben.</label>
+                        </div>
+                        }
+                        
                         <div>
-                            <button className='blue_button' onClick={()=>{setSentFrom(true)}}>Jetzt abschicken</button>
+                            <button className='blue_button' onClick={()=>{handleSubmit(formData)}}>Jetzt abschicken</button>
                         </div>
                     </div>
                 </div>
@@ -118,7 +175,7 @@ function Contact(){
             </div>
             <div>
         {sentForm &&
-            <div className='successful_order2'>
+            <div className='successful_order2 pb-5'>
                 {reasonForContact === "Karriere" &&
                 <div className='sentIt'>
                     <label className='success_label2'>Vielen Dank für Ihre Bewerbung!</label>
@@ -137,9 +194,11 @@ function Contact(){
                     <label className='success_label_minor2'>Bei Rückfragen werden wir uns bei dir melden.</label>
                 </div>
                 }
-                <NavLink to="/home">
-                    <button className='success_button' >Zurück zu unseren Produkten</button>
-                </NavLink>
+                <div className='sentIt'>
+                    <NavLink to="/home">
+                        <button className='success_button' >Zurück zu unseren Produkten</button>
+                    </NavLink>
+                </div>
             </div>
         }
         </div>

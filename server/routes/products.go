@@ -10,6 +10,7 @@ func RegisterProductRoutes(productRoutes *gin.RouterGroup) {
 
 	// public productRoutes for retrieving products:
 	productRoutes.GET("/", handlers.GetProducts)
+	productRoutes.GET("/search", handlers.SearchProducts)
 	productRoutes.GET("/category/:category", handlers.GetProductByCategory)
 	productRoutes.GET("/:id", handlers.GetProductByID)
 
@@ -19,7 +20,8 @@ func RegisterProductRoutes(productRoutes *gin.RouterGroup) {
 	protectedProductRoutes.Use(middleware.RoleAuth("admin", "worker"))
 	{
 		//endpoints for modifying productRoutes should only be accessible to logged in employees and be protected though middleware:
-		protectedProductRoutes.POST("/", handlers.CreateProduct)
+		protectedProductRoutes.POST("/product_management", handlers.CreateProduct)
+		//products.DELETE("/product_management", handlers.DeleteProduct)
 		protectedProductRoutes.PUT("/:id", handlers.UpdateProduct)
 		protectedProductRoutes.PATCH("/:id", handlers.ModifyStock)
 		protectedProductRoutes.DELETE("/:id", handlers.DeleteProduct)

@@ -10,7 +10,10 @@ func RegisterOrderRoutes(orderRoutes *gin.RouterGroup) {
 	// protected routes/endpoints that only authorized users can access
 	orderRoutes.Use(middleware.Authenticate())
 	orderRoutes.POST("/", handlers.CreateOrder)
+	orderRoutes.PUT("/:id", handlers.UpdateOrder)
 	orderRoutes.GET("/me", handlers.GetMyOrders)
+	orderRoutes.POST("/:id/return-request", handlers.RequestOrderReturn)
+	orderRoutes.GET("/", handlers.GetOrders)
 
 	protectedOrderRoutes := orderRoutes.Group("")
 	protectedOrderRoutes.Use(middleware.RoleAuth("admin", "worker"))

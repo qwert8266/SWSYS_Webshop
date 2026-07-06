@@ -11,6 +11,7 @@ import App from "./App";
 
 import { CartProvider } from "./context/cartContext";
 import { AuthProvider } from "./context/authContext";
+import { ProductProvider } from "./context/productContext";
 
 const root = createRoot(document.getElementById("root"));
 
@@ -18,7 +19,9 @@ root.render(
 
   <AuthProvider>
     <CartProvider>
-      <App />
+      <ProductProvider>
+        <App />
+      </ProductProvider>
     </CartProvider>
   </AuthProvider>
 

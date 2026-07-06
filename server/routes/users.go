@@ -14,6 +14,8 @@ func RegisterUserRoutes(userRoutes *gin.RouterGroup) {
 		// Authentication endpoints
 		public.POST("/register", handlers.AddNewUser)
 		public.POST("/login", handlers.LoginUser)
+		public.POST("/password-reset/request", handlers.RequestPasswordReset)
+		public.POST("/password-reset/confirm", handlers.ConfirmPasswordReset)
 	}
 
 	// protected user routes
@@ -23,12 +25,19 @@ func RegisterUserRoutes(userRoutes *gin.RouterGroup) {
 		// Protected so the backend can validate the submitted Bearer token before the frontend removes it from localStorage
 		protected.POST("/logout", handlers.LogoutUser)
 		protected.GET("/me", handlers.GetCurrentUser)
+		protected.PATCH("/me/password", handlers.ChangeOwnPassword)
+
+		// route was allowed for workers too, so that they can see the customer names when managing orders
+		employeeRoutes := protected.Group("")
+		employeeRoutes.Use(middleware.RoleAuth("worker", "admin"))
+		{
+			employeeRoutes.GET("/", handlers.GetUsers)
+		}
 
 		// routes modifying users are only allowed for admins
 		adminRoutes := protected.Group("")
 		adminRoutes.Use(middleware.RoleAuth("admin"))
 		{
-			adminRoutes.GET("/", handlers.GetUsers)
 			adminRoutes.GET("/:id", handlers.GetUserByID)
 			adminRoutes.PATCH("/:id", handlers.ModifyUser)
 			adminRoutes.DELETE("/:id", handlers.DeleteUser)
