@@ -1,8 +1,9 @@
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 
 
 const CartContext = createContext(null);
 const CART_STORAGE_KEY = "schmidt-shoping-cart";
+
 
 
 /* Lädt einen ursprünglichen Warenkorb 
@@ -19,11 +20,15 @@ function loadInitialCart() {
 }
 
 
+
+
 /**
  * Stellt den Warenkorb-Zustand für alle untergeordneten Komponenten bereit.
  */ 
 export function CartProvider({ children }) {
   const [items, setItems] = useState(loadInitialCart);
+  const [isCartPreviewOpen, setIsCartPreviewOpen] = useState(false);
+  const cartPreviewTimeoutRef = useRef(null);
 
   /**
    * Speichert den aktuellen Warenkorb automatisch im localStorage.
@@ -36,6 +41,48 @@ export function CartProvider({ children }) {
       console.warn("Warenkorb konnte nicht gespeichert werden", error);
     }
   }, [items]);
+
+  
+  useEffect(() => {
+  return () => {
+    if (cartPreviewTimeoutRef.current) {
+      clearTimeout(cartPreviewTimeoutRef.current);
+    }
+  };
+  }, []);
+
+function showCartPreview() {
+  if (cartPreviewTimeoutRef.current) {
+    clearTimeout(cartPreviewTimeoutRef.current);
+    cartPreviewTimeoutRef.current = null;
+  }
+
+  setIsCartPreviewOpen(true);
+}
+
+function hideCartPreview() {
+  if (cartPreviewTimeoutRef.current) {
+    clearTimeout(cartPreviewTimeoutRef.current);
+  }
+
+  cartPreviewTimeoutRef.current = setTimeout(() => {
+    setIsCartPreviewOpen(false);
+    cartPreviewTimeoutRef.current = null;
+  }, 500);
+}
+
+function openCartPreviewTemporarily() {
+  if (cartPreviewTimeoutRef.current) {
+    clearTimeout(cartPreviewTimeoutRef.current);
+  }
+
+  setIsCartPreviewOpen(true);
+
+  cartPreviewTimeoutRef.current = setTimeout(() => {
+    setIsCartPreviewOpen(false);
+    cartPreviewTimeoutRef.current = null;
+  }, 3000);
+}
 
   /**
    * Fügt ein Produkt dem Warenkorb hinzu
@@ -55,6 +102,8 @@ export function CartProvider({ children }) {
       }
       return [...currentItems, {...product, quantity: quantity}];
     });
+
+    openCartPreviewTemporarily();
   }
 
   /**
@@ -108,8 +157,12 @@ export function CartProvider({ children }) {
       increaseQuantity,
       decreaseQuantity,
       clearCart,
+      isCartPreviewOpen,
+      showCartPreview,
+      hideCartPreview,
+      openCartPreviewTemporarily,
     }),
-    [items, totalQuantity, totalPrice]
+    [items, totalQuantity, totalPrice, isCartPreviewOpen]
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

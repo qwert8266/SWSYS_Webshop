@@ -98,7 +98,6 @@ function Product(){
         if (!product) { return; }
         
         addItem(product, quantity);
-        setCartMessage(`${product.name} wurde in den Warenkorb gelegt.`);
     }
 
     {if(productNotFound || !selectedCategory){
