@@ -30,6 +30,7 @@ type MailConfig struct {
 	FromName             string
 	FromAddress          string
 	ContactEmployeeEmail string
+	CompanyLogoPath      string
 }
 
 type PasswortResetTemplateData struct {
@@ -45,6 +46,7 @@ type ContactConfirmationTemplateData struct {
 	Reason          string
 	Year            int
 	CSS             template.CSS
+	CompanyLogo     template.URL
 }
 
 type ContactEmployeeTemplateData struct {
@@ -57,6 +59,7 @@ type ContactEmployeeTemplateData struct {
 	CreatedAt       string
 	Year            int
 	CSS             template.CSS
+	CompanyLogo     template.URL
 }
 
 func LoadMailConfig() MailConfig {
@@ -66,8 +69,9 @@ func LoadMailConfig() MailConfig {
 		Username:             strings.TrimSpace(env.Get("SMTP_USERNAME")),
 		Password:             env.Get("SMTP_PASSWORD"),
 		FromName:             "Schmidt+Söhne-Getränkemarkt",
-		FromAddress:          "no-reply@schmidt.soehne.de",
-		ContactEmployeeEmail: "contact@schmidt.soehne.de",
+		FromAddress:          "no-reply@schmidt-soehne.de",
+		ContactEmployeeEmail: "kontakt@schmidt-soehne.de",
+		CompanyLogoPath:      "/images/companyLogo.png",
 	}
 }
 
@@ -118,7 +122,7 @@ func SendContactRequestConfirmationEmail(contactRequest models.ContactRequest) e
 	config := LoadMailConfig()
 
 	subject := fmt.Sprintf("Kontaktanfrage eingegangen: %s", contactRequest.ReferenceNumber)
-	htmlBody, err := buildContactConfirmationHTML(contactRequest)
+	htmlBody, err := buildContactConfirmationHTML(config, contactRequest)
 	if err != nil {
 		return err
 	}
@@ -130,12 +134,12 @@ func SendContactRequestEmployeeEmail(contactRequest models.ContactRequest) error
 	config := LoadMailConfig()
 
 	subject := fmt.Sprintf("Neue Kontaktanfrage: %s", contactRequest.ReferenceNumber)
-	htmlBody, err := buildContactEmployeeHTML(contactRequest)
+	htmlBody, err := buildContactEmployeeHTML(config, contactRequest)
 	if err != nil {
 		return err
 	}
 
-	return sendHTMLMail(config, contactRequest.Email, subject, htmlBody)
+	return sendHTMLMail(config, config.ContactEmployeeEmail, subject, htmlBody)
 }
 
 func buildHTMLMessage(from, to, subject, htmlBody string) string {
@@ -179,7 +183,7 @@ func buildPasswordResetHTML(recipientName, resetURL string) (string, error) {
 	return body.String(), nil
 }
 
-func buildContactConfirmationHTML(contactRequest models.ContactRequest) (string, error) {
+func buildContactConfirmationHTML(config MailConfig, contactRequest models.ContactRequest) (string, error) {
 	cssBytes, err := emailTemplateFiles.ReadFile("templates/contact-email.css")
 	if err != nil {
 		return "", fmt.Errorf("CSS-Datei konnte nicht gelesen werden: %w", err)
@@ -201,6 +205,7 @@ func buildContactConfirmationHTML(contactRequest models.ContactRequest) (string,
 		Reason:          contactRequest.Reason,
 		Year:            time.Now().Year(),
 		CSS:             template.CSS(string(cssBytes)),
+		CompanyLogo:     template.URL(config.CompanyLogoPath),
 	}
 
 	var body bytes.Buffer
@@ -212,7 +217,7 @@ func buildContactConfirmationHTML(contactRequest models.ContactRequest) (string,
 
 }
 
-func buildContactEmployeeHTML(contactRequest models.ContactRequest) (string, error) {
+func buildContactEmployeeHTML(config MailConfig, contactRequest models.ContactRequest) (string, error) {
 	cssBytes, err := emailTemplateFiles.ReadFile("templates/contact-email.css")
 	if err != nil {
 		return "", fmt.Errorf("CSS-Datei konnte nicht gelesen werden: %w", err)
@@ -243,6 +248,7 @@ func buildContactEmployeeHTML(contactRequest models.ContactRequest) (string, err
 		CreatedAt:       contactRequest.CreatedAt,
 		Year:            time.Now().Year(),
 		CSS:             template.CSS(string(cssBytes)),
+		CompanyLogo:     template.URL(config.CompanyLogoPath),
 	}
 
 	var body bytes.Buffer

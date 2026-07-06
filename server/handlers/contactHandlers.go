@@ -12,7 +12,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/qwert8266/SWSYS_Webshop/server/config"
+	"github.com/qwert8266/SWSYS_Webshop/server/database"
 	"github.com/qwert8266/SWSYS_Webshop/server/helpers"
 	"github.com/qwert8266/SWSYS_Webshop/server/models"
 	"github.com/qwert8266/SWSYS_Webshop/server/services"
@@ -51,7 +51,7 @@ func SubmitContactRequest(c *gin.Context) {
 	}
 
 	// Kontaktanfrage in der Datenbank speichern
-	if _, err := config.ContactRequestCollection().InsertOne(c.Request.Context(), contactRequest); err != nil {
+	if _, err := database.ContactRequestCollection().InsertOne(c.Request.Context(), contactRequest); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Kontaktanfrage konnte nicht gespeichert werden."})
 		return
 	}
@@ -122,13 +122,13 @@ func resolveContactName(c *gin.Context) string {
 		return guestName
 	}
 
-	claims, err := helpers.ValidateToken(token, config.JWTSecret(), helpers.AccessTokenType)
+	claims, err := helpers.ValidateToken(token, helpers.JWTSecret(), helpers.AccessTokenType)
 	if err != nil {
 		return guestName
 	}
 
 	var user models.User
-	err = config.UserCollection().FindOne(
+	err = database.UserCollection().FindOne(
 		c.Request.Context(),
 		bson.M{"id": claims.UserID},
 	).Decode(&user)
@@ -160,7 +160,7 @@ func contactNameFrom(user models.User) string {
 }
 
 func GetContactRequests(c *gin.Context) {
-	contactRequestCollection := config.ContactRequestCollection()
+	contactRequestCollection := database.ContactRequestCollection()
 
 	cursor, err := contactRequestCollection.Find(c.Request.Context(), bson.M{})
 	if err != nil {

@@ -265,8 +265,8 @@ function handleShowAllResults() {
               </li>
               
               <li className='nav-item'>
-                <NavLink className="nav-link" to="/placeholder">
-                  placeholder
+                <NavLink className="nav-link" to="/about">
+                  About
                 </NavLink>
               </li>
               
