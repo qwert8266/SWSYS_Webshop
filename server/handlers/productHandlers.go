@@ -96,14 +96,15 @@ func CreateProduct(c *gin.Context) {
 	}
 
 	validProductData, err := checkIncomingProductData(c, incomingProduct)
-	//trimming strings:
-	name := strings.TrimSpace(validProductData.Name)
-	description := strings.TrimSpace(validProductData.Description)
-	image := strings.TrimSpace(validProductData.Image)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+
+	//trimming strings:
+	name := strings.TrimSpace(validProductData.Name)
+	description := strings.TrimSpace(validProductData.Description)
+	image := strings.TrimSpace(validProductData.Image)
 
 	for _, category := range validProductData.Categories {
 		if !category.IsValid() {
