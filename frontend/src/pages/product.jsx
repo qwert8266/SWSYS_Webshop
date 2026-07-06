@@ -103,17 +103,13 @@ function Product(){
 
     const [slideIndex, setSlideIndex] = useState(0);
 
-    useEffect(() => {
-        if (!product?.images?.length) return;
+    function changeSlide(direction) {
+    setSlideIndex((currentIndex) =>
+        (currentIndex + direction + product.images.length) % product.images.length
+    );
+}
 
-        const interval = setInterval(() => {
-            setSlideIndex((current) =>
-                (current + 1) % product.images.length
-            );
-        }, 5000);
 
-        return () => clearInterval(interval);
-    }, [product]);
 
     {if(productNotFound || !selectedCategory){
         return <FourOFour/>
@@ -128,7 +124,6 @@ function Product(){
         );
     }
 
-    
 
 
     return(
@@ -139,7 +134,12 @@ function Product(){
             <div className='product-page-top'>
                 <div className='d-flex flex-column'>
                     <div className="slideshow-container">
-                        {product.images.map((image, index) => (
+                        
+
+                        {!product.images || product.images?.length === 0 ? (
+                            <img src={getProductImagePath(product)} alt={product.name} style={{ width: "600px", height: "600px" }}/>
+                        ) : (
+                        product.images?.map((image, index) => (
                             <div
                                 key={index}
                                 className={`mySlides slide-fade ${
@@ -152,19 +152,23 @@ function Product(){
                                     style={{ width: "600px", height: "600px" }}
                                 />
                             </div>
-                        ))}
+                        )))}
                     </div>
 
-                    <div style={{ textAlign: "center" }}>
-                        {product.images.map((_, index) => (
+                    <div style={{ textAlign: "center"}}>
+                        {(product.images && product.images?.length > 0) &&
+                        <span className="arrow left" onClick={() => changeSlide(-1)}> ❮ </span>}
+                        {product.images?.map((_, index) => (
                             <span
                                 key={index}
-                                className={`dot ${
+                                className={`dotProductPage ${
                                     index === slideIndex ? "active-dot" : ""
                                 }`}
                                 onClick={() => setSlideIndex(index)}
                             />
                         ))}
+                        {(product.images && product.images?.length > 0) &&
+                        <span className="arrow right" onClick={() => changeSlide(1)}> ❯ </span>}
                     </div>
                 </div>
                 <div className='product-information'> 

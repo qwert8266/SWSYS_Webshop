@@ -1,14 +1,12 @@
 
-const FALLBACK_PRODUCT_IMAGE = "becks.png";
+const FALLBACK_PRODUCT_IMAGE = "no_picture.png";
 
 export function getProductImagePath(product) {
-  const image = product?.images[0] || FALLBACK_PRODUCT_IMAGE;
-  
+  const image = product?.images?.[0] ?? FALLBACK_PRODUCT_IMAGE;
 
-  if (String(image).startsWith("/")) {
-    return image;
-  }
-  return `/img/product_images/${image}`;
+  return String(image).startsWith("/")
+    ? image
+    : `/img/product_images/${image}`;
 }
 
 export function normalizeProduct(product) {
