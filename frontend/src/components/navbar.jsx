@@ -16,7 +16,7 @@ import './navbar.css';
 
 function Navbar() {
   const navigate = useNavigate();
-  const { isAuthenticated, isAuthLoading } = useAuth();
+  const { isAuthenticated, isAuthLoading, user } = useAuth();
   const { totalQuantity } = useCart();
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -120,6 +120,11 @@ function handleShowAllResults() {
   navigate(`/suche?q=${encodeURIComponent(query)}`);
 }
 
+  function handleAccountClick() {
+    navigate(isAuthenticated ? "/account-settings" : "/login");
+  }
+
+  //const location = useLocation();
   const categories = CATEGORY_CONFIGS;
 
   return (
@@ -234,7 +239,7 @@ function handleShowAllResults() {
             <ul className="navbar-nav mb-2 mb-lg-0 gap-2">
               <li className="nav-item">
                 <NavLink className="nav-link" to="/home">
-                  <a>Home</a>
+                  Home
                 </NavLink>
               </li>
               
@@ -243,7 +248,7 @@ function handleShowAllResults() {
                   className="nav-link" 
                   to="/sortiment"
                 >
-                  <a>Sortiment</a>
+                  Sortiment
                 </NavLink>
 
                 <div className="nav-dropdown-menu">
@@ -253,7 +258,7 @@ function handleShowAllResults() {
                       className="nav-dropdown-link"
                       to={`/sortiment/${Category.slug}`}
                     >
-                      <a>{Category.name}</a>
+                      {Category.name}
                     </NavLink>
                   ))}
                 </div>
@@ -261,13 +266,13 @@ function handleShowAllResults() {
               
               <li className='nav-item'>
                 <NavLink className="nav-link" to="/placeholder">
-                  <a>placeholder</a>
+                  placeholder
                 </NavLink>
               </li>
               
               <li className='nav-item'>
                 <NavLink className="nav-link" to="/contact">
-                  <a>Kontakt</a>
+                  Kontakt
                 </NavLink>
               </li>
             </ul>
@@ -292,6 +297,7 @@ function handleShowAllResults() {
               />
             </NavLink>
 
+            {/*location.pathname.startsWith("/employee/") ?():()*/}
             {/* Shopping cart */}
             <NavLink
               type="button"
@@ -307,6 +313,28 @@ function handleShowAllResults() {
               />
               {totalQuantity > 0 && <span className="cart-badge">{totalQuantity}</span>}
             </NavLink>
+
+            { isAuthenticated && (user?.role === "worker" || user?.role === "admin" || user?.role === "owner") &&
+            <div className="dropdown-wrapper">
+              <div
+                className="btn btn-light border navbar-icon-button cart-icon-button"
+                title="Mitarbeiter-Funktionen"
+              >
+                <img
+                  className="navbar-icon "
+                  src="/img/hamburger_icon.png" 
+                  alt="warenkorb icon"
+                />
+              </div>
+
+              <div className="dropdown-menu-custom">
+                <NavLink to="/product_management">Produktverwaltung</NavLink>
+                <NavLink to="/order_management">Bestellungen</NavLink>
+                <NavLink to="/marketing">Marketing</NavLink>
+                <NavLink to="/analysis">Analyse-Dashboard</NavLink>
+              </div>
+            </div>
+            }
           </div>
 
         </div>

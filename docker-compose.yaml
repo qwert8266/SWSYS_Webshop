@@ -24,7 +24,15 @@ services:
         condition: service_healthy
     healthcheck:
       # CMD format for health check command
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://0.0.0.0:3001/health"]
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://0.0.0.0:3001/health",
+        ]
       interval: 10s
       timeout: 10s
       retries: 3
@@ -35,6 +43,8 @@ services:
     volumes:
       - mongo-data:/data/db
       - mongo-config:/data/configdb
+    ports:
+      - "27017:27017"
     restart: unless-stopped
     healthcheck:
       test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet

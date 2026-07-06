@@ -4,8 +4,6 @@ import { faWineGlass, faBeerMugEmpty, faWhiskeyGlass, faWineBottle } from '@fort
 import './footer.css';
 function Footer(){
 
-
-
     return(
       <footer className="footer">
         <div className="footer-content">
@@ -71,19 +69,9 @@ function Footer(){
           <div className="footer-bottom">
             <p>&copy; {new Date().getFullYear()} Ctrl+Alt+Deluxe</p>
           </div>
-          
+
 
       </footer>
-      
-      
-      
     );
 }
-// Bspw.:
-// Logo links angeordnet
-// Produkte: Sortiment und auflistung aller Unterkategorien
-// Rechtliche Hinweise: Impressum, Datenschutzerklärung, Nutzungsbedingungen, ...
-// Kontakt: Kontaktformular, ...
-// Social Media Links
-// (Newsletter)
 export default Footer

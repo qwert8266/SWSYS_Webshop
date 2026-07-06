@@ -56,19 +56,25 @@ type Address struct {
 }
 
 type User struct {
-	ID           uuid.UUID `bson:"id" json:"id"`
-	CustomerType string    `bson:"customer_type" json:"customerType"`
-	Salutation   string    `bson:"salutation" json:"salutation"`
-	FirstName    string    `bson:"first_name" json:"firstName"`
-	LastName     string    `bson:"last__name" json:"lastname"`
-	BirthDate    string    `bson:"birth_date,omitempty" json:"birthDate,omitempty"`
-	Phone        string    `bson:"phone,omitempty" json:"phone,omitempty"`
-	CompanyName  string    `bson:"company_name,omitempty" json:"companyName,omitempty"`
-	Address      Address   `bson:"address" json:"address"`
-	Email        string    `bson:"email" json:"email"`
-	PasswordHash string    `bson:"password_hash" json:"-"`
-	CreatedAt    time.Time `bson:"created_at" json:"createdAt"`
-	UpdatedAt    time.Time `bson:"updated_at" json:"updatedAt"`
+	ID uuid.UUID `bson:"id" json:"id"`
+
+	CustomerType string `bson:"customer_type" json:"customerType"`
+	Salutation   string `bson:"salutation" json:"salutation"`
+	FirstName    string `bson:"first_name" json:"firstName"`
+	LastName     string `bson:"last__name" json:"lastname"`
+	BirthDate    string `bson:"birth_date,omitempty" json:"birthDate,omitempty"`
+	Phone        string `bson:"phone,omitempty" json:"phone,omitempty"`
+
+	CompanyName string  `bson:"company_name,omitempty" json:"companyName,omitempty"`
+	Address     Address `bson:"address" json:"address"`
+
+	Email        string `bson:"email" json:"email"`
+	PasswordHash string `bson:"password_hash" json:"-"`
+
+	Role string `bson:"role" json:"role"`
+
+	CreatedAt time.Time `bson:"created_at" json:"createdAt"`
+	UpdatedAt time.Time `bson:"updated_at" json:"updatedAt"`
 }
 
 // PublicUser is the safe account representation returned to the frontend
@@ -83,6 +89,7 @@ type PublicUser struct {
 	CompanyName  string    `json:"companyName,omitempty"`
 	Address      Address   `json:"address"`
 	Email        string    `json:"email"`
+	Role         string    `json:"role"`
 	CreatedAt    time.Time `json:"createdAt"`
 	UpdatedAt    time.Time `json:"updatedAt"`
 }
@@ -110,7 +117,10 @@ func ToPublicUser(user User) PublicUser {
 		CompanyName:  user.CompanyName,
 		Address:      user.Address,
 		Email:        user.Email,
+		Role:         user.Role,
 		CreatedAt:    user.CreatedAt,
 		UpdatedAt:    user.UpdatedAt,
 	}
 }
+
+var AllowedRoles = []string{"admin", "customer", "worker", "user"}

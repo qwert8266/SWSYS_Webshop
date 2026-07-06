@@ -9,6 +9,8 @@ import { formatEuro } from '../utils/productHelpers';
 import "./accountSettings.css";
 
 
+
+
 function normalizeOrderResponse(response) {
   if (Array.isArray(response)) {
     return response;
@@ -40,7 +42,47 @@ function getOrderItemCount(order) {
 
 }
 
+function getOrderAddress(order) {
+  const address =
+    order?.shippingAddress ||
+    order?.deliveryAddress ||
+    order?.address;
+
+  if (!address) {
+    return null;
+  }
+
+  const street = [
+    address.street,
+    address.houseNumber || address.house_number,
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  const city = [
+    address.zipCode || address.postalCode || address.zip,
+    address.city,
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  const country = address.country;
+
+  return {
+    street,
+    city,
+    country,
+  };
+}
+
 function AccountSettings() {
+  const [returnOrderId, setReturnOrderId] = useState(null);
+  const [returnReason, setReturnReason] = useState("");
+  const [returnMessage, setReturnMessage] = useState("");
+  const [returnItems, setReturnItems] = useState({});
+  const [expandedOrderId, setExpandedOrderId] = useState(null);
+  const [returnStatus, setReturnStatus] = useState(null);
+
   const navigate = useNavigate();
   const { user, accessToken, logout } = useAuth();
   const [activeSection, setActiveSection] = useState("account");
@@ -107,7 +149,7 @@ function AccountSettings() {
 
   function handleLogout() {
     logout();
-    navigate("/");
+    navigate("/home");
   }
 
   function handlePasswordInputChange(event) {
@@ -166,6 +208,133 @@ function AccountSettings() {
     } 
 
   }
+
+  function getItemId(item, index) {
+    return item.product_id || item.productId || `${item.name}-${index}`;
+  }
+
+  function openReturnForm(order) {
+    const initialReturnItems = {};
+
+    const orderItems = Array.isArray(order.items) ? order.items : [];
+    orderItems.forEach((item, index) => {
+      const itemId = getItemId(item, index);
+
+      initialReturnItems[itemId] = {
+        selected: true,
+        quantity: 1,
+        maxQuantity: Number(item.quantity || 1),
+        name: item.name || "Produkt",
+        productId: item.product_id || item.productId,
+      };
+    });
+
+    setReturnOrderId(order.orderId);
+    setReturnItems(initialReturnItems);
+    setReturnReason("");
+    setReturnMessage("");
+    setReturnStatus(null);
+  }
+
+  function closeReturnForm() {
+    setReturnOrderId(null);
+    setReturnItems({});
+    setReturnReason("");
+    setReturnMessage("");
+    setReturnStatus(null);
+  }
+
+  function toggleReturnItem(itemId) {
+    setReturnItems((currentItems) => ({
+      ...currentItems,
+      [itemId]: {
+        ...currentItems[itemId],
+        selected: !currentItems[itemId].selected,
+      },
+    }));
+  }
+
+  function changeReturnQuantity(itemId, quantity) {
+    setReturnItems((currentItems) => {
+      const currentItem = currentItems[itemId];
+
+      if (!currentItem) {
+        return currentItems;
+      }
+
+      const maxQuantity = currentItem.maxQuantity;
+      const safeQuantity = Math.min(
+        Math.max(Number(quantity || 1), 1),
+        maxQuantity
+      );
+
+      return {
+        ...currentItems,
+        [itemId]: {
+          ...currentItem,
+          quantity: safeQuantity,
+        },
+      };
+    });
+  }
+
+  async function handleReturnSubmit(event, order) {
+    event.preventDefault();
+
+    const selectedItems = Object.entries(returnItems)
+      .filter(([, item]) => item.selected)
+      .map(([, item]) => ({
+        productId: item.productId,
+        name: item.name,
+        quantity: item.quantity,
+      }));
+
+    if (selectedItems.length === 0) {
+      setReturnStatus({
+        type: "error",
+        message: "Bitte wähle mindestens einen Artikel für die Rücksendung aus.",
+      });
+      return;
+    }
+
+    if (!returnReason) {
+      setReturnStatus({
+        type: "error",
+        message: "Bitte wähle einen Grund für die Rücksendung aus.",
+      });
+      return;
+    }
+
+    try {
+      const updatedOrder = await orderApi.requestReturn(
+        order.orderId,
+        {
+          reason: returnReason,
+          message: returnMessage,
+          items: selectedItems,
+        },
+        accessToken
+      );
+
+      setOrders((currentOrders) =>
+        currentOrders.map((currentOrder) =>
+          currentOrder.orderId === updatedOrder.orderId
+            ? updatedOrder
+            : currentOrder
+        )
+      );
+
+      setReturnStatus({
+        type: "success",
+        message: "Die Rücksendung wurde beantragt.",
+      });
+    } catch (error) {
+      setReturnStatus({
+        type: "error",
+        message: error.message || "Rücksendung konnte nicht beantragt werden.",
+      });
+    }
+}
   
   return (
     <main className="page account-page">
@@ -269,11 +438,12 @@ function AccountSettings() {
               {!ordersLoading && !ordersError && orders.length > 0 && (
               <div className="orders-list">
                 {orders.map((order) => {
+                  const address = getOrderAddress(order);
                   const orderId = order?.orderId;
                   const items = Array.isArray(order.items) ? order.items : [];
 
                   return (
-                    <div className="order-card">
+                    <div className="order-card" key={orderId}>
                       <section className="order-status-container">
                         <div className="section-notice-image">
                           {/*Ein anderes Icon, je Bestellstatus (Zugestellt, etc.)*/}
@@ -317,15 +487,184 @@ function AccountSettings() {
                           <span>{order.status}</span>
                           <b>{order.total}</b>
                         </div>
-                        <button className="btn btn-outline-primary" type="button">
-                          Details
+                        <button className="btn btn-outline-primary"
+                          type="button"
+                          onClick={() =>
+                            setExpandedOrderId((currentId) =>
+                              currentId === orderId ? null : orderId
+                            )
+                          }
+                        >
+                          {expandedOrderId === orderId ? "Schließen" : "Details & Rücksendung"}
                         </button>
                       </article>
+                      {expandedOrderId === orderId && (
+                      <div className="order-expanded-details">
+                        <h4>Bestelldetails</h4>
+
+                        <p>
+                          <strong>Bestellnummer:</strong> {orderId}
+                        </p>
+
+                        <p>
+                          <strong>Status:</strong> {order.status}
+                        </p>
+
+                        <p>
+                          <strong>Gesamtpreis:</strong>{" "}
+                          {formatEuro(order.totalPrice / 100)}
+                        </p>
+
+                        <h5>Produkte</h5>
+
+                        {items.map((item, index) => (
+                          <div
+                            key={`${item.product_id || item.productId || index}`}
+                            className="order-detail-product"
+                          >
+                            <span>
+                              {item.quantity}x {item.name || "Produkt"}
+                            </span>
+
+                            <span>
+                              Einzelpreis: {formatEuro(item.unitPrice / 100)}
+                            </span>
+
+                            <strong>
+                              Gesamt: {formatEuro(item.lineTotalPrice / 100)}
+                            </strong>
+                          </div>
+                        ))}
+                        <h5>Lieferadresse</h5>
+                          {address ? (
+                            <div className="order-detail-address">
+                              {address.street && <p>{address.street}</p>}
+                              {address.city && <p>{address.city}</p>}
+                              {address.country && <p>{address.country}</p>}
+                            </div>
+                          ) : (
+                            <p className="text-muted">
+                              Keine Lieferadresse hinterlegt.
+                            </p>
+                          )}
+                          <button
+                            className="btn btn-outline-danger"
+                            type="button"
+                            onClick={() => openReturnForm(order)}
+                          >
+                            Rücksendung anfordern
+                        </button>
+                        {returnOrderId === orderId && (
+                          <form
+                            className="return-form"
+                            onSubmit={(event) => handleReturnSubmit(event, order)}
+                          >
+                            <h5>Rücksendung beantragen</h5>
+
+                            <p className="return-form-hint">
+                              Wähle aus, welche Artikel du zurücksenden möchtest.
+                            </p>
+
+                            <div className="return-items">
+                              {items.map((item, index) => {
+                                const itemId = getItemId(item, index);
+                                const returnItem = returnItems[itemId];
+
+                                if (!returnItem) {
+                                  return null;
+                                }
+
+                                return (
+                                  <div className="return-item" key={itemId}>
+                                    <label className="return-item-main">
+                                      <input
+                                        type="checkbox"
+                                        checked={returnItem.selected}
+                                        onChange={() => toggleReturnItem(itemId)}
+                                      />
+
+                                      <span>
+                                        <strong>{item.name || "Produkt"}</strong>
+                                        <small>
+                                          Bestellt: {item.quantity} Stück
+                                        </small>
+                                      </span>
+                                    </label>
+
+                                    <label className="return-quantity">
+                                      Menge
+                                      <select
+                                        value={returnItem.quantity}
+                                        disabled={!returnItem.selected}
+                                        onChange={(event) =>
+                                          changeReturnQuantity(itemId, event.target.value)
+                                        }
+                                      >
+                                        {Array.from(
+                                          { length: Number(item.quantity || 1) },
+                                          (_, quantityIndex) => quantityIndex + 1
+                                        ).map((quantity) => (
+                                          <option key={quantity} value={quantity}>
+                                            {quantity}
+                                          </option>
+                                        ))}
+                                      </select>
+                                    </label>
+                                  </div>
+                                );
+                              })}
+                            </div>
+
+                            <label className="return-form-label">
+                              Grund der Rücksendung
+                              <select
+                                value={returnReason}
+                                onChange={(event) => setReturnReason(event.target.value)}
+                              >
+                                <option value="">Bitte auswählen</option>
+                                <option value="Falscher Artikel">Falscher Artikel</option>
+                                <option value="Beschädigt">Beschädigt</option>
+                                <option value="Zu viel bestellt">Zu viel bestellt</option>
+                                <option value="Gefällt mir nicht">Gefällt mir nicht</option>
+                                <option value="Sonstiges">Sonstiges</option>
+                              </select>
+                            </label>
+
+                            <label className="return-form-label">
+                              Nachricht
+                              <textarea
+                                value={returnMessage}
+                                onChange={(event) => setReturnMessage(event.target.value)}
+                                placeholder="Beschreibe kurz dein Anliegen..."
+                                rows={4}
+                              />
+                            </label>
+
+                            {returnStatus && (
+                              <p className={`return-message ${returnStatus.type}`}>
+                                {returnStatus.message}
+                              </p>
+                            )}
+
+                            <div className="return-form-actions">
+                              <button
+                                className="btn btn-outline-secondary"
+                                type="button"
+                                onClick={closeReturnForm}
+                              >
+                                Abbrechen
+                              </button>
+
+                              <button className="btn btn-danger" type="submit">
+                                Rücksendung absenden
+                              </button>
+                            </div>
+                          </form>
+                        )}
+                      </div>
+                    )}
                     </div>
-
                   );
-                  
-
                 })}
               </div>
             )}

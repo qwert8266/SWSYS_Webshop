@@ -4,13 +4,14 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"path/filepath"
 	"sort"
 	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/qwert8266/SWSYS_Webshop/server/config"
+	"github.com/qwert8266/SWSYS_Webshop/server/database"
 	"github.com/qwert8266/SWSYS_Webshop/server/models"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
@@ -19,7 +20,7 @@ import (
 
 // GetProducts returns all Products from MongoDB
 func GetProducts(c *gin.Context) {
-	productCollection := config.ProductCollection()
+	productCollection := database.ProductCollection()
 
 	cursor, err := productCollection.Find(c.Request.Context(), bson.M{})
 	if err != nil {
@@ -45,7 +46,7 @@ func GetProductByID(c *gin.Context) {
 	}
 
 	var product models.Product
-	productCollection := config.ProductCollection()
+	productCollection := database.ProductCollection()
 
 	err = productCollection.FindOne(c.Request.Context(), bson.M{"product_id": id}).Decode(&product)
 	if err != nil {
@@ -64,7 +65,7 @@ func GetProductByCategory(c *gin.Context) {
 	category := c.Param("category")
 
 	var products []models.Product
-	productCollection := config.ProductCollection()
+	productCollection := database.ProductCollection()
 
 	cursor, err := productCollection.Find(c.Request.Context(), bson.M{"category": category})
 	if err != nil {
@@ -94,11 +95,16 @@ func CreateProduct(c *gin.Context) {
 		return
 	}
 
+	validProductData, err := checkIncomingProductData(c, incomingProduct)
 	//trimming strings:
-	name := strings.TrimSpace(incomingProduct.Name)
-	description := strings.TrimSpace(incomingProduct.Description)
-	image := strings.TrimSpace(incomingProduct.Image)
-	normalizedCategory := strings.ToLower(strings.TrimSpace(incomingProduct.Category))
+	name := strings.TrimSpace(validProductData.Name)
+	description := strings.TrimSpace(validProductData.Description)
+	image := strings.TrimSpace(validProductData.Image)
+	normalizedCategory := strings.ToLower(strings.TrimSpace(validProductData.Category))
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 
 	// creating new user and generating a new user ID.
 	newProduct := models.Product{
@@ -114,7 +120,7 @@ func CreateProduct(c *gin.Context) {
 	}
 
 	// adding the new user to the collection
-	productCollection := config.ProductCollection()
+	productCollection := database.ProductCollection()
 	if _, err := productCollection.InsertOne(c.Request.Context(), newProduct); err != nil {
 		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error creating new product": err.Error()})
 		return
@@ -138,11 +144,12 @@ func UpdateProduct(c *gin.Context) {
 		return
 	}
 
+	validProductData, err := checkIncomingProductData(c, updatedProductData)
 	//trimming strings:
-	name := strings.TrimSpace(updatedProductData.Name)
-	description := strings.TrimSpace(updatedProductData.Description)
-	image := strings.TrimSpace(updatedProductData.Image)
-	normalizedCategory := strings.ToLower(strings.TrimSpace(updatedProductData.Category))
+	name := strings.TrimSpace(validProductData.Name)
+	description := strings.TrimSpace(validProductData.Description)
+	image := strings.TrimSpace(validProductData.Image)
+	normalizedCategory := strings.ToLower(strings.TrimSpace(validProductData.Category))
 
 	//updateOne() needs to be told how to modify the Document in the collection. (in this case using $set)
 	updatedProduct := bson.D{
@@ -155,7 +162,7 @@ func UpdateProduct(c *gin.Context) {
 		{"$set", bson.D{{"updated_at", time.Now()}}},
 	}
 
-	productCollection := config.ProductCollection()
+	productCollection := database.ProductCollection()
 
 	//updating product in collection:
 	if result, err := productCollection.UpdateOne(c.Request.Context(), bson.M{"product_id": productID}, updatedProduct); err != nil {
@@ -175,7 +182,7 @@ func DeleteProduct(c *gin.Context) {
 		return
 	}
 
-	productCollection := config.ProductCollection()
+	productCollection := database.ProductCollection()
 
 	result, err := productCollection.DeleteOne(c.Request.Context(), bson.M{"product_id": id})
 	if err != nil {
@@ -185,6 +192,35 @@ func DeleteProduct(c *gin.Context) {
 	} else {
 		c.IndentedJSON(http.StatusNoContent, gin.H{"message": "product deleted"})
 	}
+}
+
+func checkIncomingProductData(c *gin.Context, pd models.ProductData) (models.ProductData, error) {
+	if pd.Name == "" {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Name ungültig"})
+		return pd, errors.New("name invalid")
+	}
+
+	if ext := strings.ToLower(filepath.Ext(pd.Image)); ext != ".png" && ext != ".jpg" && ext != ".jpeg" {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Image ungültig"})
+		return pd, errors.New("image invalid")
+	}
+
+	if pd.Price <= 0 {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Preis ungültig"})
+		return pd, errors.New("price invalid")
+	}
+
+	if pd.Stock < 0 {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Stock ungültig"})
+		return pd, errors.New("stock invalid")
+	}
+
+	if pd.Category == "" {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Kategorie ungültig"})
+		return pd, errors.New("category invalid")
+	}
+
+	return pd, nil
 }
 
 // ModifyStock is used to increase or decrease the stock of the specified product
@@ -233,7 +269,7 @@ func ModifyStock(c *gin.Context) {
 
 	// creating update to stock
 	updateToStock := bson.D{{"$inc", bson.D{{"stock", operation.Value}}}}
-	err = config.ProductCollection().FindOneAndUpdate(
+	err = database.ProductCollection().FindOneAndUpdate(
 		c.Request.Context(),
 		filter,
 		updateToStock,
@@ -243,7 +279,7 @@ func ModifyStock(c *gin.Context) {
 	if errors.Is(err, mongo.ErrNoDocuments) {
 		// checking if the product exists
 		var foundProduct models.Product
-		if err = config.ProductCollection().FindOne(c.Request.Context(), idFilter).Decode(&foundProduct); err != nil {
+		if err = database.ProductCollection().FindOne(c.Request.Context(), idFilter).Decode(&foundProduct); err != nil {
 			c.IndentedJSON(http.StatusNotFound, gin.H{"message": "product not found"})
 			return
 		}
@@ -264,7 +300,7 @@ func SearchProducts(c *gin.Context) {
 		return
 	}
 
-	cursor, err := config.ProductCollection().Find(
+	cursor, err := database.ProductCollection().Find(
 		c.Request.Context(),
 		bson.M{},
 	)

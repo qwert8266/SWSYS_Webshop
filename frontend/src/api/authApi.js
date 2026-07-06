@@ -73,8 +73,16 @@ class AuthApi extends BaseApi {
     return this.request("/user/me", {
       method: "GET",
       accessToken,
-      errorMessage: "Benutzerdaten konnten nich geladen werden.",
+      errorMessage: "Benutzerdaten konnten nicht geladen werden.",
     }); 
+  }
+
+  async getUsers(accessToken) {
+    return this.request("/user/", {
+      method: "GET",
+      accessToken,
+      errorMessage: "Benutzerdaten konnten nich geladen werden.",
+    });
   }
 }
 
