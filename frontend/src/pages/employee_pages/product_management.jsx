@@ -3,17 +3,18 @@ import '../categories.css';
 import { useState, useEffect } from 'react';
 import { useAuth } from "../../context/authContext";
 
+import categoryApi from "../../api/categoryApi";
 import productApi from "../../api/productApi";
 import { useProd } from "../../context/productContext";
 import { getCategoryConfig } from "../../utils/categoryConfig";
 import { normalizeProduct, getProductImagePath, formatEuro } from '../../utils/productHelpers';
 
-function ProductManagement({ category: fixedCategory }){
-    const { categorySlug } = useParams();
-    const selectedCategory = getCategoryConfig(fixedCategory || categorySlug);
+function ProductManagement(){
     const [categoryProducts, setCategoryProducts] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [loadError, setLoadError] = useState("");
+    const [categories, setCategories] = useState([]);
+    const [categoryLoadError, setCategoryLoadError] = useState("");
 
     const [showSuccessCreateLabel, setShowSuccessCreateLabel] = useState(false);
     const [showSuccessModifyLabel, setShowSuccessModifyLabel] = useState(false);
@@ -36,7 +37,7 @@ function ProductManagement({ category: fixedCategory }){
         image: "",
         price: null,
         stock: null,
-        category: "",
+        categorySlug: "",
     });
 
     const [productDataModify, setProductDataModify] = useState({
@@ -46,7 +47,7 @@ function ProductManagement({ category: fixedCategory }){
         image: "",
         price: null,
         stock: null,
-        category: "",
+        categorySlug: "",
     });
 
     
@@ -72,7 +73,8 @@ function ProductManagement({ category: fixedCategory }){
 
     const handleCreateProduct = async () => {
         try{
-            await createProduct(productData, accessToken);
+            await createProduct(buildProductPayload(productData), accessToken);
+            await loadProducts();
         }catch{
             setShowNotSuccessfulLabel(true)
             setTimeout(() => {
@@ -80,6 +82,16 @@ function ProductManagement({ category: fixedCategory }){
             }, 5000)
             return
         }
+
+        setClickedAddProductButton(false);
+        setProductData({
+            name: "",
+            description: "",
+            image: "",
+            price: null,
+            stock: null,
+            categorySlug: "",
+        })
         
         setShowSuccessCreateLabel(true);
 
@@ -124,7 +136,90 @@ function ProductManagement({ category: fixedCategory }){
         }, 5000)
     }
 
+    const loadProducts = async () => {
+        setIsLoading(true);
+        setLoadError("");
+        setCategoryProducts([]);
+
+        try {
+            const productsFromDatabase = await getProducts();
+            setCategoryProducts(productsFromDatabase.map())
+        } catch (error) {
+            setLoadError("Produkte konnten nicht aus der Datenbank geladen werden.")
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    function getCategoryBySlug(slug) {
+        return categories.find((category) => category.slug === slug);
+    }
+
+    function getProductCategorySlug(product) {
+        const productCategories = Array.isArray(product.categories) ? product.categories : [];
+
+        if (productCategories.length === 0) {
+            return "";
+        }
+
+        const productCategory = productCategories[0];
+
+        const matchingCategory = categories.find((category) => {
+            return (
+                category.slug === productCategory.slug ||
+                category.name === productCategory.name
+            );
+        });
+
+        return (
+            matchingCategory?.slug ||
+            productCategory.slug ||
+            ""
+        );
+    }
+
+    function buildProductPayload(data) {
+        const selectedCategory = getCategoryBySlug(data.categorySlug);
+
+        return {
+            name: data.name,
+            description: data.description,
+            image: data.image,
+            price: data.price,
+            stock: data.stock,
+            categories: selectedCategory ? [selectedCategory] : [],
+        };
+    }
+
+    
+
     const[clickedAddProductButton, setClickedAddProductButton] = useState(false)
+
+    useEffect(() => {
+        let ignoreResult = false;
+
+        async function loadCategories() {
+            setCategoryLoadError("");
+
+            try {
+                const categoriesFromDatabase = await categoryApi.getCategories();
+
+                if (!ignoreResult) {
+                    setCategories(Array.isArray(categoriesFromDatabase) ? categoriesFromDatabase : []);
+                }
+            } catch {
+                if (!ignoreResult) {
+                    setCategories([]);
+                    setCategoryLoadError("Kategorien konnten nicht aus der Datenbank geladen werden.");
+                }
+            }
+        }
+        loadCategories();
+
+        return () => {
+            ignoreResult = true;
+        };
+    }, []);
 
     useEffect(() => {
         let ignoreResult = false;
@@ -148,15 +243,14 @@ function ProductManagement({ category: fixedCategory }){
                 if (!ignoreResult) {
                     setIsLoading(false);
                 }
-            }
-            
+            } 
         }
         loadProducts();
 
         return () => {
             ignoreResult = true;
         };
-    }, [selectedCategory.dbCategory]);
+    }, [getProducts]);
 
 
     return(
@@ -232,14 +326,21 @@ function ProductManagement({ category: fixedCategory }){
                     </div>
                     <div className='d-flex flex-row align-items-center pb-2'>
                         <label className='fs-5 me-3' style={{ width: "150px" }}>Kategorie</label>
-                        <select className="fs-5 border rounded" style={{ width: "230px" }} placeholder='Kategorie' name='category' value={productData.category} onChange={handleChange}>
+                        <select 
+                            className="fs-5 border rounded" 
+                            style={{ width: "230px" }} 
+                            placeholder='Kategorie' 
+                            name='categorySlug' 
+                            value={productData.categorySlug} 
+                            onChange={handleChange}
+                        >
                             <option value="">Kategorie auswählen</option>
-                            <option value="bier">Bier</option>
-                            <option value="wein">Wein & Sekt</option>
-                            <option value="schnaps">Spirituosen</option>
-                            <option value="softdrinks">Softgetränke</option>
-                            <option value="wasser">Wasser</option>
-                            <option value="kaffe-tee">Kaffee & Tee</option>
+                            
+                            {categories.map((category) => (
+                                <option key={category.slug} value={category.slug}>
+                                    {category.name}
+                                </option>
+                            ))}
                         </select>
 
                         {/**<input className='fs-5 border rounded ' type="text" placeholder='Kategorie' name='category' value={productData.category} onChange={handleChange}/>*/}
@@ -288,7 +389,7 @@ function ProductManagement({ category: fixedCategory }){
                                     <div style={{width: "200px"}}>
                                         <NavLink 
                                             className="product_link" 
-                                            to={`/sortiment/${selectedCategory.slug}/${encodeURIComponent(product.id)}`}>
+                                            to={`/sortiment/${getProductCategorySlug(product)}/${encodeURIComponent(product.id)}`}>
                                             <img className="product_png w-75 ps-5" style={{width: "70px"}} src={getProductImagePath(product)} alt={product.name} />
                                             
                                         </NavLink>

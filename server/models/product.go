@@ -36,6 +36,7 @@ type StockOperation struct {
 
 type Category struct {
 	Name string `json:"name"`
+	Slug string `json:"slug"` //Für URL's und co.
 }
 
 func (c Category) IsValid() bool {

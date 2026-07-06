@@ -39,12 +39,12 @@
 .nav-dropdown-link a:hover::before {
     width: 100%;
 }
-.nav-link.active a {
+.nav-link.active  {
     color: #ab8d51;
 }
 
 /*Sortiment dropdown*/
-.nav-link:hover::before {
+.nav-link a:hover::before {
     width: 100%;
 }
 
@@ -74,7 +74,7 @@
     display: grid;
     grid-template-rows: repeat(2, auto);
     grid-auto-flow: column;
-    grid-auto-columns: minmax(120px, max-content);
+    grid-auto-columns: minmax(140px, max-content);
 }
 
 .nav-dropdown-link {

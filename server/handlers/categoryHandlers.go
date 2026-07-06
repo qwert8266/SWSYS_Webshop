@@ -7,11 +7,15 @@ import (
 	"github.com/qwert8266/SWSYS_Webshop/server/database"
 	"github.com/qwert8266/SWSYS_Webshop/server/models"
 	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 // GetCategories returns all categories currently registered in the DB
 func GetCategories(c *gin.Context) {
-	cursor, err := database.CategoryCollection().Find(c.Request.Context(), bson.M{})
+	findOptions := options.Find()
+	findOptions.SetSort(bson.D{{Key: "name", Value: 1}})
+
+	cursor, err := database.CategoryCollection().Find(c.Request.Context(), bson.M{}, findOptions)
 	if err != nil {
 		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

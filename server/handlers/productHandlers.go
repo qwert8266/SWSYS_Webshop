@@ -381,9 +381,11 @@ func productSearchScore(product models.Product, query string) (int, bool) {
 		return 0, false
 	}
 
+	categoryValue := getProductCategoryValue(product)
+
 	fields := []searchableField{
 		{Value: product.Name, Penalty: 0},
-		{Value: product.Categories[0].Name, Penalty: 15},
+		{Value: categoryValue, Penalty: 15},
 		{Value: product.Description, Penalty: 30},
 		{Value: product.Image, Penalty: 40},
 	}
@@ -427,6 +429,19 @@ func productSearchScore(product models.Product, query string) (int, bool) {
 	}
 
 	return bestScore, matched
+}
+
+func getProductCategoryValue(product models.Product) string {
+	if len(product.Categories) > 0 {
+		if product.Categories[0].Slug != "" {
+			return product.Categories[0].Slug
+		}
+
+		if product.Categories[0].Name != "" {
+			return product.Categories[0].Name
+		}
+	}
+	return ""
 }
 
 func normalizeSearchText(value string) string {
