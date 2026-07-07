@@ -105,9 +105,46 @@ function ProductManagement(){
         };
         
         try{
-            await createProduct(productPayload, accessToken);
+            const createdProduct = await createProduct(productPayload, accessToken);
             //await createProduct(buildProductPayload(productData), accessToken);
             //await loadProducts();
+            
+            /*const newCreatedProduct = {
+                ...createProduct,
+                id: createProduct.id || createProduct.product_id,
+            };
+            
+            if (createProduct) {
+                setCategoryProducts((currentProducts) => [
+                    newCreatedProduct,
+                    ...currentProducts,
+                ]);
+            }
+            */
+
+            setCategoryProducts((currentProducts) => [
+                createdProduct,
+                ...currentProducts,
+            ]);
+
+            setShowSuccessCreateLabel(true);
+            setClickedAddProductButton(false);
+            setProductData({
+                id: 0,
+                name: "",
+                description: "",
+                image: "",
+                price: null,
+                stock: null,
+                categorySlugs: [],
+            })
+            
+            
+
+            setTimeout(() => {
+                setShowSuccessCreateLabel(false);
+            }, 5000)
+
         }catch{
             setShowNotSuccessfulLabel(true)
             setTimeout(() => {
@@ -116,21 +153,7 @@ function ProductManagement(){
             return
         }
 
-        setClickedAddProductButton(false);
-        setProductData({
-            name: "",
-            description: "",
-            image: "",
-            price: null,
-            stock: null,
-            categorySlugs: [],
-        })
         
-        setShowSuccessCreateLabel(true);
-
-        setTimeout(() => {
-            setShowSuccessCreateLabel(false);
-        }, 5000)
     }
 
     const handleUpdateProduct = async () => {
@@ -317,12 +340,6 @@ function ProductManagement(){
                                 <label className='fs-3'>Fürs Anzeigen bitte Seite neu laden.</label>
                             </div>
                         }
-                        {showNotSuccessfulLabel &&
-                            <div className="d-flex flex-column border rounded align-items-center justify-content-center " style={{height: "80px", width:"100%", alignItems: 'center', backgroundColor: 'red', color: 'white'}}>
-                                <label className='fs-3'>Es gab einen Fehler.</label>
-                                <label className='fs-3'>Bitte Eingaben prüfen!</label>
-                            </div>
-                        }
                     </div>
                 </div>
                 }
@@ -336,6 +353,17 @@ function ProductManagement(){
 
             {clickedAddProductButton &&
             <div className='d-flex justify-content-center pb-5'>
+
+                {showNotSuccessfulLabel &&
+                            <div 
+                                className="d-flex flex-column border rounded align-items-center justify-content-center " 
+                                style={{height: "80px", width:"100%", alignItems: 'center', backgroundColor: 'red', color: 'white'}}
+                            >
+                                <label className='fs-3'>Es gab einen Fehler.</label>
+                                <label className='fs-3'>Bitte Eingaben prüfen!</label>
+                            </div>
+                        }
+
                 <div className='d-flex flex-column align-items-center border rounded pt-2 w-50'>
                     <div className='d-flex flex-row align-items-center pb-2'>
                         <label className='fs-5 me-3' style={{ width: "150px" }}>Produktname</label>
@@ -403,7 +431,6 @@ function ProductManagement(){
                         className="btn text-white fs-5 align-self-center" 
                         style={{ backgroundColor: "#15406e" }} 
                         onClick={() => {
-                            setClickedAddProductButton(false);
                             handleCreateProduct();
                         }}
                     >
