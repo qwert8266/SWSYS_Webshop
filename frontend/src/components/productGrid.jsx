@@ -3,6 +3,7 @@ import { findCategoryConfig } from "../utils/categoryConfig";
 import { formatEuro, getProductImagePath } from "../utils/productHelpers";
 import FavoriteButton from "./favoriteButton";
 import "./favoriteButton.css";
+import StockIndicator from "./stockIndicator";
 
 function getProductCategorySlug(product, categorySlug) {
   if (categorySlug) {
@@ -12,7 +13,7 @@ function getProductCategorySlug(product, categorySlug) {
   return findCategoryConfig(product.category)?.slug || product.category;
 }
 
-function ProductGrid({ products, categorySlug, showListActions = true }) {
+function ProductGrid({ products, categorySlug, stockMap = {}, showListActions = true }) {
   if (!products.length) {
     return null;
   }
@@ -46,9 +47,7 @@ function ProductGrid({ products, categorySlug, showListActions = true }) {
               {"☆".repeat(5 - Math.round(product.rating))}
             </p>
             <strong>{formatEuro(product.price)}</strong>
-            {product.stock !== null && product.stock <= 15 && (
-              <p className="text-danger">Nur noch {product.stock} verfügbar</p>
-            )}
+            <StockIndicator stockInfo={stockMap[product.id]} />
           </div>
         );
       })}
