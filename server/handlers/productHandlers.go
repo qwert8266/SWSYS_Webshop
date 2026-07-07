@@ -169,7 +169,7 @@ func UpdateProduct(c *gin.Context) {
 		{"$set", bson.D{{"image", image}}},
 		{"$set", bson.D{{"price", updatedProductData.Price}}},
 		{"$set", bson.D{{"stock", updatedProductData.Stock}}},
-		{"$set", bson.D{{"category", updatedProductData.Categories}}},
+		{"$set", bson.D{{"categories", updatedProductData.Categories}}},
 		{"$set", bson.D{{"updated_at", time.Now()}}},
 	}
 
