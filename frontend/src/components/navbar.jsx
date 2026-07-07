@@ -331,7 +331,7 @@ function handleShowAllResults() {
                 <NavLink to="/product_management">Produktverwaltung</NavLink>
                 <NavLink to="/order_management">Bestellungen</NavLink>
                 <NavLink to="/marketing">Marketing</NavLink>
-                <NavLink to="/analysis">Analyse-Dashboard</NavLink>
+                <NavLink to="/statistics">Analyse-Dashboard</NavLink>
               </div>
             </div>
             }
