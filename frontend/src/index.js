@@ -16,7 +16,6 @@ import { ProductProvider } from "./context/productContext";
 
 const root = createRoot(document.getElementById("root"));
 
-root.render(
 
   root.render(
   <AuthProvider>
