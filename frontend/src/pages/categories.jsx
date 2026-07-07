@@ -3,6 +3,8 @@ import './categories.css';
 import { useState, useEffect } from 'react';
 
 import productApi from "../api/productApi";
+import StockIndicator from "../components/stockIndicator";
+import { useStockMap } from "../hooks/useStockMap";
 import { getCategoryConfig } from "../utils/categoryConfig";
 import { normalizeProduct, getProductImagePath, formatEuro } from '../utils/productHelpers';
 
@@ -36,6 +38,8 @@ function Category({ category: fixedCategory }){
     const [categoryProducts, setCategoryProducts] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [loadError, setLoadError] = useState("");
+    // Bestände kommen gesammelt vom Stock-Endpunkt, nicht aus der Produkt-Response
+    const stockMap = useStockMap();
 
     useEffect(() => {
         let ignoreResult = false;
@@ -106,7 +110,7 @@ function Category({ category: fixedCategory }){
                         </NavLink>
                         <p>{"★".repeat(Math.round(product.rating))}{"☆".repeat(5 - Math.round(product.rating))}</p>
                         <strong>{formatEuro(product.price)}</strong>
-                        {product.stock !== null && product.stock <= 15 && <p className='text-danger'>Nur noch {product.stock} verfügbar</p>}
+                        <StockIndicator stockInfo={stockMap[product.id]} />
                     </div>
                 ))}
             </div>

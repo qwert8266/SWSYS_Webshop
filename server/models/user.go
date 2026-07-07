@@ -89,9 +89,9 @@ type PublicUser struct {
 	CompanyName  string    `json:"companyName,omitempty"`
 	Address      Address   `json:"address"`
 	Email        string    `json:"email"`
-	Role         string    `json:"role"`
-	CreatedAt    time.Time `json:"createdAt"`
-	UpdatedAt    time.Time `json:"updatedAt"`
+	Role      string    `json:"role"`
+	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
 }
 
 // AuthResponse is returned after registration and login

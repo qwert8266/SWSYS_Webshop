@@ -24,6 +24,7 @@ import AccountSettings from "./pages/accountSettings";
 import Contact from "./pages/contact";
 import Category from "./pages/categories";
 import Product from "./pages/product";
+import LogisticsPanel from "./pages/logisticsPanel";
 import Home from './pages/home';
 
 function App() {
@@ -55,23 +56,27 @@ function App() {
             </ProtectedRoutes>
           }/>
 
-          <Route path="product_management" element={
-            <ProtectedRoutes>
-              <ProductManagement/>
-            </ProtectedRoutes>
-          }/>
+         <Route path="/logistik" element={
+  <ProtectedRoutes>
+    <LogisticsPanel/>
+  </ProtectedRoutes>
+}/>
+<Route path="product_management" element={
+  <ProtectedRoutes>
+    <ProductManagement/>
+  </ProtectedRoutes>
+}/>
+<Route path="order_management" element={
+  <ProtectedRoutes>
+    <OrderManagement/>
+  </ProtectedRoutes>
+}/>
+<Route path="statistics" element={
+  <ProtectedRoutes>
+    <Statistics/>
+  </ProtectedRoutes>
+}/>
 
-          <Route path="order_management" element={
-            <ProtectedRoutes>
-              <OrderManagement/>
-            </ProtectedRoutes>
-          }/>
-
-          <Route path="statistics" element={
-            <ProtectedRoutes>
-              <Statistics/>
-            </ProtectedRoutes>
-          }/>
           
           <Route path="/sortiment" element={<Navigate to="/sortiment/bier" replace/>}/>
           <Route path="/sortiment/:categorySlug" element={<Category />}/>
