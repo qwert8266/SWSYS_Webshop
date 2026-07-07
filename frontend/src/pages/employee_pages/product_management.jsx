@@ -37,7 +37,7 @@ function ProductManagement(){
         image: "",
         price: null,
         stock: null,
-        categorySlug: "",
+        categorySlugs: [],
     });
 
     const [productDataModify, setProductDataModify] = useState({
@@ -47,7 +47,7 @@ function ProductManagement(){
         image: "",
         price: null,
         stock: null,
-        categorySlug: "",
+        categorySlugs: [],
     });
 
     
@@ -61,6 +61,7 @@ function ProductManagement(){
         });
     };
 
+
     const handleChange2 = (event) => {
     const { name, value } = event.target;
 
@@ -71,10 +72,42 @@ function ProductManagement(){
         });
     };
 
+    const handleCategoryToggle = (categorySlug) => {
+        setProductData((currentProductData) => {
+            const categoryIsSelected = currentProductData.categorySlugs.includes(categorySlug);
+
+            if (categoryIsSelected) {
+                return {
+                    ...currentProductData,
+                    categorySlugs: currentProductData.categorySlugs.filter((slug) => slug !== categorySlug),
+                };
+            }
+
+            return {
+                ...currentProductData,
+                categorySlugs: [...currentProductData.categorySlugs, categorySlug],
+            };
+        });
+    };
+
     const handleCreateProduct = async () => {
+        const selectedCategories = categories.filter((category) => {
+            return productData.categorySlugs.includes(category.slug);
+        });
+
+        const productPayload = {
+            name: productData.name,
+            description: productData.description,
+            image: productData.image,
+            price: productData.price,
+            stock: productData.stock,
+            categories: selectedCategories,
+        };
+        
         try{
-            await createProduct(buildProductPayload(productData), accessToken);
-            await loadProducts();
+            await createProduct(productPayload, accessToken);
+            //await createProduct(buildProductPayload(productData), accessToken);
+            //await loadProducts();
         }catch{
             setShowNotSuccessfulLabel(true)
             setTimeout(() => {
@@ -90,7 +123,7 @@ function ProductManagement(){
             image: "",
             price: null,
             stock: null,
-            categorySlug: "",
+            categorySlugs: [],
         })
         
         setShowSuccessCreateLabel(true);
@@ -314,7 +347,7 @@ function ProductManagement(){
                     </div>
                     <div className='d-flex flex-row align-items-center pb-2'>
                         <label className='fs-5 me-3' style={{ width: "150px" }}>Bild</label>
-                        <input className='fs-5 border rounded ' type="text" placeholder='Bild(Dateiname)' name='image' value={productData.image} onChange={handleChange}/>
+                        <input className='fs-5 border rounded ' type="text" placeholder='Bild(bier.png)' name='image' value={productData.image} onChange={handleChange}/>
                     </div>
                     <div className='d-flex flex-row align-items-center pb-2'>
                         <label className='fs-5 me-3' style={{ width: "150px" }}>Preis</label>
@@ -326,7 +359,26 @@ function ProductManagement(){
                     </div>
                     <div className='d-flex flex-row align-items-center pb-2'>
                         <label className='fs-5 me-3' style={{ width: "150px" }}>Kategorie</label>
-                        <select 
+                        
+                        <div className="d-flex flex-column border rounded p-2" style={{ width: "230px" }}>
+                            {categories.length === 0 && (
+                                <span className='text-muted'>Keine Kategorien verfügbar</span>
+                            )}
+
+                            {categories.map((category) => (
+                                <label key={category.slug} className='fs-6 d-flex align-items-center gap-2'>
+                                    <input
+                                        type="checkbox"
+                                        checked={productData.categorySlugs.includes(category.slug)}
+                                        onChange={() => handleCategoryToggle(category.slug)}
+                                    />
+                                    {category.name}
+                                </label>
+                            ))}
+
+                        </div>
+
+                        {/*<select 
                             className="fs-5 border rounded" 
                             style={{ width: "230px" }} 
                             placeholder='Kategorie' 
@@ -341,13 +393,22 @@ function ProductManagement(){
                                     {category.name}
                                 </option>
                             ))}
-                        </select>
+                        </select> */}
 
                         {/**<input className='fs-5 border rounded ' type="text" placeholder='Kategorie' name='category' value={productData.category} onChange={handleChange}/>*/}
                     </div>
                     
                     <div className='pb-2'>
-                    <button className="btn text-white fs-5 align-self-center" style={{ backgroundColor: "#15406e" }} onClick={() => {setClickedAddProductButton(false);handleCreateProduct()}}>Produkt hinzufügen</button>
+                    <button 
+                        className="btn text-white fs-5 align-self-center" 
+                        style={{ backgroundColor: "#15406e" }} 
+                        onClick={() => {
+                            setClickedAddProductButton(false);
+                            handleCreateProduct();
+                        }}
+                    >
+                        Produkt hinzufügen
+                    </button>
                     </div>
                 </div>
             </div>}
@@ -401,9 +462,9 @@ function ProductManagement(){
                                     <p>{"★".repeat(Math.round(product.rating))}{"☆".repeat(5 - Math.round(product.rating))}</p>
                                     <strong style={{width: "80px", textAlign: 'right'}}>{formatEuro(product.price)}</strong>
                                     <div style={{width: "100px"}}>
-                                        {product.stock !== null && (product.stock <= 15 && product.stock != 0) && <p className='text-danger'>Nur noch {product.stock} verfügbar</p>}
+                                        {product.stock !== null && (product.stock <= 15 && product.stock !== 0) && <p className='text-danger'>Nur noch {product.stock} verfügbar</p>}
                                         {product.stock !== null && product.stock > 15 && <p className=''>Noch {product.stock} verfügbar</p>}
-                                        {product.stock !== null && product.stock == 0 && <p className='text-danger'>Nicht mehr verfügbar</p>}
+                                        {product.stock !== null && product.stock === 0 && <p className='text-danger'>Nicht mehr verfügbar</p>}
                                     </div>
                                     <button className="btn p-2 border-0 bg-transparent flex-shrink-0  cart-delete-button justify-content-end"
                                         type="button" onClick={() => {setProductToModify(product);setShowModifyWindow(true)
@@ -420,6 +481,7 @@ function ProductManagement(){
                                         <img
                                         src="/img/settings.png"
                                         className='cart-delete-icon'
+                                        alt="modify"
                                         />
                                     </button>
                                     <button className="btn p-2 border-0 bg-transparent flex-shrink-0  cart-delete-button justify-content-end"
@@ -427,6 +489,7 @@ function ProductManagement(){
                                         <img
                                         src="/img/trash.svg"
                                         className='cart-delete-icon'
+                                        alt="delete cart"
                                         />
                                     </button>
 

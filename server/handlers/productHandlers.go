@@ -226,6 +226,11 @@ func checkIncomingProductData(c *gin.Context, pd models.ProductData) (models.Pro
 		return pd, errors.New("stock invalid")
 	}
 
+	if len(pd.Categories) == 0 {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Mindestens eine Kategorie muss ausgewählt sein"})
+		return pd, errors.New("no category")
+	}
+
 	for _, category := range pd.Categories {
 		if !category.IsValid() {
 			c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Kategorie ungültig"})
