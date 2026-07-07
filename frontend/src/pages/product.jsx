@@ -6,7 +6,8 @@ import { useEffect, useState } from 'react';
 import productApi from '../api/productApi';
 import StockIndicator from '../components/stockIndicator';
 import { getCategoryConfig } from '../utils/categoryConfig';
-import { formatEuro, normalizeProduct } from '../utils/productHelpers';
+import { formatEuro,getProductImagePath, normalizeProduct } from '../utils/productHelpers';
+import FourOFour from './404';
 
 /*export const produkte = [
   { name: "Becks", id: "001", price: "14.99", rating: 3.8, image: "becks.png", category: "bier", quantity: 0},
@@ -47,6 +48,8 @@ function Product(){
     const [isLoading, setIsLoading] = useState(false);
     const [loadError, setLoadError] = useState("");
     const [cartMessage, setCartMessage] = useState("");
+    const [productNotFound, setProductNotFound] = useState(false);
+    const [slideIndex, setSlideIndex] = useState(0);
 
     /*const product = produkte.find(
         p =>
@@ -61,6 +64,7 @@ function Product(){
             setIsLoading(true);
             setLoadError("");
             setCartMessage("");
+            setProductNotFound(false);
 
             try {
                 // Produktdaten und Bestand kommen aus getrennten Endpunkten:
@@ -77,6 +81,10 @@ function Product(){
                 }
             } catch (error) {
                 if (!ignoreResult) {
+                    if(error.status === 404){
+                        setProductNotFound(true);
+                    }
+                    
                     setLoadError("Produkt konnte nicht geladen werden.");
                     setProduct(null);
                     setStockInfo(null);
@@ -120,17 +128,29 @@ function Product(){
         }
     }
 
+    
+
+    function changeSlide(direction) {
+    setSlideIndex((currentIndex) =>
+        (currentIndex + direction + product.images.length) % product.images.length
+    );
+}
+
+
+
+    if (productNotFound || !selectedCategory) {
+    return <FourOFour />;
+}
+
     if (isLoading) {
         return <p>Produkt wird geladen...</p>
     }
     if (!product?.name) {
         return (
-            <div className="product-page">
-                {loadError && <p className="text-danger">{loadError}</p>}
-                <p>Das Produkt wurde nicht gefunden</p>
-            </div>
+            <FourOFour/>
         );
     }
+
 
 
     return(
@@ -139,10 +159,45 @@ function Product(){
             {cartMessage && <p className='text-success'>{cartMessage}</p>}
             
             <div className='product-page-top'>
-                <div >
-                    <img className='product-picture' src={`/img/product_images/${product.image}` }alt={product.name} />
-                </div>
+                <div className='d-flex flex-column'>
+                    <div className="slideshow-container">
+                        
 
+                        {!product.images || product.images?.length === 0 ? (
+                            <img src={getProductImagePath(product)} alt={product.name} style={{ width: "600px", height: "600px" }}/>
+                        ) : (
+                        product.images?.map((image, index) => (
+                            <div
+                                key={index}
+                                className={`mySlides slide-fade ${
+                                    index === slideIndex ? "active-slide" : ""
+                                }`}
+                            >
+                                <img
+                                    src={getProductImagePath({ images: [image] })}
+                                    alt={product.name}
+                                    style={{ width: "600px", height: "600px" }}
+                                />
+                            </div>
+                        )))}
+                    </div>
+
+                    <div style={{ textAlign: "center"}}>
+                        {(product.images && product.images?.length > 0) &&
+                        <span className="arrow left" onClick={() => changeSlide(-1)}> ❮ </span>}
+                        {product.images?.map((_, index) => (
+                            <span
+                                key={index}
+                                className={`dotProductPage ${
+                                    index === slideIndex ? "active-dot" : ""
+                                }`}
+                                onClick={() => setSlideIndex(index)}
+                            />
+                        ))}
+                        {(product.images && product.images?.length > 0) &&
+                        <span className="arrow right" onClick={() => changeSlide(1)}> ❯ </span>}
+                    </div>
+                </div>
                 <div className='product-information'> 
                     <div className='blue-header'>
                         <strong>{product.name}</strong><p> -- {selectedCategory.name} (Kategorie)</p>

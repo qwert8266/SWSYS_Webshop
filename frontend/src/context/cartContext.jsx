@@ -1,8 +1,9 @@
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 
 
 const CartContext = createContext(null);
 const CART_STORAGE_KEY = "schmidt-shoping-cart";
+
 
 
 /* Lädt einen ursprünglichen Warenkorb 
@@ -19,9 +20,10 @@ function loadInitialCart() {
 }
 
 
-
 export function CartProvider({ children }) {
   const [items, setItems] = useState(loadInitialCart);
+  const [isCartPreviewOpen, setIsCartPreviewOpen] = useState(false);
+  const cartPreviewTimeoutRef = useRef(null);
 
 
   useEffect(() => {
@@ -32,41 +34,78 @@ export function CartProvider({ children }) {
     }
   }, [items]);
 
-
-  function addItem(product, quantity, availableStock) {
-    const maxStock = Number.isFinite(availableStock)
-      ? availableStock
-      : product.stock ?? Infinity;
-
-    const existingItem = items.find((item) => item.id === product.id);
-    const quantityInCart = existingItem ? existingItem.quantity : 0;
-
-    // Es darf nur so viel dazukommen, wie der Bestand abzüglich
-    // der bereits im Warenkorb liegenden Menge hergibt
-    const addableQuantity = Math.max(
-      0,
-      Math.min(quantity, maxStock - quantityInCart)
-    );
-
-    if (addableQuantity > 0) {
-      setItems((currentItems) => {
-        if (existingItem) {
-          return currentItems.map((item) =>
-            item.id === product.id
-              ? { ...item, quantity: item.quantity + addableQuantity }
-              : item
-          );
-        }
-        return [...currentItems, { ...product, quantity: addableQuantity }];
-      });
+useEffect(() => {
+  return () => {
+    if (cartPreviewTimeoutRef.current) {
+      clearTimeout(cartPreviewTimeoutRef.current);
     }
+  };
+}, []);
 
-    return {
-      added: addableQuantity,
-      requested: quantity,
-      capped: addableQuantity < quantity,
-    };
+function showCartPreview() {
+  if (cartPreviewTimeoutRef.current) {
+    clearTimeout(cartPreviewTimeoutRef.current);
+    cartPreviewTimeoutRef.current = null;
   }
+  setIsCartPreviewOpen(true);
+}
+
+function hideCartPreview() {
+  if (cartPreviewTimeoutRef.current) {
+    clearTimeout(cartPreviewTimeoutRef.current);
+  }
+  cartPreviewTimeoutRef.current = setTimeout(() => {
+    setIsCartPreviewOpen(false);
+    cartPreviewTimeoutRef.current = null;
+  }, 500);
+}
+
+function openCartPreviewTemporarily() {
+  if (cartPreviewTimeoutRef.current) {
+    clearTimeout(cartPreviewTimeoutRef.current);
+  }
+  setIsCartPreviewOpen(true);
+  cartPreviewTimeoutRef.current = setTimeout(() => {
+    setIsCartPreviewOpen(false);
+    cartPreviewTimeoutRef.current = null;
+  }, 3000);
+}
+  
+  function addItem(product, quantity, availableStock) {
+  const maxStock = Number.isFinite(availableStock)
+    ? availableStock
+    : product.stock ?? Infinity;
+
+  const existingItem = items.find((item) => item.id === product.id);
+  const quantityInCart = existingItem ? existingItem.quantity : 0;
+
+  const addableQuantity = Math.max(
+    0,
+    Math.min(quantity, maxStock - quantityInCart)
+  );
+
+  if (addableQuantity > 0) {
+    setItems((currentItems) => {
+      if (existingItem) {
+        return currentItems.map((item) =>
+          item.id === product.id
+            ? { ...item, quantity: item.quantity + addableQuantity }
+            : item
+        );
+      }
+      return [...currentItems, { ...product, quantity: addableQuantity }];
+    });
+
+    openCartPreviewTemporarily();
+  }
+
+  return {
+    added: addableQuantity,
+    requested: quantity,
+    capped: addableQuantity < quantity,
+  };
+}
+  
 
 
   function removeItem(productId) {
@@ -115,8 +154,12 @@ export function CartProvider({ children }) {
       increaseQuantity,
       decreaseQuantity,
       clearCart,
+      isCartPreviewOpen,
+      showCartPreview,
+      hideCartPreview,
+      openCartPreviewTemporarily,
     }),
-    [items, totalQuantity, totalPrice]
+    [items, totalQuantity, totalPrice, isCartPreviewOpen]
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

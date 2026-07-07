@@ -1,4 +1,4 @@
-import { React, useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from "../context/authContext";
 import { useCart } from "../context/cartContext";
@@ -20,7 +20,7 @@ const EMPLOYEE_ROLES = ["worker", "admin", "owner"];
 function Navbar() {
   const navigate = useNavigate();
   const { user, isAuthenticated, isAuthLoading } = useAuth();
-  const { totalQuantity } = useCart();
+  const { totalQuantity, items, isCartPreviewOpen, showCartPreview, hideCartPreview } = useCart();
   const isEmployee = EMPLOYEE_ROLES.includes(user?.role);
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -124,6 +124,11 @@ function handleShowAllResults() {
   navigate(`/suche?q=${encodeURIComponent(query)}`);
 }
 
+  function handleAccountClick() {
+    navigate(isAuthenticated ? "/account-settings" : "/login");
+  }
+
+  //const location = useLocation();
   const categories = CATEGORY_CONFIGS;
 
   return (
@@ -238,7 +243,7 @@ function handleShowAllResults() {
             <ul className="navbar-nav mb-2 mb-lg-0 gap-2">
               <li className="nav-item">
                 <NavLink className="nav-link" to="/home">
-                  <a>Home</a>
+                  Home
                 </NavLink>
               </li>
               
@@ -247,7 +252,7 @@ function handleShowAllResults() {
                   className="nav-link" 
                   to="/sortiment"
                 >
-                  <a>Sortiment</a>
+                  Sortiment
                 </NavLink>
 
                 <div className="nav-dropdown-menu">
@@ -257,7 +262,7 @@ function handleShowAllResults() {
                       className="nav-dropdown-link"
                       to={`/sortiment/${Category.slug}`}
                     >
-                      <a>{Category.name}</a>
+                      {Category.name}
                     </NavLink>
                   ))}
                 </div>
@@ -265,13 +270,13 @@ function handleShowAllResults() {
               
               <li className='nav-item'>
                 <NavLink className="nav-link" to="/placeholder">
-                  <a>placeholder</a>
+                  placeholder
                 </NavLink>
               </li>
               
               <li className='nav-item'>
                 <NavLink className="nav-link" to="/contact">
-                  <a>Kontakt</a>
+                  Kontakt
                 </NavLink>
               </li>
 
@@ -305,21 +310,87 @@ function handleShowAllResults() {
               />
             </NavLink>
 
+            {/*location.pathname.startsWith("/employee/") ?():()*/}
             {/* Shopping cart */}
-            <NavLink
-              type="button"
-              className="btn btn-light border navbar-icon-button cart-icon-button"
-              title="Warenkorb"
-              aria-label='Warenkorb anzeigen'
-              to="/cart"
-            >
-              <img
-                className="navbar-icon"
-                src="/img/cart-icon.png" 
-                alt="warenkorb icon"
-              />
-              {totalQuantity > 0 && <span className="cart-badge">{totalQuantity}</span>}
-            </NavLink>
+            <div className="cart-preview-wrapper" onMouseEnter={showCartPreview} onMouseLeave={hideCartPreview}>
+              <NavLink
+                type="button"
+                className="btn btn-light border navbar-icon-button cart-icon-button"
+                title="Warenkorb"
+                aria-label='Warenkorb anzeigen'
+                to="/cart"
+              >
+                <img
+                  className="navbar-icon"
+                  src="/img/cart-icon.png" 
+                  alt="warenkorb icon"
+                />
+                {totalQuantity > 0 && <span className="cart-badge">{totalQuantity}</span>}
+              </NavLink>
+
+              {isCartPreviewOpen && (
+                <div className="cart-preview">
+                  {totalQuantity === 0 ? (
+                    <>
+                      <h4>Dein Warenkorb ist leer</h4>
+                      <p>Lege Produkte in deinen Warenkorb und schließe deinen Einkauf entspannt ab.</p>
+
+                      <NavLink className="cart-preview-button" to="/sortiment">
+                        Zum Sortiment
+                      </NavLink>
+                    </>
+                  ) : (
+                    <>
+                      <h4>Dein Warenkorb</h4>
+                      <div className="cart-preview-items">
+                        {items.slice(0, 3).map((item)=>(
+                          <div className="cart-preview-item" key={item.productId || item.id}>
+                            <img src={`/img/product_images/${item.image}`} alt={item.name}/>
+
+                            <div>
+                              <strong>{item.name}</strong>
+                              <span>{item.quantity}x {formatEuro(item.price)}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {items.length > 3 && (
+                        <p className="cart-preview-more">
+                          + {items.length - 3} weitere Produkte
+                        </p>
+                      )}
+
+                      <NavLink className="cart-preview-button" to="/cart" onClick={hideCartPreview}>
+                        Zum Warenkorb
+                      </NavLink>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+
+            { isAuthenticated && (user?.role === "worker" || user?.role === "admin" || user?.role === "owner") &&
+            <div className="dropdown-wrapper">
+              <div
+                className="btn btn-light border navbar-icon-button cart-icon-button"
+                title="Mitarbeiter-Funktionen"
+              >
+                <img
+                  className="navbar-icon "
+                  src="/img/hamburger_icon.png" 
+                  alt="warenkorb icon"
+                />
+              </div>
+
+              <div className="dropdown-menu-custom">
+                <NavLink to="/product_management">Produktverwaltung</NavLink>
+                <NavLink to="/order_management">Bestellungen</NavLink>
+                <NavLink to="/marketing">Marketing</NavLink>
+                <NavLink to="/statistics">Analyse-Dashboard</NavLink>
+              </div>
+            </div>
+            }
           </div>
 
         </div>

@@ -27,11 +27,17 @@ func RegisterUserRoutes(userRoutes *gin.RouterGroup) {
 		protected.GET("/me", handlers.GetCurrentUser)
 		protected.PATCH("/me/password", handlers.ChangeOwnPassword)
 
+		// route was allowed for workers too, so that they can see the customer names when managing orders
+		employeeRoutes := protected.Group("")
+		employeeRoutes.Use(middleware.RoleAuth("worker", "admin"))
+		{
+			employeeRoutes.GET("/", handlers.GetUsers)
+		}
+
 		// routes modifying users are only allowed for admins
 		adminRoutes := protected.Group("")
-		adminRoutes.Use(middleware.RoleAuth("admin", "owner"))
+		adminRoutes.Use(middleware.RoleAuth("admin"))
 		{
-			adminRoutes.GET("/", handlers.GetUsers)
 			adminRoutes.GET("/:id", handlers.GetUserByID)
 			adminRoutes.PATCH("/:id", handlers.ModifyUser)
 			adminRoutes.DELETE("/:id", handlers.DeleteUser)

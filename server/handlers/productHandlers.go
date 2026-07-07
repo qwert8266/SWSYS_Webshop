@@ -1,9 +1,12 @@
 package handlers
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 	"time"
@@ -86,26 +89,57 @@ func GetProductByCategory(c *gin.Context) {
 
 // CreateProduct creates a new product and generates an uuid for it.
 func CreateProduct(c *gin.Context) {
-	var incomingProduct models.ProductData
+	newProductID := uuid.New()
 
 	//parsing all incoming data
-	if err := c.BindJSON(&incomingProduct); err != nil {
+	form, err := c.MultipartForm()
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error retrieving form": err.Error()})
+		return
+	}
+	var incomingProduct models.ProductData
+	if err := json.Unmarshal([]byte(c.PostForm("data")), &incomingProduct); err != nil {
 		c.IndentedJSON(http.StatusBadRequest, gin.H{"error parsing product data": err.Error()})
 		return
 	}
 
+	// adding image if provided
+	images := form.File["image"]
+	var imagePaths []string
+	if images != nil {
+		for _, image := range images {
+			// if an image is provided, a new directory is created and the image is saved
+			directory := filepath.Join("/images/", newProductID.String())
+			imagePaths = append(imagePaths, filepath.Join(newProductID.String(), image.Filename))
+
+			if err = os.MkdirAll(directory, os.ModePerm); err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error creating directory": err.Error()})
+				return
+			}
+			if err = c.SaveUploadedFile(image, filepath.Join(directory, image.Filename)); err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error creating file": err.Error()})
+				return
+			}
+		}
+	}
+
+	validProductData, err := checkIncomingProductData(c, incomingProduct)
+
 	//trimming strings:
-	name := strings.TrimSpace(incomingProduct.Name)
-	description := strings.TrimSpace(incomingProduct.Description)
-	image := strings.TrimSpace(incomingProduct.Image)
-	normalizedCategory := strings.ToLower(strings.TrimSpace(incomingProduct.Category))
+	name := strings.TrimSpace(validProductData.Name)
+	description := strings.TrimSpace(validProductData.Description)
+	normalizedCategory := strings.ToLower(strings.TrimSpace(validProductData.Category))
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 
 	// creating new user and generating a new user ID.
 	newProduct := models.Product{
-		ProductID:   uuid.New(),
+		ProductID:   newProductID,
 		Name:        name,
 		Description: description,
-		Image:       image,
+		Images:      imagePaths,
 		Price:       incomingProduct.Price,
 		Stock:       incomingProduct.Stock,
 		Category:    normalizedCategory,
@@ -138,17 +172,16 @@ func UpdateProduct(c *gin.Context) {
 		return
 	}
 
+	validProductData, err := checkIncomingProductData(c, updatedProductData)
 	//trimming strings:
-	name := strings.TrimSpace(updatedProductData.Name)
-	description := strings.TrimSpace(updatedProductData.Description)
-	image := strings.TrimSpace(updatedProductData.Image)
-	normalizedCategory := strings.ToLower(strings.TrimSpace(updatedProductData.Category))
+	name := strings.TrimSpace(validProductData.Name)
+	description := strings.TrimSpace(validProductData.Description)
+	normalizedCategory := strings.ToLower(strings.TrimSpace(validProductData.Category))
 
 	//updateOne() needs to be told how to modify the Document in the collection. (in this case using $set)
 	updatedProduct := bson.D{
 		{"$set", bson.D{{"name", name}}},
 		{"$set", bson.D{{"description", description}}},
-		{"$set", bson.D{{"image", image}}},
 		{"$set", bson.D{{"price", updatedProductData.Price}}},
 		{"$set", bson.D{{"stock", updatedProductData.Stock}}},
 		{"$set", bson.D{{"category", normalizedCategory}}},
@@ -183,8 +216,43 @@ func DeleteProduct(c *gin.Context) {
 	} else if result.DeletedCount == 0 {
 		c.IndentedJSON(http.StatusNotFound, gin.H{"message": "product not found"})
 	} else {
+		directory := filepath.Join("/images", id.String())
+		if err := os.RemoveAll(directory); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Bilder konnten nicht gelöscht werden",
+			})
+		}
 		c.IndentedJSON(http.StatusNoContent, gin.H{"message": "product deleted"})
 	}
+}
+
+func checkIncomingProductData(c *gin.Context, pd models.ProductData) (models.ProductData, error) {
+	if pd.Name == "" {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Name ungültig"})
+		return pd, errors.New("name invalid")
+	}
+
+	//if ext := strings.ToLower(filepath.Ext(pd.Image)); ext != ".png" && ext != ".jpg" && ext != ".jpeg" {
+	//	c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Image ungültig"})
+	//	return pd, errors.New("image invalid")
+	//}
+
+	if pd.Price <= 0 {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Preis ungültig"})
+		return pd, errors.New("price invalid")
+	}
+
+	if pd.Stock < 0 {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Stock ungültig"})
+		return pd, errors.New("stock invalid")
+	}
+
+	if pd.Category == "" {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Kategorie ungültig"})
+		return pd, errors.New("category invalid")
+	}
+
+	return pd, nil
 }
 
 // ModifyStock is used to increase or decrease the stock of the specified product
@@ -215,7 +283,7 @@ func ModifyStock(c *gin.Context) {
 	if operation.Value > 0 {
 		message.WriteString(fmt.Sprintf("stock amount increased by %d", operation.Value))
 	} else if operation.Value < 0 {
-		//adding a minimum stock to the filter to prevent modification if stock is insufficient
+		//adding a minimum stock to the filter to prevent modification if stock is not enough
 		filter = bson.M{
 			"product_id": productID,
 			"stock": bson.M{
@@ -427,7 +495,6 @@ func productSearchScore(product models.Product, query string) (int, bool) {
 		{Value: product.Name, Penalty: 0},
 		{Value: product.Category, Penalty: 15},
 		{Value: product.Description, Penalty: 30},
-		{Value: product.Image, Penalty: 40},
 	}
 
 	bestScore := 1_000_000
@@ -599,7 +666,7 @@ func levenshteinDistance(a string, b string) int {
 				replaceCost++
 			}
 
-			currentRow[j+1] = min(insertCost, deleteCost, replaceCost)
+			currentRow[j+1] = minimum(insertCost, deleteCost, replaceCost)
 		}
 
 		previousRow, currentRow = currentRow, previousRow
@@ -608,7 +675,7 @@ func levenshteinDistance(a string, b string) int {
 	return previousRow[len(bRunes)]
 }
 
-func min(values ...int) int {
+func minimum(values ...int) int {
 	smallest := values[0]
 
 	for _, value := range values[1:] {

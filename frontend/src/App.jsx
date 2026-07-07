@@ -1,10 +1,13 @@
 import React from "react";
-import { useState } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import SearchResults from "./pages/searchResults";
 import './App.css';
 
 import ProtectedRoutes from "./routes/protectedRoutes";
+
+import ProductManagement from "./pages/employee_pages/product_management";
+import OrderManagement from "./pages/employee_pages/order_management";
+import Statistics from "./pages/employee_pages/statistics";
 
 import FourOFour from "./pages/404";
 import CookieBanner from "./components/cookie_banner";
@@ -22,7 +25,6 @@ import Contact from "./pages/contact";
 import Category from "./pages/categories";
 import Product from "./pages/product";
 import LogisticsPanel from "./pages/logisticsPanel";
-import {produkte} from "./pages/product";
 import Home from './pages/home';
 
 function App() {
@@ -54,12 +56,27 @@ function App() {
             </ProtectedRoutes>
           }/>
 
-          {/* Logistikpanel: Rollenprüfung passiert in der Seite selbst + im Backend */}
-          <Route path="/logistik" element={
-            <ProtectedRoutes>
-              <LogisticsPanel/>
-            </ProtectedRoutes>
-          }/>
+         <Route path="/logistik" element={
+  <ProtectedRoutes>
+    <LogisticsPanel/>
+  </ProtectedRoutes>
+}/>
+<Route path="product_management" element={
+  <ProtectedRoutes>
+    <ProductManagement/>
+  </ProtectedRoutes>
+}/>
+<Route path="order_management" element={
+  <ProtectedRoutes>
+    <OrderManagement/>
+  </ProtectedRoutes>
+}/>
+<Route path="statistics" element={
+  <ProtectedRoutes>
+    <Statistics/>
+  </ProtectedRoutes>
+}/>
+
           
           <Route path="/sortiment" element={<Navigate to="/sortiment/bier" replace/>}/>
           <Route path="/sortiment/:categorySlug" element={<Category />}/>
@@ -70,7 +87,7 @@ function App() {
           <Route path="/wein" element={<Category category="wein" />} />
           <Route path="/schnaps" element={<Category category="schnaps" />} />
           <Route path="/:category/:productName"  element={<Product />} />
-
+          
           <Route path="*" element={<FourOFour />}/>
 
         </Routes>

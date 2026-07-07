@@ -12,15 +12,9 @@ import (
 
 func main() {
 	database.LoadEnv()
+
 	database.DB = database.ConnectDB()
 	defer database.DisconnectDB(database.DB)
-
-	// add owner as user to the db
-	result, err := database.AddOwnerIfNotExist()
-	if err != nil {
-		fmt.Println(err)
-	}
-	fmt.Println(result)
 
 	server := gin.Default()
 
@@ -38,12 +32,12 @@ func main() {
 	routes.RegisterUserRoutes(server.Group("/user"))
 	routes.RegisterProductRoutes(server.Group("/products"))
 	routes.RegisterOrderRoutes(server.Group("/order"))
-	routes.RegisterCartRoutes(server.Group("/cart"))
 
 	// the addr is explicitly 0.0.0.0 because if the application is running inside a container,
 	//it must handle requests from outside the container.
-	err = server.Run("0.0.0.0:3001")
+	err := server.Run("0.0.0.0:3001")
 	if err != nil {
 		fmt.Println(err)
 	}
+
 }

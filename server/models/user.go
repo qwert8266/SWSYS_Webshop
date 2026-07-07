@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"golang.org/x/crypto/bcrypt"
 )
 
 // RegisterRequest matches the form fields sent by frontend/src/pages/register.jsx
@@ -42,7 +41,7 @@ type PasswordResetRequest struct {
 	Email string `json:"email"`
 }
 
-// PasswortResetConfirmRequest is sent from the password reset page
+// PasswordResetConfirmRequest is sent from the password reset page
 type PasswordResetConfirmRequest struct {
 	Token    string `json:"token"`
 	Password string `json:"password"`
@@ -90,8 +89,6 @@ type PublicUser struct {
 	CompanyName  string    `json:"companyName,omitempty"`
 	Address      Address   `json:"address"`
 	Email        string    `json:"email"`
-	// Role is needed by the frontend to show employee-only areas
-	// (e.g. the logistics panel); it is not sensitive to the user themselves.
 	Role      string    `json:"role"`
 	CreatedAt time.Time `json:"createdAt"`
 	UpdatedAt time.Time `json:"updatedAt"`
@@ -126,17 +123,4 @@ func ToPublicUser(user User) PublicUser {
 	}
 }
 
-var AllowedRoles = []string{"customer", "worker", "admin", "owner"}
-
-func CreateOwner(password string) User {
-
-	passwordHash, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-
-	return User{
-		ID:   uuid.New(),
-		Role: "owner",
-
-		Email:        "owner",
-		PasswordHash: string(passwordHash),
-	}
-}
+var AllowedRoles = []string{"admin", "customer", "worker", "user"}

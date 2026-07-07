@@ -182,43 +182,8 @@ function ShoppingCart() {
               </button>
             </div>
         </aside>
-                         
-        
       </div>
     </section>
-
-
-    /*<section className="cart-layout container py-5 h-100" aria-label="Warenkorb">
-      <div className="cart card-registration ">
-        <div className="account-card-header">
-
-        <div className="d-flex fustify-content-between align-items-center mb-5"> 
-          <h1 className="account-title">Warenkorb</h1>
-          <h6 className="mb-0 test-muted account-badge">{totalQuantity} Artikel</h6>
-
-        </div>
-        </div>
-        <span className="account-badge">{totalQuantity} Artikel</span>        
-      </div>
-      <hr className='my-4' />
-
-      <div className="cart-items">
-        {items.map((item) => (
-          <article className="cart-item" key={item.id}>
-            
-            <div>
-              <strong>{item.title}</strong>
-
-            </div>
-
-          </article>
-        ))}
-
-      </div>
-      
-
-
-    </section>*/
   );
 }
 
