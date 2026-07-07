@@ -1,12 +1,10 @@
-import { NavLink, useParams } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 import '../categories.css';
 import { useState, useEffect } from 'react';
 import { useAuth } from "../../context/authContext";
 
 import categoryApi from "../../api/categoryApi";
-import productApi from "../../api/productApi";
 import { useProd } from "../../context/productContext";
-import { getCategoryConfig } from "../../utils/categoryConfig";
 import { normalizeProduct, getProductImagePath, formatEuro } from '../../utils/productHelpers';
 
 function ProductManagement(){
@@ -34,7 +32,7 @@ function ProductManagement(){
 
     // API-Funktionen aus dem Produkt-Context
     const { createProduct,updateProduct,deleteProduct,getProducts } = useProd();
-    const { user, accessToken, logout } = useAuth();
+    const { accessToken} = useAuth();
 
     // Fomulardaten für das Erstellen eines neuen Produkts
     const [productData, setProductData] = useState({
@@ -99,6 +97,7 @@ function ProductManagement(){
         });
     };
 
+    // Ändert die Kategorie-Auswahl beim Bearbeiten eines Produktes
     const handleModifyCategoryToggle = (categorySlug) => {
         setProductDataModify((currentProductData) => {
             const currentCategorySlugs = currentProductData.categorySlugs || [];
@@ -255,6 +254,7 @@ function ProductManagement(){
         }, 5000)
     }   
 
+    // Überprüft die Eingabe der Änderungen
     function validateModifyProductForm() {
         const allowedImageExtensions = [".png", ".jpg", ".jpeg", ".webp"];
 
@@ -292,11 +292,6 @@ function ProductManagement(){
 
         return "";
     }
-    
-    // Sucht eine Kategorie anhand ihres Slugs
-    function getCategoryBySlug(slug) {
-        return categories.find((category) => category.slug === slug);
-    }
 
     // Ermittelt den Kategorie-Slug für Produktlinks
     function getProductCategorySlug(product) {
@@ -331,20 +326,6 @@ function ProductManagement(){
         return product.categories
             .map((category) => category.slug)
             .filter((slug) => slug);
-    }
-
-    // Baut die Produktdaten passend zum Backend-Modell zusammen
-    function buildProductPayload(data) {
-        const selectedCategory = getCategoryBySlug(data.categorySlug);
-
-        return {
-            name: data.name,
-            description: data.description,
-            image: data.image,
-            price: data.price,
-            stock: data.stock,
-            categories: selectedCategory ? [selectedCategory] : [],
-        };
     }
 
     // Steuert ob das Formular zum Hinzufügen eines neuen Produkts sichtbar ist
@@ -492,7 +473,13 @@ function ProductManagement(){
                                 className="list-group border rounded overflow-auto" 
                                 style={{ width: "230px", maxHeight: "150px"}}
                             >
-                                {categories.length === 0 && (
+                               {categoryLoadError && (
+                                    <div classname="list-group-item text-danger">
+                                        {categoryLoadError}
+                                    </div>
+                                )}
+
+                                {!categoryLoadError && categories.length === 0 && (
                                     <span className='text-muted'>Keine Kategorien verfügbar</span>
                                 )}
 
@@ -511,27 +498,7 @@ function ProductManagement(){
                                         {category.name}
                                     </label>
                                 ))}
-
                             </div>
-
-                            {/*<select 
-                                className="fs-5 border rounded" 
-                                style={{ width: "230px" }} 
-                                placeholder='Kategorie' 
-                                name='categorySlug' 
-                                value={productData.categorySlug} 
-                                onChange={handleChange}
-                            >
-                                <option value="">Kategorie auswählen</option>
-                                
-                                {categories.map((category) => (
-                                    <option key={category.slug} value={category.slug}>
-                                        {category.name}
-                                    </option>
-                                ))}
-                            </select> */}
-
-                            {/**<input className='fs-5 border rounded ' type="text" placeholder='Kategorie' name='category' value={productData.category} onChange={handleChange}/>*/}
                         </div>
                         
                         <div className='pb-2'>
@@ -634,9 +601,6 @@ function ProductManagement(){
                                         alt="delete cart"
                                         />
                                     </button>
-
-
-                                    
                                 </div>
                             ))}
                         </div>
@@ -717,7 +681,14 @@ function ProductManagement(){
                             className="list-group border rounded overflow-auto" 
                             style={{ width: "230px", maxHeight: "150px"}}
                         >
-                            {categories.length === 0 && (
+
+                            {categoryLoadError && (
+                                <div classname="list-group-item text-danger">
+                                    {categoryLoadError}
+                                </div>
+                            )}
+
+                            {!categoryLoadError && categories.length === 0 && (
                                 <span className='text-muted'>Keine Kategorien verfügbar</span>
                             )}
 
