@@ -4,6 +4,7 @@ import { useCart } from '../context/cartContext';
 import { useEffect, useState } from 'react';
 
 import productApi from '../api/productApi';
+import StockIndicator from '../components/stockIndicator';
 import { getCategoryConfig } from '../utils/categoryConfig';
 import { formatEuro, normalizeProduct } from '../utils/productHelpers';
 
@@ -42,6 +43,7 @@ function Product(){
     const { addItem } = useCart();
     const [quantity, setQuantity] = useState(1);
     const [product, setProduct] = useState(null);
+    const [stockInfo, setStockInfo] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
     const [loadError, setLoadError] = useState("");
     const [cartMessage, setCartMessage] = useState("");
@@ -61,15 +63,23 @@ function Product(){
             setCartMessage("");
 
             try {
-                const loadedProduct = await productApi.getProductById(requestedProductId);
-                
+                // Produktdaten und Bestand kommen aus getrennten Endpunkten:
+                // der Stock-Endpunkt liefert den zentral berechneten Status
+                // (ok / low / critical / out_of_stock) gleich mit
+                const [loadedProduct, loadedStock] = await Promise.all([
+                    productApi.getProductById(requestedProductId),
+                    productApi.getProductStock(requestedProductId),
+                ]);
+
                 if (!ignoreResult) {
                     setProduct(normalizeProduct(loadedProduct));
+                    setStockInfo(loadedStock);
                 }
             } catch (error) {
                 if (!ignoreResult) {
                     setLoadError("Produkt konnte nicht geladen werden.");
                     setProduct(null);
+                    setStockInfo(null);
                 }
             } finally {
                 if (!ignoreResult) {
@@ -88,11 +98,26 @@ function Product(){
     }, [requestedProductId]);
     
 
+    // Bei stock === 0 (Status "out_of_stock") ist kein Kauf möglich
+    const isOutOfStock = stockInfo?.status === "out_of_stock" || product?.stock === 0;
+
     function handleAddToCart(){
-        if (!product) { return; }
-        
-        addItem(product, quantity);
-        setCartMessage(`${product.name} wurde in den Warenkorb gelegt.`);
+        if (!product || isOutOfStock) { return; }
+
+        // Der Warenkorb deckelt die Menge am aktuellen Bestand,
+        // damit Überbestellungen gar nicht erst entstehen
+        const result = addItem(product, quantity, stockInfo?.stock);
+
+        if (result.added === 0) {
+            setCartMessage("");
+            setLoadError(`Keine weitere Menge verfügbar – es sind bereits ${stockInfo?.stock ?? 0} Stück in deinem Warenkorb.`);
+        } else if (result.capped) {
+            setLoadError("");
+            setCartMessage(`Nur ${result.added} von ${result.requested} Stück konnten hinzugefügt werden (Bestand: ${stockInfo?.stock}).`);
+        } else {
+            setLoadError("");
+            setCartMessage(`${product.name} wurde in den Warenkorb gelegt.`);
+        }
     }
 
     if (isLoading) {
@@ -126,12 +151,14 @@ function Product(){
                         <p>{product.description || "Keine Beschreibung zu diesem Produkt vorhanden."}</p>
                         <p>{"★".repeat(Math.round(product.rating))}{"☆".repeat(5 - Math.round(product.rating))}{`(${product.rating})`}</p>
                         <p>{formatEuro(product.price)}</p>
-                        {product.stock !== null && product.stock <= 15 && <p className='text-danger'>Nur noch {product.stock} verfügbar</p>}
+                        {/* Status kommt vom Backend -- kein hardcodierter Schwellwert mehr */}
+                        <StockIndicator stockInfo={stockInfo} showInStock />
                     </div>
                     <div className='cart-input'>
                         <input 
                             type="number" 
                             min="1" 
+                            max={stockInfo?.stock}
                             value={quantity} 
                             onChange={(e)=> {
                                 setQuantity(parseInt(e.target.value))
@@ -141,7 +168,8 @@ function Product(){
                             className='cart-button' 
                             type="button"
                             onClick={handleAddToCart}
-                            disabled={product.stock === 0}
+                            disabled={isOutOfStock}
+                            title={isOutOfStock ? "Dieses Produkt ist ausverkauft" : "In den Warenkorb"}
                         >
                             <img className="cart-at-product" src={`/img/cart-icon_white.png`} alt="In den Warenkorb" />
                         </button>

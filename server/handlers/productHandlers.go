@@ -253,6 +253,96 @@ func ModifyStock(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, gin.H{"message": message.String(), "new_stock": product.Stock})
 }
 
+// GetProductStock returns only the stock information of a single product.
+// Used by the frontend to display availability without loading the full product.
+func GetProductStock(c *gin.Context) {
+	id, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "the requested uuid is not a valid uuid"})
+		return
+	}
+
+	var product models.Product
+
+	err = database.ProductCollection().FindOne(c.Request.Context(), bson.M{"product_id": id}).Decode(&product)
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			c.IndentedJSON(http.StatusNotFound, gin.H{"message": "requested product not found"})
+		} else {
+			c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
+		return
+	}
+
+	c.IndentedJSON(http.StatusOK, models.NewStockInfo(product))
+}
+
+// GetAllStock returns the stock information of every product.
+// The thresholds are included so clients never have to hardcode them.
+func GetAllStock(c *gin.Context) {
+	cursor, err := database.ProductCollection().Find(c.Request.Context(), bson.M{})
+	if err != nil {
+		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	var products []models.Product
+	if err = cursor.All(c.Request.Context(), &products); err != nil {
+		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	stocks := make([]models.StockInfo, 0, len(products))
+	for _, product := range products {
+		stocks = append(stocks, models.NewStockInfo(product))
+	}
+
+	c.IndentedJSON(http.StatusOK, gin.H{
+		"thresholds": gin.H{
+			"low":      models.LowStockThreshold,
+			"critical": models.CriticalStockThreshold,
+		},
+		"stocks": stocks,
+	})
+}
+
+// GetLowStock returns all products at or below the low-stock threshold,
+// sorted ascending by stock so the most urgent products come first.
+// Intended for the employee logistics panel.
+func GetLowStock(c *gin.Context) {
+	// filtering in the database instead of in Go keeps the response small
+	filter := bson.M{"stock": bson.M{"$lte": models.LowStockThreshold}}
+
+	cursor, err := database.ProductCollection().Find(
+		c.Request.Context(),
+		filter,
+		options.Find().SetSort(bson.D{{"stock", 1}}),
+	)
+	if err != nil {
+		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	var products []models.Product
+	if err = cursor.All(c.Request.Context(), &products); err != nil {
+		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	stocks := make([]models.StockInfo, 0, len(products))
+	for _, product := range products {
+		stocks = append(stocks, models.NewStockInfo(product))
+	}
+
+	c.IndentedJSON(http.StatusOK, gin.H{
+		"thresholds": gin.H{
+			"low":      models.LowStockThreshold,
+			"critical": models.CriticalStockThreshold,
+		},
+		"stocks": stocks,
+	})
+}
+
 func SearchProducts(c *gin.Context) {
 	query := strings.TrimSpace(c.Query("q"))
 

@@ -90,8 +90,11 @@ type PublicUser struct {
 	CompanyName  string    `json:"companyName,omitempty"`
 	Address      Address   `json:"address"`
 	Email        string    `json:"email"`
-	CreatedAt    time.Time `json:"createdAt"`
-	UpdatedAt    time.Time `json:"updatedAt"`
+	// Role is needed by the frontend to show employee-only areas
+	// (e.g. the logistics panel); it is not sensitive to the user themselves.
+	Role      string    `json:"role"`
+	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
 }
 
 // AuthResponse is returned after registration and login
@@ -117,6 +120,7 @@ func ToPublicUser(user User) PublicUser {
 		CompanyName:  user.CompanyName,
 		Address:      user.Address,
 		Email:        user.Email,
+		Role:         user.Role,
 		CreatedAt:    user.CreatedAt,
 		UpdatedAt:    user.UpdatedAt,
 	}

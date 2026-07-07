@@ -21,6 +21,7 @@ import AccountSettings from "./pages/accountSettings";
 import Contact from "./pages/contact";
 import Category from "./pages/categories";
 import Product from "./pages/product";
+import LogisticsPanel from "./pages/logisticsPanel";
 import {produkte} from "./pages/product";
 import Home from './pages/home';
 
@@ -50,6 +51,13 @@ function App() {
           <Route path="account-settings" element={
             <ProtectedRoutes>
               <AccountSettings/>
+            </ProtectedRoutes>
+          }/>
+
+          {/* Logistikpanel: Rollenprüfung passiert in der Seite selbst + im Backend */}
+          <Route path="/logistik" element={
+            <ProtectedRoutes>
+              <LogisticsPanel/>
             </ProtectedRoutes>
           }/>
           
