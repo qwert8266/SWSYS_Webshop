@@ -16,6 +16,7 @@ function ProductManagement(){
     const [loadError, setLoadError] = useState("");
     const [categories, setCategories] = useState([]);
     const [categoryLoadError, setCategoryLoadError] = useState("");
+    const [modifyErrorMessage, setModifyErrorMessage] = useState("");
 
     // Statusmeldungen für erfolgreiche oder fehlgeschlagene Aktionen
     const [showSuccessCreateLabel, setShowSuccessCreateLabel] = useState(false);
@@ -169,6 +170,14 @@ function ProductManagement(){
 
     // Speichert Änderungen an einem bestehenden Produkt
     const handleUpdateProduct = async () => {
+        setModifyErrorMessage("");
+
+        const validationMessage = validateModifyProductForm();
+        if (validationMessage) {
+            setModifyErrorMessage(validationMessage);
+            return;
+        }
+        
         const selectedCategories = categories.filter((category) => {
             return (productDataModify.categorySlugs || []).includes(category.slug);
         });
@@ -186,6 +195,7 @@ function ProductManagement(){
         try{
             await updateProduct(productPayload, accessToken);
 
+            setModifyErrorMessage("");
             setShowModifyWindow(false);
             setProductToModify(null);
 
@@ -215,6 +225,8 @@ function ProductManagement(){
         }catch (error){
             setShowNotSuccessfulLabel(true)
             
+            setModifyErrorMessage("Produkt konnte nicht gespeichert werden. Bitte prüfe deine Eingabe.");
+
             setTimeout(() => {
                 setShowNotSuccessfulLabel(false);
             }, 5000)
@@ -243,22 +255,44 @@ function ProductManagement(){
         }, 5000)
     }   
 
-    // Läft alle Produkte erneut aus dem Backend
-    const loadProducts = async () => {
-        setIsLoading(true);
-        setLoadError("");
-        setCategoryProducts([]);
+    function validateModifyProductForm() {
+        const allowedImageExtensions = [".png", ".jpg", ".jpeg", ".webp"];
 
-        try {
-            const productsFromDatabase = await getProducts();
-            setCategoryProducts(productsFromDatabase.map())
-        } catch (error) {
-            setLoadError("Produkte konnten nicht aus der Datenbank geladen werden.")
-        } finally {
-            setIsLoading(false);
+        if (!productDataModify.name || productDataModify.name === "") {
+            return "Bitte gib einen Produktnamen an";
         }
-    };
 
+        if (!productDataModify.description || productDataModify.description === "") {
+            return "Bitte gib eine Produktbeschreibung an";
+        }
+
+        if (!productDataModify.image || productDataModify.image === "") {
+            return "Bitte gib einen Bild-Dateinamen an";
+        }
+
+        const hasValidImageExtension = allowedImageExtensions.some((extension) => {
+            return productDataModify.image.toLowerCase().endsWith(extension);
+        });
+
+        if (!hasValidImageExtension) {
+            return "Das Bild muss eine gültige Dateiendung besitzen: .png, .jpg, .jpeg oder .webp";
+        }
+
+        if (productDataModify.price === "" || productDataModify.price === null || productDataModify.price <= 0) {
+            return "Bitte gib einen gültigen Preis in Cent an";
+        }
+
+        if (productDataModify.stock < 0) {
+            return "Bitte gib einen gültigen Lagerbestand an";
+        }
+
+        if ((productDataModify.categorySlugs || []).length === 0) {
+            return "Bitte wähle mindestens eine Kategorie aus";
+        }
+
+        return "";
+    }
+    
     // Sucht eine Kategorie anhand ihres Slugs
     function getCategoryBySlug(slug) {
         return categories.find((category) => category.slug === slug);
@@ -583,7 +617,7 @@ function ProductManagement(){
                                                 stock: product.stock,
                                                 categorySlugs: getCategorySlugsFromProduct(product),
                                             });
-
+                                            setModifyErrorMessage("");
                                             setShowModifyWindow(true);
                                         }}>
                                         <img
@@ -653,7 +687,7 @@ function ProductManagement(){
                     zIndex: 9999
                 }}
             >
-                <div className="d-flex flex-column bg-white p-4 rounded align-items-center gap-3">
+                <div className="d-flex flex-column bg-white p-4 pb-5 rounded align-items-center gap-3">
                     <h3>Produktanpassung</h3>
 
                     <div className='d-flex flex-row align-items-center pb-2'>
@@ -720,7 +754,11 @@ function ProductManagement(){
                     <div className="d-flex gap-2">
                         <button
                             className="btn btn-secondary"
-                            onClick={() => setShowModifyWindow(false)}
+                            onClick={() => { 
+                                setModifyErrorMessage("");    
+                                setShowModifyWindow(false);
+                                    
+                            }}
                         >
                             Abbrechen
                         </button>
@@ -732,9 +770,14 @@ function ProductManagement(){
                         >
                             Speichern
                         </button>
-
-                        
                     </div>
+                    
+                    {modifyErrorMessage && (
+                        <div className="bottom-0 alert alert-danger text-center shadow-sm py-2 px-3 mb-0 ">
+                            {modifyErrorMessage}
+                        </div>
+                    )}
+
                 </div>
             </div>
         )}
