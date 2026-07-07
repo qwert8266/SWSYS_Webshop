@@ -6,7 +6,6 @@ import { useEffect, useState } from 'react';
 import productApi from '../api/productApi';
 import StockIndicator from '../components/stockIndicator';
 import { getCategoryConfig } from '../utils/categoryConfig';
-import { formatEuro, normalizeProduct } from '../utils/productHelpers';
 import FavoriteButton from '../components/favoriteButton';
 import '../components/favoriteButton.css';
 import { formatEuro,getProductImagePath, normalizeProduct } from '../utils/productHelpers';
