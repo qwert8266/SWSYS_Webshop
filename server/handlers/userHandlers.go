@@ -109,7 +109,7 @@ func AddNewUser(c *gin.Context) {
 	}
 
 	now := time.Now().UTC()
-	// a new UUID is created for the new user
+	// a new SaleId is created for the new user
 	newUser := models.User{
 		ID: uuid.New(),
 

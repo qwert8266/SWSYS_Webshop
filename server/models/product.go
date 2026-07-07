@@ -13,6 +13,7 @@ type Product struct {
 	Images      []string  `json:"images" bson:"images"` // multiple paths to images can be stored in a string array
 	Price       uint32    `json:"price" bson:"price"`   //price is stored in Cents
 	Stock       uint32    `json:"stock" bson:"stock"`
+	Discount    *int8     `json:"discount" bson:"discount,omitempty"`
 	Category    string    `json:"category" bson:"category"`
 	CreatedAt   time.Time `json:"created_at" bson:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at" bson:"updated_at"`
