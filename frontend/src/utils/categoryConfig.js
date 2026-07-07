@@ -32,13 +32,13 @@ export const CATEGORY_CONFIGS = [
     name: "Wasser",
     slug: "wasser",
     dbCategory: "wasser",
-    banner: { png: "", sentence: "Wasser für jeden Tag" },
+    banner: { png: "water_top.png", sentence: "Wasser für jeden Tag" },
   },
   {
     name: "Kaffe & Tee",
     slug: "kaffe&tee",
     dbCategory: "kaffe-tee",
-    banner: { png: "", sentence: "Kaffee und Tee für deine Pause" },
+    banner: { png: "kaffee_top.png", sentence: "Kaffee und Tee für deine Pause" },
   },
 ];
 

@@ -1,9 +1,13 @@
 package handlers
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
+	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 
@@ -85,26 +89,57 @@ func GetProductByCategory(c *gin.Context) {
 
 // CreateProduct creates a new product and generates an uuid for it.
 func CreateProduct(c *gin.Context) {
-	var incomingProduct models.ProductData
+	newProductID := uuid.New()
 
 	//parsing all incoming data
-	if err := c.BindJSON(&incomingProduct); err != nil {
+	form, err := c.MultipartForm()
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error retrieving form": err.Error()})
+		return
+	}
+	var incomingProduct models.ProductData
+	if err := json.Unmarshal([]byte(c.PostForm("data")), &incomingProduct); err != nil {
 		c.IndentedJSON(http.StatusBadRequest, gin.H{"error parsing product data": err.Error()})
 		return
 	}
 
+	// adding image if provided
+	images := form.File["image"]
+	var imagePaths []string
+	if images != nil {
+		for _, image := range images {
+			// if an image is provided, a new directory is created and the image is saved
+			directory := filepath.Join("/images/", newProductID.String())
+			imagePaths = append(imagePaths, filepath.Join(newProductID.String(), image.Filename))
+
+			if err = os.MkdirAll(directory, os.ModePerm); err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error creating directory": err.Error()})
+				return
+			}
+			if err = c.SaveUploadedFile(image, filepath.Join(directory, image.Filename)); err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error creating file": err.Error()})
+				return
+			}
+		}
+	}
+
+	validProductData, err := checkIncomingProductData(c, incomingProduct)
+
 	//trimming strings:
-	name := strings.TrimSpace(incomingProduct.Name)
-	description := strings.TrimSpace(incomingProduct.Description)
-	image := strings.TrimSpace(incomingProduct.Image)
-	normalizedCategory := strings.ToLower(strings.TrimSpace(incomingProduct.Category))
+	name := strings.TrimSpace(validProductData.Name)
+	description := strings.TrimSpace(validProductData.Description)
+	normalizedCategory := strings.ToLower(strings.TrimSpace(validProductData.Category))
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 
 	// creating new user and generating a new user ID.
 	newProduct := models.Product{
-		ProductID:   uuid.New(),
+		ProductID:   newProductID,
 		Name:        name,
 		Description: description,
-		Image:       image,
+		Images:      imagePaths,
 		Price:       incomingProduct.Price,
 		Stock:       incomingProduct.Stock,
 		Category:    normalizedCategory,
@@ -137,17 +172,16 @@ func UpdateProduct(c *gin.Context) {
 		return
 	}
 
+	validProductData, err := checkIncomingProductData(c, updatedProductData)
 	//trimming strings:
-	name := strings.TrimSpace(updatedProductData.Name)
-	description := strings.TrimSpace(updatedProductData.Description)
-	image := strings.TrimSpace(updatedProductData.Image)
-	normalizedCategory := strings.ToLower(strings.TrimSpace(updatedProductData.Category))
+	name := strings.TrimSpace(validProductData.Name)
+	description := strings.TrimSpace(validProductData.Description)
+	normalizedCategory := strings.ToLower(strings.TrimSpace(validProductData.Category))
 
 	//updateOne() needs to be told how to modify the Document in the collection. (in this case using $set)
 	updatedProduct := bson.D{
 		{"$set", bson.D{{"name", name}}},
 		{"$set", bson.D{{"description", description}}},
-		{"$set", bson.D{{"image", image}}},
 		{"$set", bson.D{{"price", updatedProductData.Price}}},
 		{"$set", bson.D{{"stock", updatedProductData.Stock}}},
 		{"$set", bson.D{{"category", normalizedCategory}}},
@@ -182,8 +216,43 @@ func DeleteProduct(c *gin.Context) {
 	} else if result.DeletedCount == 0 {
 		c.IndentedJSON(http.StatusNotFound, gin.H{"message": "product not found"})
 	} else {
+		directory := filepath.Join("/images", id.String())
+		if err := os.RemoveAll(directory); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Bilder konnten nicht gelöscht werden",
+			})
+		}
 		c.IndentedJSON(http.StatusNoContent, gin.H{"message": "product deleted"})
 	}
+}
+
+func checkIncomingProductData(c *gin.Context, pd models.ProductData) (models.ProductData, error) {
+	if pd.Name == "" {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Name ungültig"})
+		return pd, errors.New("name invalid")
+	}
+
+	//if ext := strings.ToLower(filepath.Ext(pd.Image)); ext != ".png" && ext != ".jpg" && ext != ".jpeg" {
+	//	c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Image ungültig"})
+	//	return pd, errors.New("image invalid")
+	//}
+
+	if pd.Price <= 0 {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Preis ungültig"})
+		return pd, errors.New("price invalid")
+	}
+
+	if pd.Stock < 0 {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Stock ungültig"})
+		return pd, errors.New("stock invalid")
+	}
+
+	if pd.Category == "" {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Kategorie ungültig"})
+		return pd, errors.New("category invalid")
+	}
+
+	return pd, nil
 }
 
 // ModifyStock is used to increase or decrease the stock of the specified product
@@ -214,7 +283,7 @@ func ModifyStock(c *gin.Context) {
 	if operation.Value > 0 {
 		message.WriteString(fmt.Sprintf("stock amount increased by %d", operation.Value))
 	} else if operation.Value < 0 {
-		//adding a minimum stock to the filter to prevent modification if stock is insufficient
+		//adding a minimum stock to the filter to prevent modification if stock is not enough
 		filter = bson.M{
 			"product_id": productID,
 			"stock": bson.M{
@@ -250,4 +319,378 @@ func ModifyStock(c *gin.Context) {
 		return
 	}
 	c.IndentedJSON(http.StatusOK, gin.H{"message": message.String(), "new_stock": product.Stock})
+}
+
+// GetProductStock returns only the stock information of a single product.
+// Used by the frontend to display availability without loading the full product.
+func GetProductStock(c *gin.Context) {
+	id, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "the requested uuid is not a valid uuid"})
+		return
+	}
+
+	var product models.Product
+
+	err = database.ProductCollection().FindOne(c.Request.Context(), bson.M{"product_id": id}).Decode(&product)
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			c.IndentedJSON(http.StatusNotFound, gin.H{"message": "requested product not found"})
+		} else {
+			c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
+		return
+	}
+
+	c.IndentedJSON(http.StatusOK, models.NewStockInfo(product))
+}
+
+// GetAllStock returns the stock information of every product.
+// The thresholds are included so clients never have to hardcode them.
+func GetAllStock(c *gin.Context) {
+	cursor, err := database.ProductCollection().Find(c.Request.Context(), bson.M{})
+	if err != nil {
+		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	var products []models.Product
+	if err = cursor.All(c.Request.Context(), &products); err != nil {
+		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	stocks := make([]models.StockInfo, 0, len(products))
+	for _, product := range products {
+		stocks = append(stocks, models.NewStockInfo(product))
+	}
+
+	c.IndentedJSON(http.StatusOK, gin.H{
+		"thresholds": gin.H{
+			"low":      models.LowStockThreshold,
+			"critical": models.CriticalStockThreshold,
+		},
+		"stocks": stocks,
+	})
+}
+
+// GetLowStock returns all products at or below the low-stock threshold,
+// sorted ascending by stock so the most urgent products come first.
+// Intended for the employee logistics panel.
+func GetLowStock(c *gin.Context) {
+	// filtering in the database instead of in Go keeps the response small
+	filter := bson.M{"stock": bson.M{"$lte": models.LowStockThreshold}}
+
+	cursor, err := database.ProductCollection().Find(
+		c.Request.Context(),
+		filter,
+		options.Find().SetSort(bson.D{{"stock", 1}}),
+	)
+	if err != nil {
+		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	var products []models.Product
+	if err = cursor.All(c.Request.Context(), &products); err != nil {
+		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	stocks := make([]models.StockInfo, 0, len(products))
+	for _, product := range products {
+		stocks = append(stocks, models.NewStockInfo(product))
+	}
+
+	c.IndentedJSON(http.StatusOK, gin.H{
+		"thresholds": gin.H{
+			"low":      models.LowStockThreshold,
+			"critical": models.CriticalStockThreshold,
+		},
+		"stocks": stocks,
+	})
+}
+
+func SearchProducts(c *gin.Context) {
+	query := strings.TrimSpace(c.Query("q"))
+
+	if len([]rune(query)) < 2 {
+		c.IndentedJSON(
+			http.StatusBadRequest,
+			gin.H{"message": "search query must contain at least two characters"},
+		)
+		return
+	}
+
+	cursor, err := database.ProductCollection().Find(
+		c.Request.Context(),
+		bson.M{},
+	)
+	if err != nil {
+		c.IndentedJSON(
+			http.StatusInternalServerError,
+			gin.H{"error": err.Error()},
+		)
+		return
+	}
+
+	var products []models.Product
+
+	if err = cursor.All(c.Request.Context(), &products); err != nil {
+		c.IndentedJSON(
+			http.StatusInternalServerError,
+			gin.H{"error": err.Error()},
+		)
+		return
+	}
+
+	type scoredProduct struct {
+		Product models.Product
+		Score   int
+	}
+
+	ranked := make([]scoredProduct, 0)
+
+	for _, product := range products {
+		score, matches := productSearchScore(product, query)
+
+		if matches {
+			ranked = append(ranked, scoredProduct{
+				Product: product,
+				Score:   score,
+			})
+		}
+	}
+
+	sort.SliceStable(ranked, func(i, j int) bool {
+		return ranked[i].Score < ranked[j].Score
+	})
+
+	if len(ranked) > 30 {
+		ranked = ranked[:30]
+	}
+
+	results := make([]models.Product, 0, len(ranked))
+
+	for _, match := range ranked {
+		results = append(results, match.Product)
+	}
+
+	c.IndentedJSON(http.StatusOK, results)
+}
+
+type searchableField struct {
+	Value   string
+	Penalty int
+}
+
+func productSearchScore(product models.Product, query string) (int, bool) {
+	normalizedQuery := normalizeSearchText(query)
+
+	if normalizedQuery == "" {
+		return 0, false
+	}
+
+	fields := []searchableField{
+		{Value: product.Name, Penalty: 0},
+		{Value: product.Category, Penalty: 15},
+		{Value: product.Description, Penalty: 30},
+	}
+
+	bestScore := 1_000_000
+	matched := false
+
+	for _, field := range fields {
+		normalizedField := normalizeSearchText(field.Value)
+
+		if normalizedField == "" {
+			continue
+		}
+
+		if normalizedField == normalizedQuery {
+			score := field.Penalty
+			if score < bestScore {
+				bestScore = score
+			}
+			matched = true
+			continue
+		}
+
+		if strings.Contains(normalizedField, normalizedQuery) {
+			score := field.Penalty + 5
+			if score < bestScore {
+				bestScore = score
+			}
+			matched = true
+			continue
+		}
+
+		tokenScore, tokenMatches := fuzzyTokenScore(normalizedField, normalizedQuery)
+		if tokenMatches {
+			score := field.Penalty + tokenScore
+			if score < bestScore {
+				bestScore = score
+			}
+			matched = true
+		}
+	}
+
+	return bestScore, matched
+}
+
+func normalizeSearchText(value string) string {
+	value = strings.ToLower(strings.TrimSpace(value))
+
+	replacer := strings.NewReplacer(
+		"ä", "ae",
+		"ö", "oe",
+		"ü", "ue",
+		"ß", "ss",
+		"'", "",
+		"`", "",
+		"´", "",
+		"-", " ",
+		"_", " ",
+		".", " ",
+		",", " ",
+		":", " ",
+		";", " ",
+		"/", " ",
+		"\\", " ",
+		"&", " und ",
+	)
+
+	value = replacer.Replace(value)
+
+	return strings.Join(strings.Fields(value), " ")
+}
+
+func fuzzyTokenScore(normalizedField string, normalizedQuery string) (int, bool) {
+	queryTokens := strings.Fields(normalizedQuery)
+	fieldTokens := strings.Fields(normalizedField)
+
+	if len(queryTokens) == 0 || len(fieldTokens) == 0 {
+		return 0, false
+	}
+
+	totalScore := 0
+
+	for _, queryToken := range queryTokens {
+		bestTokenScore := 1_000_000
+		tokenMatched := false
+
+		for _, fieldToken := range fieldTokens {
+			if fieldToken == queryToken {
+				bestTokenScore = 0
+				tokenMatched = true
+				break
+			}
+
+			if strings.Contains(fieldToken, queryToken) || strings.Contains(queryToken, fieldToken) {
+				score := 5 + abs(len(fieldToken)-len(queryToken))
+				if score < bestTokenScore {
+					bestTokenScore = score
+				}
+				tokenMatched = true
+				continue
+			}
+
+			distance := levenshteinDistance(queryToken, fieldToken)
+			maxDistance := allowedDistance(queryToken)
+
+			if distance <= maxDistance {
+				score := 10 + distance*10
+				if score < bestTokenScore {
+					bestTokenScore = score
+				}
+				tokenMatched = true
+			}
+		}
+
+		if !tokenMatched {
+			return 0, false
+		}
+
+		totalScore += bestTokenScore
+	}
+
+	return totalScore, true
+}
+
+func allowedDistance(value string) int {
+	length := len([]rune(value))
+
+	if length <= 2 {
+		return 0
+	}
+
+	if length <= 4 {
+		return 1
+	}
+
+	if length <= 7 {
+		return 2
+	}
+
+	return 3
+}
+
+func levenshteinDistance(a string, b string) int {
+	aRunes := []rune(a)
+	bRunes := []rune(b)
+
+	if len(aRunes) == 0 {
+		return len(bRunes)
+	}
+
+	if len(bRunes) == 0 {
+		return len(aRunes)
+	}
+
+	previousRow := make([]int, len(bRunes)+1)
+	currentRow := make([]int, len(bRunes)+1)
+
+	for j := range previousRow {
+		previousRow[j] = j
+	}
+
+	for i, aRune := range aRunes {
+		currentRow[0] = i + 1
+
+		for j, bRune := range bRunes {
+			insertCost := currentRow[j] + 1
+			deleteCost := previousRow[j+1] + 1
+			replaceCost := previousRow[j]
+
+			if aRune != bRune {
+				replaceCost++
+			}
+
+			currentRow[j+1] = minimum(insertCost, deleteCost, replaceCost)
+		}
+
+		previousRow, currentRow = currentRow, previousRow
+	}
+
+	return previousRow[len(bRunes)]
+}
+
+func minimum(values ...int) int {
+	smallest := values[0]
+
+	for _, value := range values[1:] {
+		if value < smallest {
+			smallest = value
+		}
+	}
+
+	return smallest
+}
+
+func abs(value int) int {
+	if value < 0 {
+		return -value
+	}
+
+	return value
 }

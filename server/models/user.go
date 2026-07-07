@@ -31,6 +31,22 @@ type LoginCredentials struct {
 	Password string `json:"password"`
 }
 
+type ChangePasswordRequest struct {
+	CurrentPassword string `json:"currentPassword"`
+	NewPassword     string `json:"newPassword"`
+}
+
+// PasswordResetRequest is sent when a user requests a password reset link
+type PasswordResetRequest struct {
+	Email string `json:"email"`
+}
+
+// PasswordResetConfirmRequest is sent from the password reset page
+type PasswordResetConfirmRequest struct {
+	Token    string `json:"token"`
+	Password string `json:"password"`
+}
+
 type Address struct {
 	Street      string `bson:"street" json:"street"`
 	HouseNumber string `bson:"house_number" json:"houseNumber"`
@@ -76,6 +92,7 @@ type PublicUser struct {
 	CompanyName        string      `json:"companyName,omitempty"`
 	Address            Address     `json:"address"`
 	Email              string      `json:"email"`
+  Role               string      `json:"role"`
 	FavoriteProductIDs []uuid.UUID `json:"favoriteProductIds"`
 	WishlistProductIDs []uuid.UUID `json:"wishlistProductIds"`
 	CreatedAt          time.Time   `json:"createdAt"`
@@ -92,7 +109,6 @@ type AuthResponse struct {
 	ExpiresIn    int64      `json:"expiresIn"`
 }
 
-// ToPublicUser converts the persisted User into the safe API representation
 func ToPublicUser(user User) PublicUser {
 	return PublicUser{
 		ID:                 user.ID,
@@ -105,6 +121,7 @@ func ToPublicUser(user User) PublicUser {
 		CompanyName:        user.CompanyName,
 		Address:            user.Address,
 		Email:              user.Email,
+		Role:               user.Role,
 		FavoriteProductIDs: NormalizeProductIDs(user.FavoriteProductIDs),
 		WishlistProductIDs: NormalizeProductIDs(user.WishlistProductIDs),
 		CreatedAt:          user.CreatedAt,
