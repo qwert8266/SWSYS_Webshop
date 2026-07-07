@@ -1,12 +1,13 @@
-import { NavLink, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import './categories.css';
 import { useState, useEffect } from 'react';
 
 import productApi from "../api/productApi";
+import ProductGrid from "../components/productGrid";
 import StockIndicator from "../components/stockIndicator";
 import { useStockMap } from "../hooks/useStockMap";
 import { getCategoryConfig } from "../utils/categoryConfig";
-import { normalizeProduct, getProductImagePath, formatEuro } from '../utils/productHelpers';
+import { normalizeProduct } from '../utils/productHelpers';
 
 /*export const biere = [
   { name: "Becks", price: "14.99", rating: 3.8, img: "becks.png" },
@@ -97,23 +98,7 @@ function Category({ category: fixedCategory }){
                 <p className='category-info'>Hoppla. Leider konnten wir keine Produkte finden.</p>
             )}
 
-            <div className="product_row">
-                {categoryProducts.map((product) => (
-                    <div className="product" key={product.id || product.name}>
-                        
-                        <NavLink 
-                            className="product_link" 
-                            to={`/sortiment/${selectedCategory.slug}/${encodeURIComponent(product.id)}`}
-                        >
-                            <img className="product_png" src={getProductImagePath(product)} alt={product.name} />
-                            <h3>{product.name}</h3>
-                        </NavLink>
-                        <p>{"★".repeat(Math.round(product.rating))}{"☆".repeat(5 - Math.round(product.rating))}</p>
-                        <strong>{formatEuro(product.price)}</strong>
-                        <StockIndicator stockInfo={stockMap[product.id]} />
-                    </div>
-                ))}
-            </div>
+            <ProductGrid products={categoryProducts} categorySlug={selectedCategory.slug} />
         </div>
     );
 }

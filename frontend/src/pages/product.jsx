@@ -6,6 +6,9 @@ import { useEffect, useState } from 'react';
 import productApi from '../api/productApi';
 import StockIndicator from '../components/stockIndicator';
 import { getCategoryConfig } from '../utils/categoryConfig';
+import { formatEuro, normalizeProduct } from '../utils/productHelpers';
+import FavoriteButton from '../components/favoriteButton';
+import '../components/favoriteButton.css';
 import { formatEuro,getProductImagePath, normalizeProduct } from '../utils/productHelpers';
 import FourOFour from './404';
 
@@ -228,6 +231,20 @@ function Product(){
                         >
                             <img className="cart-at-product" src={`/img/cart-icon_white.png`} alt="In den Warenkorb" />
                         </button>
+                    </div>
+                    <div className="product-page-actions">
+                        <FavoriteButton
+                            productId={product.id}
+                            listType="favorite"
+                            className="with-label"
+                            showLabel
+                        />
+                        <FavoriteButton
+                            productId={product.id}
+                            listType="wishlist"
+                            className="with-label"
+                            showLabel
+                        />
                     </div>
                 </div>
             </div>

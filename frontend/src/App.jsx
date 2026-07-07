@@ -23,6 +23,7 @@ import Checkout from "./pages/checkout";
 import AccountSettings from "./pages/accountSettings";
 import Contact from "./pages/contact";
 import Category from "./pages/categories";
+import Sortiment from "./pages/sortiment";
 import Product from "./pages/product";
 import LogisticsPanel from "./pages/logisticsPanel";
 import Home from './pages/home';
@@ -78,7 +79,7 @@ function App() {
 }/>
 
           
-          <Route path="/sortiment" element={<Navigate to="/sortiment/bier" replace/>}/>
+          <Route path="/sortiment" element={<Sortiment />}/>
           <Route path="/sortiment/:categorySlug" element={<Category />}/>
           <Route path="/sortiment/:categorySlug/:productId" element={<Product />}/>
           
