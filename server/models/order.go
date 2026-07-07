@@ -64,14 +64,15 @@ type ReturnRequestItem struct {
 }
 
 type Statistics struct {
-	TotalOrders       int64  `bson:"total_orders" json:"totalOrders"`
-	TotalRevenue      uint32 `bson:"total_revenue" json:"totalRevenue"`
-	AverageOrderValue uint32 `bson:"average_order_value" json:"averageOrderValue"`
-	RegisteredUsers   int64  `bson:"registered_users" json:"registeredUsers"`
-	ProductsSold      uint32 `bson:"products_sold" json:"productsSold"`
-	ProductsInStock   uint32 `bson:"products_in_stock" json:"productsInStock"`
-	LowStockProducts  uint32 `bson:"low_stock_products" json:"lowStockProducts"`
-	CanceledOrders    uint32 `bson:"canceled_orders" json:"canceledOrders"`
+	TotalOrders        int64  `bson:"total_orders" json:"totalOrders"`
+	TotalRevenue       uint32 `bson:"total_revenue" json:"totalRevenue"`
+	AverageOrderValue  uint32 `bson:"average_order_value" json:"averageOrderValue"`
+	RegisteredUsers    int64  `bson:"registered_users" json:"registeredUsers"`
+	ProductsSold       uint32 `bson:"products_sold" json:"productsSold"`
+	ProductsInStock    uint32 `bson:"products_in_stock" json:"productsInStock"`
+	LowStockProducts   uint32 `bson:"low_stock_products" json:"lowStockProducts"`
+	CanceledOrders     uint32 `bson:"canceled_orders" json:"canceledOrders"`
+	AverageUserRevenue uint32 `bson:"average_user_revenue" json:"averageUserRevenue"`
 	//CategoryStatistics map[string]CategoryStatistics `json:"categoryStatistics"`
 }
 

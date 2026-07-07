@@ -190,15 +190,15 @@ function Statistics(){
             <div className="card shadow-sm border-0" style={{ width: "400px" }}>
                 <div className="card-body d-flex flex-column justify-content-center text-center">
                     <h6 className="text-uppercase mb-2 " style={{color: "#15406e"}}>
-                        Gesamteinnahmen
+                        Ø Einnahmen pro Nutzer
                     </h6>
 
                     <h1 className="fw-bold text-success mb-0">
-                        500.000 €
+                        {statistics?.averageUserRevenue/100} €
                     </h1>
 
                     <small className="text-muted mt-2">
-                        Umsatz aller Bestellungen
+                        Durchschnittswert pro Nutzer
                     </small>
                 </div>
             </div>

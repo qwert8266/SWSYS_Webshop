@@ -268,15 +268,18 @@ func GetStatistics(c *gin.Context) {
 		return
 	}
 
+	averageUserRevenue := totalRevenue / uint32(userCount)
+
 	statistics := models.Statistics{
-		TotalOrders:       orderCount,
-		TotalRevenue:      totalRevenue,
-		AverageOrderValue: averageOrderValue,
-		RegisteredUsers:   userCount,
-		ProductsSold:      productsSold,
-		ProductsInStock:   totalStock,
-		LowStockProducts:  lowStockCount,
-		CanceledOrders:    canceledOrders,
+		TotalOrders:        orderCount,
+		TotalRevenue:       totalRevenue,
+		AverageOrderValue:  averageOrderValue,
+		RegisteredUsers:    userCount,
+		ProductsSold:       productsSold,
+		ProductsInStock:    totalStock,
+		LowStockProducts:   lowStockCount,
+		CanceledOrders:     canceledOrders,
+		AverageUserRevenue: averageUserRevenue,
 	}
 
 	c.IndentedJSON(http.StatusOK, statistics)
