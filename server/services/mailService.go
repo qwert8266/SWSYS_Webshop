@@ -83,14 +83,14 @@ func sendHTMLMail(config MailConfig, to string, subject string, htmlBody string)
 		return fmt.Errorf("SMTP_PORT ist ungültig")
 	}
 	if config.FromAddress == "" {
-		return fmt.Errorf("Absender Email-Adresse ist nicht gesetzt")
+		return fmt.Errorf("absender Email-Adresse ist nicht gesetzt")
 	}
 
 	if _, err := mail.ParseAddress(config.FromAddress); err != nil {
-		return fmt.Errorf("Absender Email-Adresse ist ungültig: %w", err)
+		return fmt.Errorf("absender Email-Adresse ist ungültig: %w", err)
 	}
 	if _, err := mail.ParseAddress(to); err != nil {
-		return fmt.Errorf("Die Empfänger Email-Adresse ist ungültig: %w", err)
+		return fmt.Errorf("die Empfänger Email-Adresse ist ungültig: %w", err)
 	}
 
 	fromHeader := mail.Address{Name: config.FromName, Address: config.FromAddress}
@@ -172,7 +172,7 @@ func buildPasswordResetHTML(recipientName, resetURL string) (string, error) {
 		Username: recipientName,
 		ResetURL: resetURL,
 		Year:     time.Now().Year(),
-		CSS:      template.CSS(string(cssBytes)),
+		CSS:      template.CSS(cssBytes),
 	}
 
 	var body bytes.Buffer

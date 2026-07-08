@@ -33,7 +33,7 @@ function ProductManagement({ category: fixedCategory }){
         id: 0,
         name: "",
         description: "",
-        image: "",
+        images: [],
         price: null,
         stock: null,
         category: "",
@@ -43,7 +43,7 @@ function ProductManagement({ category: fixedCategory }){
         id: 0,
         name: "",
         description: "",
-        image: "",
+        images: [],
         price: null,
         stock: null,
         category: "",
@@ -71,8 +71,23 @@ function ProductManagement({ category: fixedCategory }){
     };
 
     const handleCreateProduct = async () => {
+        console.log("handleCreateProduct gestartet");
         try{
-            await createProduct(productData, accessToken);
+            const formData = new FormData();
+            formData.append(
+                "data",JSON.stringify({
+                    name: productData.name,
+                    description: productData.description,
+                    price: productData.price,
+                    stock: productData.stock,
+                    category: productData.category,
+                })
+            );
+            console.log(formData);
+            console.log(productData.images);
+            console.log(productData.images.length);
+            productData.images.forEach((image) => {formData.append("image",image)});
+            await createProduct(formData, accessToken);
         }catch{
             setShowNotSuccessfulLabel(true)
             setTimeout(() => {
@@ -220,6 +235,12 @@ function ProductManagement({ category: fixedCategory }){
                     </div>
                     <div className='d-flex flex-row align-items-center pb-2'>
                         <label className='fs-5 me-3' style={{ width: "150px" }}>Bild</label>
+                        <input className="file-input" multiple type="file" onChange={(e) =>
+                                                                                        setProductData(prev => ({
+                                                                                            ...prev,
+                                                                                            images: [...e.target.files]
+                                                                                        }))
+                                                                                    }/>
                         <input className='fs-5 border rounded ' type="text" placeholder='Bild(Dateiname)' name='image' value={productData.image} onChange={handleChange}/>
                     </div>
                     <div className='d-flex flex-row align-items-center pb-2'>
@@ -290,7 +311,6 @@ function ProductManagement({ category: fixedCategory }){
                                             className="product_link" 
                                             to={`/sortiment/${selectedCategory.slug}/${encodeURIComponent(product.id)}`}>
                                             <img className="product_png w-75 ps-5" style={{width: "70px"}} src={getProductImagePath(product)} alt={product.name} />
-                                            
                                         </NavLink>
                                     </div>
                                     

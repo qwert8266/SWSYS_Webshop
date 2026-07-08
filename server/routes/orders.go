@@ -18,6 +18,7 @@ func RegisterOrderRoutes(orderRoutes *gin.RouterGroup) {
 	protectedOrderRoutes := orderRoutes.Group("")
 	protectedOrderRoutes.Use(middleware.RoleAuth("admin", "worker"))
 	{
+		protectedOrderRoutes.GET("/statistics", handlers.GetStatistics)
 		//TODO:
 		//protectedOrderRoutes.GET("", handlers.GetAllOrders)
 		//protectedOrderRoutes.GET("", handlers.GetActiveOrders)

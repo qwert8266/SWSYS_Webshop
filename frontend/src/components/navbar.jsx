@@ -1,4 +1,4 @@
-import { React, useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from "../context/authContext";
 import { useCart } from "../context/cartContext";
@@ -14,10 +14,14 @@ import "../custom.scss";
 
 import './navbar.css';
 
+// Mitarbeiterrollen, für die der Logistik-Link angezeigt wird
+const EMPLOYEE_ROLES = ["worker", "admin", "owner"];
+
 function Navbar() {
   const navigate = useNavigate();
-  const { isAuthenticated, isAuthLoading, user } = useAuth();
-  const { totalQuantity } = useCart();
+  const { user, isAuthenticated, isAuthLoading } = useAuth();
+  const { totalQuantity, items, isCartPreviewOpen, showCartPreview, hideCartPreview } = useCart();
+  const isEmployee = EMPLOYEE_ROLES.includes(user?.role);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [suggestions, setSuggestions] = useState([]);
@@ -275,6 +279,15 @@ function handleShowAllResults() {
                   Kontakt
                 </NavLink>
               </li>
+
+              {/* Nur für Mitarbeiter sichtbar */}
+              {isEmployee && (
+                <li className='nav-item'>
+                  <NavLink className="nav-link" to="/logistik">
+                    <a>Logistik</a>
+                  </NavLink>
+                </li>
+              )}
             </ul>
           </div>
 
@@ -299,20 +312,63 @@ function handleShowAllResults() {
 
             {/*location.pathname.startsWith("/employee/") ?():()*/}
             {/* Shopping cart */}
-            <NavLink
-              type="button"
-              className="btn btn-light border navbar-icon-button cart-icon-button"
-              title="Warenkorb"
-              aria-label='Warenkorb anzeigen'
-              to="/cart"
-            >
-              <img
-                className="navbar-icon"
-                src="/img/cart-icon.png" 
-                alt="warenkorb icon"
-              />
-              {totalQuantity > 0 && <span className="cart-badge">{totalQuantity}</span>}
-            </NavLink>
+            <div className="cart-preview-wrapper" onMouseEnter={showCartPreview} onMouseLeave={hideCartPreview}>
+              <NavLink
+                type="button"
+                className="btn btn-light border navbar-icon-button cart-icon-button"
+                title="Warenkorb"
+                aria-label='Warenkorb anzeigen'
+                to="/cart"
+              >
+                <img
+                  className="navbar-icon"
+                  src="/img/cart-icon.png" 
+                  alt="warenkorb icon"
+                />
+                {totalQuantity > 0 && <span className="cart-badge">{totalQuantity}</span>}
+              </NavLink>
+
+              {isCartPreviewOpen && (
+                <div className="cart-preview">
+                  {totalQuantity === 0 ? (
+                    <>
+                      <h4>Dein Warenkorb ist leer</h4>
+                      <p>Lege Produkte in deinen Warenkorb und schließe deinen Einkauf entspannt ab.</p>
+
+                      <NavLink className="cart-preview-button" to="/sortiment">
+                        Zum Sortiment
+                      </NavLink>
+                    </>
+                  ) : (
+                    <>
+                      <h4>Dein Warenkorb</h4>
+                      <div className="cart-preview-items">
+                        {items.slice(0, 3).map((item)=>(
+                          <div className="cart-preview-item" key={item.productId || item.id}>
+                            <img src={`/img/product_images/${item.image}`} alt={item.name}/>
+
+                            <div>
+                              <strong>{item.name}</strong>
+                              <span>{item.quantity}x {formatEuro(item.price)}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {items.length > 3 && (
+                        <p className="cart-preview-more">
+                          + {items.length - 3} weitere Produkte
+                        </p>
+                      )}
+
+                      <NavLink className="cart-preview-button" to="/cart" onClick={hideCartPreview}>
+                        Zum Warenkorb
+                      </NavLink>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
 
             { isAuthenticated && (user?.role === "worker" || user?.role === "admin" || user?.role === "owner") &&
             <div className="dropdown-wrapper">
@@ -331,7 +387,7 @@ function handleShowAllResults() {
                 <NavLink to="/product_management">Produktverwaltung</NavLink>
                 <NavLink to="/order_management">Bestellungen</NavLink>
                 <NavLink to="/marketing">Marketing</NavLink>
-                <NavLink to="/analysis">Analyse-Dashboard</NavLink>
+                <NavLink to="/statistics">Analyse-Dashboard</NavLink>
               </div>
             </div>
             }
