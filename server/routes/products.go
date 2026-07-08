@@ -24,7 +24,7 @@ func RegisterProductRoutes(productRoutes *gin.RouterGroup) {
 	protectedProductRoutes.Use(middleware.Authenticate())
 	protectedProductRoutes.Use(middleware.RoleAuth("admin", "worker", "owner"))
 	{
-    protectedProductRoutes.POST("/", handlers.CreateProduct)
+    protectedProductRoutes.POST("/product_management", handlers.CreateProduct)
 		protectedProductRoutes.PUT("/:id", handlers.UpdateProduct)
 		protectedProductRoutes.PATCH("/:id", handlers.ModifyStock)
 		protectedProductRoutes.DELETE("/:id", handlers.DeleteProduct)
