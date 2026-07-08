@@ -283,6 +283,7 @@ function Product(){
                                 <StockIndicator stockInfo={stockInfo} showInStock />
                             </>
                         )}
+                    </div>
                     <div className='cart-input'>
                         <input 
                             type="number" 

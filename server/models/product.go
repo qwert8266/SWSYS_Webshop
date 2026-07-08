@@ -35,6 +35,7 @@ type ProductVariant struct {
 	Deposit      uint16 `json:"deposit" bson:"deposit"`            //price is stored in Cents
 	CrateDeposit uint16 `json:"crate_deposit" bson:"crateDeposit"` //price is stored in Cents
 	Stock        uint32 `json:"stock" bson:"stock"`
+	VariantLabel string `json:"variant_label,omitempty" bson:"-"`
 }
 
 type StockOperation struct {
@@ -63,12 +64,16 @@ const (
 
 // StockInfo is the response model of the dedicated stock endpoints.
 // It intentionally contains no price/description so stock checks stay cheap.
+// Volume and PackSize are set when the entry refers to a specific variant.
 type StockInfo struct {
-	ProductID uuid.UUID `json:"product_id"`
-	Name      string    `json:"name"`
-	Category  string    `json:"category"`
-	Stock     uint32    `json:"stock"`
-	Status    string    `json:"status"`
+	ProductID    uuid.UUID `json:"product_id"`
+	Name         string    `json:"name"`
+	Category     string    `json:"category"`
+	Volume       uint16    `json:"volume"`
+	PackSize     uint16    `json:"pack_size"`
+	VariantLabel string    `json:"variant_label"`
+	Stock        uint32    `json:"stock"`
+	Status       string    `json:"status"`
 }
 
 // TotalStock sums the stock of all variants.
@@ -94,7 +99,7 @@ func StockStatus(stock uint32) string {
 	}
 }
 
-// NewStockInfo builds the stock response for a single product.
+// NewStockInfo builds the stock response for a single product (total across variants).
 func NewStockInfo(product Product) StockInfo {
 	stock := product.TotalStock()
 	return StockInfo{
@@ -103,5 +108,19 @@ func NewStockInfo(product Product) StockInfo {
 		Category:  product.Category,
 		Stock:     stock,
 		Status:    StockStatus(stock),
+	}
+}
+
+// NewVariantStockInfo builds the stock response for one product variant.
+func NewVariantStockInfo(product Product, variant ProductVariant) StockInfo {
+	return StockInfo{
+		ProductID:    product.ProductID,
+		Name:         product.Name,
+		Category:     product.Category,
+		Volume:       variant.Volume,
+		PackSize:     variant.PackSize,
+		VariantLabel: variant.DisplayLabel(),
+		Stock:        variant.Stock,
+		Status:       StockStatus(variant.Stock),
 	}
 }

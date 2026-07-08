@@ -20,16 +20,15 @@ export function normalizeVariant(variant) {
   const crateDeposit = (variant?.crate_deposit ?? 0) / 100;
 
   return {
-    /* Eindeutiger Schlüssel der Variante (Backend identifiziert über volume + pack_size) */
     key: `${volume}x${packSize}`,
     price: (variant?.price ?? 0) / 100,
     volume,
     packSize,
     deposit,
     crateDeposit,
-    /* Pfand für das gesamte Gebinde: Flaschenpfand × Anzahl + Kistenpfand */
     depositPerPack: packSize * deposit + crateDeposit,
     stock: variant?.stock ?? 0,
+    label: variant?.variant_label || null,
   };
 }
 
@@ -40,12 +39,33 @@ export function formatVolume(volumeInMl) {
   })} l`;
 }
 
-/** Bezeichnung eines Gebindes, z.B. "24 × 0,33 l" */
+/** Bezeichnung eines Gebindes – bevorzugt variant_label vom Backend */
 export function getVariantLabel(variant) {
   if (!variant) {
     return "";
   }
-  return `${variant.packSize} × ${formatVolume(variant.volume)}`;
+  if (variant.label || variant.variant_label) {
+    return variant.label || variant.variant_label;
+  }
+  const packSize = variant.packSize ?? variant.pack_size ?? 0;
+  const volume = variant.volume ?? 0;
+  return `${packSize} × ${formatVolume(volume)}`;
+}
+
+/** Varianten-Label aus Stock-API-Eintrag */
+export function getStockVariantLabel(stockInfo) {
+  if (stockInfo?.variant_label) {
+    return stockInfo.variant_label;
+  }
+
+  const packSize = Number(stockInfo?.pack_size ?? stockInfo?.packSize ?? 0);
+  const volume = Number(stockInfo?.volume ?? 0);
+
+  if (packSize === 0 && volume === 0) {
+    return null;
+  }
+
+  return getVariantLabel({ packSize, volume });
 }
 
 export function normalizeProduct(product) {

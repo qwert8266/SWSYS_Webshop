@@ -36,6 +36,7 @@ func GetProducts(c *gin.Context) {
 		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+	models.EnrichProductsVariantLabels(products)
 	c.IndentedJSON(http.StatusOK, products)
 }
 
@@ -59,6 +60,7 @@ func GetProductByID(c *gin.Context) {
 		}
 		return
 	}
+	models.EnrichProductVariantLabels(&product)
 	c.IndentedJSON(http.StatusOK, product)
 }
 
@@ -84,6 +86,7 @@ func GetProductByCategory(c *gin.Context) {
 		return
 	}
 
+	models.EnrichProductsVariantLabels(products)
 	c.IndentedJSON(http.StatusOK, products)
 }
 
@@ -146,6 +149,7 @@ func CreateProduct(c *gin.Context) {
 		return
 	}
 
+	models.EnrichProductVariantLabels(&newProduct)
 	c.IndentedJSON(http.StatusCreated, newProduct)
 }
 
@@ -258,6 +262,7 @@ func checkIncomingProductData(c *gin.Context, pd models.ProductData) (models.Pro
 
 	return pd, nil
 }
+
 // ModifyStock is used to increase or decrease the stock of the specified product
 func ModifyStock(c *gin.Context) {
 	//retrieving the product ID
@@ -343,6 +348,7 @@ func ModifyStock(c *gin.Context) {
 		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "insufficient stock", "available": foundProduct})
 		return
 	}
+	models.EnrichProductVariantLabels(&product)
 	c.IndentedJSON(http.StatusOK, gin.H{"message": message.String(), "new_product": product})
 }
 
@@ -417,9 +423,19 @@ func GetLowStock(c *gin.Context) {
 
 	stocks := make([]models.StockInfo, 0)
 	for _, product := range products {
-		info := models.NewStockInfo(product)
-		if info.Stock <= models.LowStockThreshold {
-			stocks = append(stocks, info)
+		if len(product.ProductVariants) == 0 {
+			info := models.NewStockInfo(product)
+			if info.Stock <= models.LowStockThreshold {
+				stocks = append(stocks, info)
+			}
+			continue
+		}
+
+		for _, variant := range product.ProductVariants {
+			info := models.NewVariantStockInfo(product, variant)
+			if info.Stock <= models.LowStockThreshold {
+				stocks = append(stocks, info)
+			}
 		}
 	}
 
@@ -501,6 +517,7 @@ func SearchProducts(c *gin.Context) {
 		results = append(results, match.Product)
 	}
 
+	models.EnrichProductsVariantLabels(results)
 	c.IndentedJSON(http.StatusOK, results)
 }
 

@@ -75,7 +75,7 @@ func CreateOrder(c *gin.Context) {
 		}
 		// writing update to reduce the stock by the ordered number of products
 		update := bson.M{
-			"$inc": bson.M{"stock": -int32(requestedItem.Quantity)},
+			"$inc": bson.M{"product_variants.$.stock": -int32(requestedItem.Quantity)},
 			"$set": bson.M{"updated_at": now},
 		}
 
@@ -137,7 +137,12 @@ func CreateOrder(c *gin.Context) {
 			return
 		}
 
-		reservedItems = append(reservedItems, reservedStock{ProductID: productID, Quantity: requestedItem.Quantity})
+		reservedItems = append(reservedItems, reservedStock{
+			ProductID: productID,
+			PackSize:  requestedItem.PackSize,
+			Volume:    requestedItem.Volume,
+			Quantity:  requestedItem.Quantity,
+		})
 
 		lineTotal := (product.ProductVariants[0].Price) * (requestedItem.Quantity)
 		totalPrice += lineTotal
@@ -282,9 +287,10 @@ func GetStatistics(c *gin.Context) {
 			return
 		}
 
-		totalStock += product.Stock
+		stock := product.TotalStock()
+		totalStock += stock
 
-		if product.Stock <= 10 {
+		if stock <= models.LowStockThreshold {
 			lowStockCount++
 		}
 	}
@@ -397,13 +403,20 @@ type reservedStock struct {
 }
 
 func rollbackReservedStock(c *gin.Context, reservedItems []reservedStock) {
-	// restores all items that have already been reserved
 	for _, item := range reservedItems {
 		_, _ = database.ProductCollection().UpdateOne(
 			c.Request.Context(),
-			bson.M{"product_id": item.ProductID},
 			bson.M{
-				"$inc": bson.M{"stock": item.Quantity},
+				"product_id": item.ProductID,
+				"product_variants": bson.M{
+					"$elemMatch": bson.M{
+						"volume":    item.Volume,
+						"pack_size": item.PackSize,
+					},
+				},
+			},
+			bson.M{
+				"$inc": bson.M{"product_variants.$.stock": item.Quantity},
 				"$set": bson.M{"updated_at": time.Now().UTC()},
 			},
 		)
