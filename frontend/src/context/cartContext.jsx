@@ -20,20 +20,12 @@ function loadInitialCart() {
 }
 
 
-
-
-/**
- * Stellt den Warenkorb-Zustand für alle untergeordneten Komponenten bereit.
- */ 
 export function CartProvider({ children }) {
   const [items, setItems] = useState(loadInitialCart);
   const [isCartPreviewOpen, setIsCartPreviewOpen] = useState(false);
   const cartPreviewTimeoutRef = useRef(null);
 
-  /**
-   * Speichert den aktuellen Warenkorb automatisch im localStorage.
-   * immer wenn sich [items] ändert.
-   */
+
   useEffect(() => {
     try {
       window.localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
@@ -42,21 +34,19 @@ export function CartProvider({ children }) {
     }
   }, [items]);
 
-  
-  useEffect(() => {
+useEffect(() => {
   return () => {
     if (cartPreviewTimeoutRef.current) {
       clearTimeout(cartPreviewTimeoutRef.current);
     }
   };
-  }, []);
+}, []);
 
 function showCartPreview() {
   if (cartPreviewTimeoutRef.current) {
     clearTimeout(cartPreviewTimeoutRef.current);
     cartPreviewTimeoutRef.current = null;
   }
-
   setIsCartPreviewOpen(true);
 }
 
@@ -64,7 +54,6 @@ function hideCartPreview() {
   if (cartPreviewTimeoutRef.current) {
     clearTimeout(cartPreviewTimeoutRef.current);
   }
-
   cartPreviewTimeoutRef.current = setTimeout(() => {
     setIsCartPreviewOpen(false);
     cartPreviewTimeoutRef.current = null;
@@ -75,59 +64,67 @@ function openCartPreviewTemporarily() {
   if (cartPreviewTimeoutRef.current) {
     clearTimeout(cartPreviewTimeoutRef.current);
   }
-
   setIsCartPreviewOpen(true);
-
   cartPreviewTimeoutRef.current = setTimeout(() => {
     setIsCartPreviewOpen(false);
     cartPreviewTimeoutRef.current = null;
   }, 3000);
 }
+  
+  function addItem(product, quantity, availableStock) {
+  const maxStock = Number.isFinite(availableStock)
+    ? availableStock
+    : product.stock ?? Infinity;
 
-  /**
-   * Fügt ein Produkt dem Warenkorb hinzu
-   * ist es schon vorhanden, wird die Menge erhöht 
-   */
-  function addItem(product, quantity) {
+  const existingItem = items.find((item) => item.id === product.id);
+  const quantityInCart = existingItem ? existingItem.quantity : 0;
+
+  const addableQuantity = Math.max(
+    0,
+    Math.min(quantity, maxStock - quantityInCart)
+  );
+
+  if (addableQuantity > 0) {
     setItems((currentItems) => {
-      const existingItem = currentItems.find((item) => item.id === product.id);
-    
-      /* Wenn das Produkt bereits im Warenkorb ist */
       if (existingItem) {
         return currentItems.map((item) =>
-        item.id === product.id ? {
-          ...item, quantity: item.quantity + quantity
-        } : item
+          item.id === product.id
+            ? { ...item, quantity: item.quantity + addableQuantity }
+            : item
         );
       }
-      return [...currentItems, {...product, quantity: quantity}];
+      return [...currentItems, { ...product, quantity: addableQuantity }];
     });
 
     openCartPreviewTemporarily();
   }
 
-  /**
-   * Entfernt ein Produkt volständig aus dem Warenkorb 
-   */
+  return {
+    added: addableQuantity,
+    requested: quantity,
+    capped: addableQuantity < quantity,
+  };
+}
+  
+
+
   function removeItem(productId) {
     setItems((currentItems) => currentItems.filter((item) => item.id !== productId))
   }
 
-  /**
-   * Erhöht die Menge eines bestimmten Produkts um eins.
-   */
-  function increaseQuantity(productId) {
+
+  function increaseQuantity(productId, availableStock) {
+    const maxStock = Number.isFinite(availableStock) ? availableStock : Infinity;
+
     setItems((currentItems) => 
       currentItems.map((item) =>
         item.id === productId ? { 
-          ... item, quantity: item.quantity + 1} : item
+          ...item, quantity: Math.min(item.quantity + 1, maxStock)} : item
       )
     );
   }
 
-  /**
-   * Verringert die Menge eines bestimmten Produkts um eins.
-   */
+
   function decreaseQuantity(productId) {
     setItems((currentItems) => 
       currentItems.map((item) =>
@@ -168,9 +165,7 @@ function openCartPreviewTemporarily() {
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }
 
-/**
- * Stellt einen einfachen Zugriff auf den Warenkorb-Context bereit.
- */
+
 export function useCart() {
   const context = useContext(CartContext);
 

@@ -1,10 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/authContext";
+import { useProductLists } from "../context/productListsContext";
 
 import authApi from '../api/authApi';
 import orderApi from '../api/orderApi';
-import { formatEuro } from '../utils/productHelpers';
+import listApi from '../api/listApi';
+import productApi from '../api/productApi';
+import ProductGrid from '../components/productGrid';
+import { getPurchasedProductIds } from '../utils/orderHelpers';
+import { formatEuro, normalizeProduct } from '../utils/productHelpers';
 
 import "./accountSettings.css";
 
@@ -85,6 +90,7 @@ function AccountSettings() {
 
   const navigate = useNavigate();
   const { user, accessToken, logout } = useAuth();
+  const { favoriteIds, wishlistIds } = useProductLists();
   const [activeSection, setActiveSection] = useState("account");
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
   const [twoFactorMethod, setTwoFactorMethod] = useState("authenticator");
@@ -92,6 +98,12 @@ function AccountSettings() {
   const [orders, setOrders] = useState([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [ordersError, setOrdersError] = useState("");
+  const [favoriteProducts, setFavoriteProducts] = useState([]);
+  const [wishlistProducts, setWishlistProducts] = useState([]);
+  const [purchaseSuggestions, setPurchaseSuggestions] = useState([]);
+  const [listsLoading, setListsLoading] = useState(false);
+  const [listsError, setListsError] = useState("");
+  const [suggestionsLoading, setSuggestionsLoading] = useState(false);
   
   const [passwordError, setPasswordError] = useState("");
   const [passwordSuccess, setPasswordSuccess] = useState("");
@@ -145,6 +157,109 @@ function AccountSettings() {
       ignoreResult = true;
     };
   }, [accessToken]);
+
+  useEffect(() => {
+    if (!accessToken) {
+      setFavoriteProducts([]);
+      setWishlistProducts([]);
+      setListsError("");
+      setListsLoading(false);
+      return;
+    }
+
+    if (!["account", "favorites", "wishlist"].includes(activeSection)) {
+      return;
+    }
+
+    let ignoreResult = false;
+
+    async function loadLists() {
+      setListsLoading(true);
+      setListsError("");
+
+      try {
+        const [favoritesResponse, wishlistResponse] = await Promise.all([
+          listApi.getFavorites(accessToken),
+          listApi.getWishlist(accessToken),
+        ]);
+
+        if (!ignoreResult) {
+          setFavoriteProducts(
+            Array.isArray(favoritesResponse)
+              ? favoritesResponse.map(normalizeProduct)
+              : []
+          );
+          setWishlistProducts(
+            Array.isArray(wishlistResponse)
+              ? wishlistResponse.map(normalizeProduct)
+              : []
+          );
+        }
+      } catch (error) {
+        if (!ignoreResult) {
+          setFavoriteProducts([]);
+          setWishlistProducts([]);
+          setListsError(error.message || "Listen konnten nicht geladen werden.");
+        }
+      } finally {
+        if (!ignoreResult) {
+          setListsLoading(false);
+        }
+      }
+    }
+
+    loadLists();
+
+    return () => {
+      ignoreResult = true;
+    };
+  }, [accessToken, activeSection, favoriteIds.join(","), wishlistIds.join(",")]);
+
+  useEffect(() => {
+    if (!accessToken || activeSection !== "account" || ordersLoading) {
+      return;
+    }
+
+    const purchasedProductIds = getPurchasedProductIds(orders);
+    if (purchasedProductIds.length === 0) {
+      setPurchaseSuggestions([]);
+      setSuggestionsLoading(false);
+      return;
+    }
+
+    let ignoreResult = false;
+
+    async function loadSuggestions() {
+      setSuggestionsLoading(true);
+
+      try {
+        const loadedProducts = await Promise.all(
+          purchasedProductIds.map(async (productId) => {
+            try {
+              const product = await productApi.getProductById(productId);
+              return normalizeProduct(product);
+            } catch {
+              return null;
+            }
+          })
+        );
+
+        if (!ignoreResult) {
+          setPurchaseSuggestions(loadedProducts.filter(Boolean));
+        }
+      } finally {
+        if (!ignoreResult) {
+          setSuggestionsLoading(false);
+        }
+      }
+    }
+
+    loadSuggestions();
+
+    return () => {
+      ignoreResult = true;
+    };
+  }, [accessToken, activeSection, orders, ordersLoading]);
 
 
   function handleLogout() {
@@ -370,6 +485,20 @@ function AccountSettings() {
               Bestellungen
             </button>
             <button
+              className={activeSection === "favorites" ? "account-nav active" : "account-nav"}
+              onClick={() => setActiveSection("favorites")}
+              type="button"
+            >
+              Lieblingsprodukte
+            </button>
+            <button
+              className={activeSection === "wishlist" ? "account-nav active" : "account-nav"}
+              onClick={() => setActiveSection("wishlist")}
+              type="button"
+            >
+              Wunschzettel
+            </button>
+            <button
               className={activeSection === "settings" ? "account-nav active" : "account-nav"}
               onClick={() => setActiveSection("settings")}
               type="button"
@@ -411,12 +540,124 @@ function AccountSettings() {
                   <b>{orders.length} Bestellungen</b>
                 </article>
                 <article className="account-info-box">
+                  <span className='small-padding'>Lieblingsprodukte</span>
+                  <b>{favoriteIds.length} Produkte</b>
+                </article>
+                <article className="account-info-box">
+                  <span className='small-padding'>Wunschzettel</span>
+                  <b>{wishlistIds.length} Produkte</b>
+                </article>
+                <article className="account-info-box">
                   <span className='small-padding'>2FA-Status</span>
                   <b>{twoFactorEnabled ? "Aktiviert" : "Nicht aktiviert"}</b>
                 </article>
               </div>
+
+              {listsLoading && <p className="account-section-info">Listen werden geladen...</p>}
+              {listsError && <p className="account-section-info text-danger">{listsError}</p>}
+
+              {!listsLoading && !listsError && favoriteProducts.length > 0 && (
+                <div className="account-preview-section">
+                  <div className="account-card-header compact">
+                    <div>
+                      <p className="account-title">Lieblingsprodukte</p>
+                      <h3>Deine Favoriten</h3>
+                    </div>
+                    <button
+                      className="btn btn-link account-link-button"
+                      type="button"
+                      onClick={() => setActiveSection("favorites")}
+                    >
+                      Alle anzeigen
+                    </button>
+                  </div>
+                  <ProductGrid products={favoriteProducts.slice(0, 4)} />
+                </div>
+              )}
+
+              {!listsLoading && !listsError && wishlistProducts.length > 0 && (
+                <div className="account-preview-section">
+                  <div className="account-card-header compact">
+                    <div>
+                      <p className="account-title">Wunschzettel</p>
+                      <h3>Deine Wunschliste</h3>
+                    </div>
+                    <button
+                      className="btn btn-link account-link-button"
+                      type="button"
+                      onClick={() => setActiveSection("wishlist")}
+                    >
+                      Alle anzeigen
+                    </button>
+                  </div>
+                  <ProductGrid products={wishlistProducts.slice(0, 4)} />
+                </div>
+              )}
+
+              <div className="account-preview-section">
+                <div className="account-card-header compact">
+                  <div>
+                    <p className="account-title">Empfehlungen</p>
+                    <h3>Bereits gekaufte Produkte</h3>
+                  </div>
+                </div>
+
+                {suggestionsLoading && (
+                  <p className="account-section-info">Vorschläge werden geladen...</p>
+                )}
+                {!suggestionsLoading && purchaseSuggestions.length === 0 && (
+                  <p className="account-section-info">
+                    Sobald du Bestellungen aufgibst, erscheinen hier deine zuletzt gekauften Produkte.
+                  </p>
+                )}
+                {!suggestionsLoading && purchaseSuggestions.length > 0 && (
+                  <ProductGrid products={purchaseSuggestions} />
+                )}
+              </div>
             </section>
 
+          )}
+
+          {activeSection === "favorites" && (
+            <section className="account-card">
+              <div className="account-card-header">
+                <div>
+                  <p className="account-title">Lieblingsprodukte</p>
+                  <h2>Deine markierten Favoriten</h2>
+                </div>
+                <span className="account-badge">{favoriteProducts.length} Produkte</span>
+              </div>
+
+              {listsLoading && <p>Produkte werden geladen...</p>}
+              {listsError && <p className="text-danger">{listsError}</p>}
+              {!listsLoading && !listsError && favoriteProducts.length === 0 && (
+                <p>Du hast noch keine Lieblingsprodukte markiert.</p>
+              )}
+              {!listsLoading && !listsError && favoriteProducts.length > 0 && (
+                <ProductGrid products={favoriteProducts} />
+              )}
+            </section>
+          )}
+
+          {activeSection === "wishlist" && (
+            <section className="account-card">
+              <div className="account-card-header">
+                <div>
+                  <p className="account-title">Wunschzettel</p>
+                  <h2>Produkte auf deiner Wunschliste</h2>
+                </div>
+                <span className="account-badge">{wishlistProducts.length} Produkte</span>
+              </div>
+
+              {listsLoading && <p>Produkte werden geladen...</p>}
+              {listsError && <p className="text-danger">{listsError}</p>}
+              {!listsLoading && !listsError && wishlistProducts.length === 0 && (
+                <p>Dein Wunschzettel ist noch leer.</p>
+              )}
+              {!listsLoading && !listsError && wishlistProducts.length > 0 && (
+                <ProductGrid products={wishlistProducts} />
+              )}
+            </section>
           )}
 
           {activeSection === "orders" && (
@@ -711,7 +952,7 @@ function AccountSettings() {
                 <div className='settings-section'>
                   <div className='account-card-header compact border-top pt-3 border-bottom-0'>
                     <div>
-                      <h3>Password ändern</h3>
+                      <h3>Passwort ändern</h3>
                       <p className='account-info-text'>
                         Gib zuerst dein aktuelles Passwort ein und lege dann ein neues fest.
                       </p>

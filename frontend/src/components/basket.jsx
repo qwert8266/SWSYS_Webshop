@@ -1,5 +1,6 @@
 import { Link, NavLink } from 'react-router-dom';
 import { useCart } from "../context/cartContext";
+import { useStockMap } from "../hooks/useStockMap";
 import { formatEuro } from '../utils/productHelpers';
 
 
@@ -16,6 +17,9 @@ function ShoppingCart() {
     removeItem,
     clearCart,
   } = useCart();
+
+  /* Aktuelle Bestände vom Stock-Endpunkt, um die Menge zu deckeln */
+  const stockMap = useStockMap();
 
   /** Wenn sich noch keine Produkte im Warenkorb befinden */
   if (items.length === 0) {
@@ -62,7 +66,13 @@ function ShoppingCart() {
 
             {/* Warenkorb Produkte */}
             <div className="d-grid gap-3">
-              {items.map((item) => (
+              {items.map((item) => {
+                // Aktueller Bestand; solange er noch lädt, wird nicht blockiert
+                const availableStock = stockMap[item.id]?.stock;
+                const isAtStockLimit =
+                  Number.isFinite(availableStock) && item.quantity >= availableStock;
+
+                return (
                 <article 
                   className="d-flex flex-column flex-md-row align-items-md-center gap-3 p-3 rounded-4 bg-light" 
                   key={item.id}
@@ -80,6 +90,13 @@ function ShoppingCart() {
                     <span>
                       {formatEuro(item.price)}
                     </span>
+
+                    {/* Hinweis, wenn der Bestand die Warenkorbmenge nicht mehr deckt */}
+                    {Number.isFinite(availableStock) && item.quantity > availableStock && (
+                      <p className="text-danger mb-0 small">
+                        Nur noch {availableStock} verfügbar – bitte Menge anpassen.
+                      </p>
+                    )}
                   </div>
                   
                   {/* Buttons für Menge anpassen */}
@@ -100,7 +117,9 @@ function ShoppingCart() {
                     <button
                       className="btn btn-outline-secondary btn-sm"
                       type="button"
-                      onClick={() => increaseQuantity(item.id)}
+                      onClick={() => increaseQuantity(item.id, availableStock)}
+                      disabled={isAtStockLimit}
+                      title={isAtStockLimit ? `Maximal ${availableStock} Stück verfügbar` : undefined}
                       aria-label="Menge erhöhen"
                     >
                       +
@@ -125,7 +144,8 @@ function ShoppingCart() {
                     />
                   </button>
                 </article>
-              ))}   
+                );
+              })}   
             </div>
           </div> 
         </div>

@@ -7,6 +7,7 @@ import ProtectedRoutes from "./routes/protectedRoutes";
 
 import ProductManagement from "./pages/employee_pages/product_management";
 import OrderManagement from "./pages/employee_pages/order_management";
+import Statistics from "./pages/employee_pages/statistics";
 
 import FourOFour from "./pages/404";
 import CookieBanner from "./components/cookie_banner";
@@ -22,7 +23,9 @@ import Checkout from "./pages/checkout";
 import AccountSettings from "./pages/accountSettings";
 import Contact from "./pages/contact";
 import Category from "./pages/categories";
+import Sortiment from "./pages/sortiment";
 import Product from "./pages/product";
+import LogisticsPanel from "./pages/logisticsPanel";
 import Home from './pages/home';
 
 function App() {
@@ -54,19 +57,29 @@ function App() {
             </ProtectedRoutes>
           }/>
 
-          <Route path="product_management" element={
-            <ProtectedRoutes>
-              <ProductManagement/>
-            </ProtectedRoutes>
-          }/>
+         <Route path="/logistik" element={
+  <ProtectedRoutes>
+    <LogisticsPanel/>
+  </ProtectedRoutes>
+}/>
+<Route path="product_management" element={
+  <ProtectedRoutes>
+    <ProductManagement/>
+  </ProtectedRoutes>
+}/>
+<Route path="order_management" element={
+  <ProtectedRoutes>
+    <OrderManagement/>
+  </ProtectedRoutes>
+}/>
+<Route path="statistics" element={
+  <ProtectedRoutes>
+    <Statistics/>
+  </ProtectedRoutes>
+}/>
 
-          <Route path="order_management" element={
-            <ProtectedRoutes>
-              <OrderManagement/>
-            </ProtectedRoutes>
-          }/>
           
-          <Route path="/sortiment" element={<Navigate to="/sortiment/bier" replace/>}/>
+          <Route path="/sortiment" element={<Sortiment />}/>
           <Route path="/sortiment/:categorySlug" element={<Category />}/>
           <Route path="/sortiment/:categorySlug/:productId" element={<Product />}/>
           

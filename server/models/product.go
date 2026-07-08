@@ -29,3 +29,56 @@ type ProductData struct {
 type StockOperation struct {
 	Value int32 `json:"value"`
 }
+
+// Central stock thresholds. These are the single source of truth --
+// the frontend receives the resulting status via the stock endpoints
+// instead of hardcoding its own thresholds.
+const (
+	// LowStockThreshold marks products that should be reordered soon.
+	LowStockThreshold uint32 = 15
+	// CriticalStockThreshold marks products that are about to sell out.
+	CriticalStockThreshold uint32 = 5
+)
+
+// Possible values of StockInfo.Status, ordered from best to worst.
+const (
+	StockStatusOK       = "ok"
+	StockStatusLow      = "low"
+	StockStatusCritical = "critical"
+	StockStatusOut      = "out_of_stock"
+)
+
+// StockInfo is the response model of the dedicated stock endpoints.
+// It intentionally contains no price/description so stock checks stay cheap.
+type StockInfo struct {
+	ProductID uuid.UUID `json:"product_id"`
+	Name      string    `json:"name"`
+	Category  string    `json:"category"`
+	Stock     uint32    `json:"stock"`
+	Status    string    `json:"status"`
+}
+
+// StockStatus maps a raw stock value onto one of the StockStatus* levels.
+func StockStatus(stock uint32) string {
+	switch {
+	case stock == 0:
+		return StockStatusOut
+	case stock <= CriticalStockThreshold:
+		return StockStatusCritical
+	case stock <= LowStockThreshold:
+		return StockStatusLow
+	default:
+		return StockStatusOK
+	}
+}
+
+// NewStockInfo builds the stock response for a single product.
+func NewStockInfo(product Product) StockInfo {
+	return StockInfo{
+		ProductID: product.ProductID,
+		Name:      product.Name,
+		Category:  product.Category,
+		Stock:     product.Stock,
+		Status:    StockStatus(product.Stock),
+	}
+}

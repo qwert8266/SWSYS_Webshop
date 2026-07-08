@@ -1,4 +1,4 @@
-import { React, useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from "../context/authContext";
 import { useCart } from "../context/cartContext";
@@ -14,17 +14,19 @@ import "../custom.scss";
 
 import './navbar.css';
 
+// Mitarbeiterrollen, für die der Logistik-Link angezeigt wird
+const EMPLOYEE_ROLES = ["worker", "admin", "owner"];
+
 function Navbar() {
   const navigate = useNavigate();
-  const { isAuthenticated, isAuthLoading, user } = useAuth();
-  const { totalQuantity, items, isCartPreviewOpen, showCartPreview, hideCartPreview} = useCart();
+  const { user, isAuthenticated, isAuthLoading } = useAuth();
+  const { totalQuantity, items, isCartPreviewOpen, showCartPreview, hideCartPreview } = useCart();
+  const isEmployee = EMPLOYEE_ROLES.includes(user?.role);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isSuggestionsLoading, setIsSuggestionsLoading] = useState(false);
-
-  const {} = useCart();
 
   const searchWrapperRef = useRef(null);
 
@@ -267,8 +269,8 @@ function handleShowAllResults() {
               </li>
               
               <li className='nav-item'>
-                <NavLink className="nav-link" to="/placeholder">
-                  placeholder
+                <NavLink className="nav-link" to="/about">
+                  About
                 </NavLink>
               </li>
               
@@ -277,6 +279,15 @@ function handleShowAllResults() {
                   Kontakt
                 </NavLink>
               </li>
+
+              {/* Nur für Mitarbeiter sichtbar */}
+              {isEmployee && (
+                <li className='nav-item'>
+                  <NavLink className="nav-link" to="/logistik">
+                    <a>Logistik</a>
+                  </NavLink>
+                </li>
+              )}
             </ul>
           </div>
 
@@ -376,7 +387,7 @@ function handleShowAllResults() {
                 <NavLink to="/product_management">Produktverwaltung</NavLink>
                 <NavLink to="/order_management">Bestellungen</NavLink>
                 <NavLink to="/marketing">Marketing</NavLink>
-                <NavLink to="/analysis">Analyse-Dashboard</NavLink>
+                <NavLink to="/statistics">Analyse-Dashboard</NavLink>
               </div>
             </div>
             }

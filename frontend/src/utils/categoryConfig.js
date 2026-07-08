@@ -3,7 +3,7 @@ export const CATEGORY_CONFIGS = [
     name: "Angebote",
     slug: "angebote",
     dbCategory: "angebote",
-    banner: { png: "", sentence: "" },
+    banner: { png: "angebote_top.png", sentence: "Schnell einkaufen!" },
   },
   {
     name: "Bier",
