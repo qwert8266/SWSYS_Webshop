@@ -78,6 +78,14 @@ function ProductManagement(){
         });
     };
 
+    // Speichert die ausgewählten Bilddateien für den Upload
+    const handleImageChange = (event) => {
+        setProductData((currentProductData) => ({
+            ...currentProductData,
+            images: Array.from(event.target.files || []),
+        }));
+    };
+
     // Fügt eine Kategorie zur Auswahl hinzu oder entfernt sie wieder
     const handleCategoryToggle = (categorySlug) => {
         setProductData((currentProductData) => {
@@ -139,10 +147,10 @@ function ProductManagement(){
         });
         
         try{
-            const createdProduct = await createProduct(productPayload, accessToken);
+            const createdProduct = await createProduct(formData, accessToken);
 
             setCategoryProducts((currentProducts) => [
-                createdProduct,
+                normalizeProduct(createdProduct),
                 ...currentProducts,
             ]);
 
@@ -156,39 +164,17 @@ function ProductManagement(){
                 price: null,
                 stock: null,
                 categorySlugs: [],
-            })
+            });
 
             setTimeout(() => {
                 setShowSuccessCreateLabel(false);
             }, 5000)
-
-        {/*console.log("handleCreateProduct gestartet");
-        try{
-            const formData = new FormData();
-            formData.append(
-                "data",JSON.stringify({
-                    name: productData.name,
-                    description: productData.description,
-                    price: productData.price,
-                    stock: productData.stock,
-                    category: productData.category,
-                })
-            );
-            console.log(formData);
-            console.log(productData.images);
-            console.log(productData.images.length);
-            productData.images.forEach((image) => {formData.append("image",image)});
-            await createProduct(formData, accessToken);
-            */}
         }catch{
             setShowNotSuccessfulLabel(true)
             setTimeout(() => {
             setShowNotSuccessfulLabel(false);
             }, 5000)
-            //return
         }
-
-        
     }
 
     // Speichert Änderungen an einem bestehenden Produkt
@@ -478,21 +464,53 @@ function ProductManagement(){
                             <label className='fs-5 me-3' style={{ width: "150px" }}>Beschreibung</label>
                             <input className='fs-5 border rounded ' type="text" placeholder='Beschreibung' name='description' value={productData.description} onChange={handleChange}/>
                         </div>
-                        
-                        {/*<div className='d-flex flex-row align-items-center pb-2'>
-                            <label className='fs-5 me-3' style={{ width: "150px" }}>Bild</label>
-                            <input className='fs-5 border rounded ' type="text" placeholder='Bild(bier.png)' name='image' value={productData.image} onChange={handleChange}/>
-                        </div> */}
 
-                        <div className='d-flex flex-row align-items-center pb-2'>
-                            <label className='fs-5 me-3' style={{ width: "150px" }}>Bild</label>
-                            <input className="file-input" multiple type="file" onChange={(e) =>
-                                                                                        setProductData(prev => ({
-                                                                                            ...prev,
-                                                                                            images: [...e.target.files]
-                                                                                        }))
-                                                                                    }/>
-                        <   input className='fs-5 border rounded ' type="text" placeholder='Bild(Dateiname)' name='image' value={productData.image} onChange={handleChange}/>
+                        <div className='d-flex flex-row align-items-center start-50 pb-2'>
+                            <label className='fs-5 me-3 mb-5' style={{ width: "150px" }}>Bild</label>
+
+                            <div className="d-flex flex-column mb-4" style={{ width: "230px" }}>
+                                <label 
+                                    htmlFor='product-images'
+                                    className='btn btn-light fs-6 mb-1 border '
+                                >
+                                    Dateien auswählen
+                                </label>
+
+                                <input
+                                    id="product-images"
+                                    className='d-none'
+                                    multiple
+                                    type="file"
+                                    accept="image/png,image/jpg,image/jpeg,image/webp"
+                                    onChange={handleImageChange}
+                                />
+                                {productData.images.length > 0 && (
+                                    <div className='small text-muted'>
+                                        {productData.images.map((image) => image.name).join(", ")}
+                                    </div>
+                                )}
+
+                                {productData.images.length === 0 && (
+                                    <div className='small text-muted'>
+                                        Keine Bilder ausgewählt
+                                    </div>
+                                )}
+                                
+
+                            </div>
+
+                            {/*
+                            <input 
+                                className="file-input" 
+                                multiple type="file" 
+                                onChange={(e) =>
+                                    setProductData(prev => ({
+                                        ...prev,
+                                        images: [...e.target.files]
+                                    }))
+                                }
+                                />
+                                */}
                         </div>
 
                         <div className='d-flex flex-row align-items-center pb-2'>
@@ -596,7 +614,7 @@ function ProductManagement(){
                                     </div>
                                     
                                     <div style={{width: "400px"}}>
-                                        <h3 className='w-25'>{product.name}</h3>
+                                        <h3 className='w-75'>{product.name}</h3>
                                     </div>
                                     <p>{"★".repeat(Math.round(product.rating))}{"☆".repeat(5 - Math.round(product.rating))}</p>
                                     <strong style={{width: "80px", textAlign: 'right'}}>{formatEuro(product.price)}</strong>
