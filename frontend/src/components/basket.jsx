@@ -1,12 +1,14 @@
 import { Link, NavLink } from 'react-router-dom';
 import { useCart } from "../context/cartContext";
-import { formatEuro, getVariantLabel } from '../utils/productHelpers';
+import { useStockMap } from "../hooks/useStockMap";
+import { formatEuro, getOfferPricing, getVariantLabel } from '../utils/productHelpers';
+import OfferBadge from './offerBadge';
+import ProductPrice from './productPrice';
 
 
 
 function ShoppingCart() {
   
-  /* Ruft den Kontext/Funktionen des Warenkorbs auf */
   const {
     items,
     totalQuantity,
@@ -19,12 +21,12 @@ function ShoppingCart() {
     clearCart,
   } = useCart();
 
-  /** Wenn sich noch keine Produkte im Warenkorb befinden */
+  const stockMap = useStockMap();
+
   if (items.length === 0) {
     return (
       <section className="container-xl my-4">
         <div class="row g-4">
-        {/* Linke Seite <Warenkorb-Produkte> */}
           <div className="col-12 col-lg-8">
             <div className="card border rounded-4 shadow-sm p-4 bg-white">
               <div className="d-flex justify-content-between align-items-start mb-4">
@@ -48,7 +50,6 @@ function ShoppingCart() {
      
     <section className="container-xl my-4">
       <div class="row g-4">
-        {/* Linke Seite <Warenkorb-Produkte> */}
         <div className="col-12 col-lg-8">
           <div 
             className="card border rounded-4 shadow-sm p-4 bg-white"
@@ -62,9 +63,14 @@ function ShoppingCart() {
               <span className="account-badge">{totalQuantity} Artikel</span>
             </div>
 
-            {/* Warenkorb Produkte */}
             <div className="d-grid gap-3">
-              {items.map((item) => (
+              {items.map((item) => {
+                const availableStock = stockMap[item.id]?.stock;
+                const isAtStockLimit =
+                  Number.isFinite(availableStock) && item.quantity >= availableStock;
+                const itemPrice = getOfferPricing(item).currentPrice;
+
+                return (
                 <article 
                   className="d-flex flex-column flex-md-row align-items-md-center gap-3 p-3 rounded-4 bg-light" 
                   key={item.cartKey}
@@ -73,30 +79,34 @@ function ShoppingCart() {
                     className="rounded-3 object-fit-contain flex-shrink-0" 
                     src={"/img/product_images/" + item.image} alt={item.name} 
                     style={{ width: "95px", height: "95px"}}
-                    alt={item.name}
                   />
 
                   <div className="flex-grow-1">
                     <h5>{item.name}</h5>
 
-                    {/* Gewählte Variante (Gebindegröße) */}
                     {item.volume > 0 && (
                       <p className="mb-1 text-muted">
                         {getVariantLabel({ packSize: item.packSize, volume: item.volume })}
                       </p>
                     )}
-                    
-                    <span>
-                      {formatEuro(item.price)}
+
+                    <OfferBadge product={item} />
+                    <span className="d-block">
+                      <ProductPrice product={item} showDiscount={false} />
                       {item.deposit > 0 && (
                         <span className="text-muted">
                           {" "}zzgl. {formatEuro(item.deposit)} Pfand
                         </span>
                       )}
                     </span>
+
+                    {Number.isFinite(availableStock) && item.quantity > availableStock && (
+                      <p className="text-danger mb-0 small">
+                        Nur noch {availableStock} verfügbar – bitte Menge anpassen.
+                      </p>
+                    )}
                   </div>
                   
-                  {/* Buttons für Menge anpassen */}
                   <div
                     className="d-flex align-items-center gap-2 justify-content-center flex-shrink-0"
                     style={{ width: "115px" }}
@@ -114,7 +124,9 @@ function ShoppingCart() {
                     <button
                       className="btn btn-outline-secondary btn-sm"
                       type="button"
-                      onClick={() => increaseQuantity(item.cartKey)}
+                      onClick={() => increaseQuantity(item.cartKey, availableStock)}
+                      disabled={isAtStockLimit}
+                      title={isAtStockLimit ? `Maximal ${availableStock} Stück verfügbar` : undefined}
                       aria-label="Menge erhöhen"
                     >
                       +
@@ -125,7 +137,7 @@ function ShoppingCart() {
                     className="text-nowrap text-end flex-shrink-0" 
                     style={{ width: "85px"}}
                   >
-                    {formatEuro((item.price + (item.deposit || 0)) * item.quantity)}
+                    {formatEuro((itemPrice + (item.deposit || 0)) * item.quantity)}
                   </strong>
 
                   <button
@@ -139,12 +151,12 @@ function ShoppingCart() {
                     />
                   </button>
                 </article>
-              ))}   
+                );
+              })}   
             </div>
           </div> 
         </div>
 
-        {/* Rechte Seite - Bestellübersicht */}
         <aside className="col-12 col-lg-4">
             <div className="card border rounded-4 shadow-sm p-4 bg-white sticky-lg-top">
               <h2 className='h4 mb-3'>Bestellübersicht</h2>
@@ -186,43 +198,8 @@ function ShoppingCart() {
               </button>
             </div>
         </aside>
-                         
-        
       </div>
     </section>
-
-
-    /*<section className="cart-layout container py-5 h-100" aria-label="Warenkorb">
-      <div className="cart card-registration ">
-        <div className="account-card-header">
-
-        <div className="d-flex fustify-content-between align-items-center mb-5"> 
-          <h1 className="account-title">Warenkorb</h1>
-          <h6 className="mb-0 test-muted account-badge">{totalQuantity} Artikel</h6>
-
-        </div>
-        </div>
-        <span className="account-badge">{totalQuantity} Artikel</span>        
-      </div>
-      <hr className='my-4' />
-
-      <div className="cart-items">
-        {items.map((item) => (
-          <article className="cart-item" key={item.id}>
-            
-            <div>
-              <strong>{item.title}</strong>
-
-            </div>
-
-          </article>
-        ))}
-
-      </div>
-      
-
-
-    </section>*/
   );
 }
 

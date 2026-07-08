@@ -1,4 +1,3 @@
-import { NavLink, useParams } from 'react-router-dom';
 import '../categories.css';
 import { useState, useEffect } from 'react';
 import { useAuth } from "../../context/authContext";
@@ -8,7 +7,7 @@ import orderApi from "../../api/orderApi";
 import { formatEuro, totalItems } from '../../utils/orderHelpers';
 
 
-// Übermittelt, Registriert, In Bearbeitung, Unterwegs, Zugestellt, Storniert, Rückerstattung veranlasst/bearbeitet
+// Übermittelt, Registriert, in Bearbeitung, Unterwegs, Zugestellt, Storniert, Rückerstattung veranlasst/bearbeitet
 function OrderManagement(){
 
     const { accessToken } = useAuth(() => 
@@ -154,7 +153,7 @@ function OrderManagement(){
                                     <img style={{width: "40px", height: "40px"}} src="/img/dreieck_auf.png" alt="png" />
                                 </button>
                                 }
-                                {openOrderID != order.orderId &&
+                                {openOrderID !== order.orderId &&
                                 <button className='border rounded fs-5' style={{color: 'white', backgroundColor: "#ffffff"}} onClick={()=>setOpenOrderID(order.orderId)}>
                                     <img style={{width: "40px", height: "40px"}} src="/img/dreieck_zu.png" alt="png" />
                                 </button>
@@ -165,7 +164,7 @@ function OrderManagement(){
                             <label className='fs-5' style={{width: "150px"}}>
                                 {users[order.userId]?.firstName}
                                 {" "}
-                                {users[order.userId]?.lastname}
+                                {users[order.userId]?.lastName}
                             </label>
                             <label className='fs-5 text-center' style={{width: "100px"}}>{totalItems(order.items)}</label>
                             <label className='fs-5 text-center' style={{width: "120px"}}>{formatEuro(order.totalPrice)}</label>

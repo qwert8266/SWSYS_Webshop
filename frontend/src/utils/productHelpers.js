@@ -1,13 +1,12 @@
 
-const FALLBACK_PRODUCT_IMAGE = "becks.png";
+const FALLBACK_PRODUCT_IMAGE = "no_picture.png";
 
 export function getProductImagePath(product) {
-  const image = product?.image || FALLBACK_PRODUCT_IMAGE;
+  const image = product?.images?.[0] ?? FALLBACK_PRODUCT_IMAGE;
 
-  if (String(image).startsWith("/")) {
-    return image;
-  }
-  return `/img/product_images/${image}`;
+  return String(image).startsWith("/")
+    ? image
+    : `/img/product_images/${image}`;
 }
 
 /**
@@ -52,7 +51,8 @@ export function getVariantLabel(variant) {
 export function normalizeProduct(product) {
   const productId = product?.product_id;
   const name = product?.name || "Unbekanntes Produkt";
-  const image = product?.image;
+  const images = product?.images ?? (product?.image ? [product.image] : []);
+  const image = images[0] ?? null;
 
   const variants = (product?.product_variants ?? []).map(normalizeVariant);
 
@@ -76,6 +76,7 @@ export function normalizeProduct(product) {
     name,
     price: minPrice,
     image,
+    images,
     category: product?.category,
     description: product?.description || "",
     stock: totalStock,
@@ -91,3 +92,42 @@ export function formatEuro(value) {
     currency: "EUR",
   }));
 }
+
+/**
+ * Ein Produkt gilt als "im Angebot", wenn das Backend einen
+ * positiven Rabatt (in Prozent) am Produkt hinterlegt hat.
+ */
+export function isOnOffer(product) {
+  const discount = Number(product?.discount);
+  return Number.isFinite(discount) && discount > 0;
+}
+
+/**
+ * Liefert alle Preisinformationen zu einem Produkt:
+ * - originalPrice: regulärer Preis (in Euro)
+ * - currentPrice: tatsächlich zu zahlender Preis (bei Angebot reduziert)
+ * - discountPercent: Rabatt in Prozent (0, wenn kein Angebot)
+ */
+export function getOfferPricing(product) {
+  const originalPrice = Number(product?.price) || 0;
+
+  if (!isOnOffer(product)) {
+    return {
+      isOnOffer: false,
+      originalPrice,
+      currentPrice: originalPrice,
+      discountPercent: 0,
+    };
+  }
+
+  const discountPercent = Math.min(100, Math.round(Number(product.discount)));
+  const currentPrice = Math.round(originalPrice * (100 - discountPercent)) / 100;
+
+  return {
+    isOnOffer: true,
+    originalPrice,
+    currentPrice,
+    discountPercent,
+  };
+}
+

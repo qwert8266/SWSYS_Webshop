@@ -207,6 +207,110 @@ func GetMyOrders(c *gin.Context) {
 	c.JSON(http.StatusOK, orders)
 }
 
+func GetStatistics(c *gin.Context) {
+
+	orderCollection := database.OrderCollection()
+	orderCount, err := orderCollection.CountDocuments(c.Request.Context(), bson.D{})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	cursor, err := orderCollection.Find(c.Request.Context(), bson.D{})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	defer cursor.Close(c.Request.Context())
+
+	var totalRevenue uint32
+	var productsSold uint32
+	var canceledOrders uint32
+
+	for cursor.Next(c.Request.Context()) {
+		var order models.Order
+
+		if err := cursor.Decode(&order); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		totalRevenue += order.TotalPrice
+
+		if order.Status == "Storniert" {
+			canceledOrders++
+		}
+
+		for _, item := range order.Items {
+			productsSold += item.Quantity
+		}
+	}
+
+	if err := cursor.Err(); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	var averageOrderValue uint32
+
+	if orderCount > 0 {
+		averageOrderValue = totalRevenue / uint32(orderCount)
+	}
+
+	userCollection := database.UserCollection()
+	userCount, err := userCollection.CountDocuments(c.Request.Context(), bson.D{})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	productCollection := database.ProductCollection()
+	cursor2, err2 := productCollection.Find(c.Request.Context(), bson.D{})
+	if err2 != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err2.Error()})
+		return
+	}
+	defer cursor2.Close(c.Request.Context())
+
+	var totalStock uint32
+	var lowStockCount uint32
+	for cursor2.Next(c.Request.Context()) {
+		var product models.Product
+
+		if err := cursor2.Decode(&product); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		totalStock += product.Stock
+
+		if product.Stock <= 10 {
+			lowStockCount++
+		}
+	}
+
+	if err := cursor2.Err(); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	averageUserRevenue := totalRevenue / uint32(userCount)
+
+	statistics := models.Statistics{
+		TotalOrders:        orderCount,
+		TotalRevenue:       totalRevenue,
+		AverageOrderValue:  averageOrderValue,
+		RegisteredUsers:    userCount,
+		ProductsSold:       productsSold,
+		ProductsInStock:    totalStock,
+		LowStockProducts:   lowStockCount,
+		CanceledOrders:     canceledOrders,
+		AverageUserRevenue: averageUserRevenue,
+	}
+
+	c.IndentedJSON(http.StatusOK, statistics)
+}
+
 // GetOrders returns all Orders from MongoDB
 func GetOrders(c *gin.Context) {
 	orderCollection := database.OrderCollection()

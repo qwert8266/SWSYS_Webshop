@@ -10,7 +10,7 @@ type Product struct {
 	ProductID   uuid.UUID `json:"product_id" bson:"product_id"`
 	Name        string    `json:"name" bson:"name"`
 	Description string    `json:"description" bson:"description"`
-	Image       string    `json:"image" bson:"image"`
+	Images      []string  `json:"images" bson:"images"`
 
 	ProductVariants []ProductVariant `json:"product_variants" bson:"product_variants"`
 
@@ -20,13 +20,12 @@ type Product struct {
 }
 
 type ProductData struct {
-	Name        string `json:"name" bson:"name"`
-	Description string `json:"description" bson:"description"`
-	Image       string `json:"image" bson:"image"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
 
-	ProductVariants []ProductVariant `json:"product_variants" bson:"product_variants"`
+	ProductVariants []ProductVariant `json:"product_variants"`
 
-	Category string `json:"category" bson:"category"`
+	Category string `json:"category"`
 }
 
 type ProductVariant struct {
@@ -42,4 +41,67 @@ type StockOperation struct {
 	PackSize uint16 `json:"pack_size"`
 	Volume   uint16 `json:"volume"`
 	Value    int32  `json:"value"`
+}
+
+// Central stock thresholds. These are the single source of truth --
+// the frontend receives the resulting status via the stock endpoints
+// instead of hardcoding its own thresholds.
+const (
+	// LowStockThreshold marks products that should be reordered soon.
+	LowStockThreshold uint32 = 15
+	// CriticalStockThreshold marks products that are about to sell out.
+	CriticalStockThreshold uint32 = 5
+)
+
+// Possible values of StockInfo.Status, ordered from best to worst.
+const (
+	StockStatusOK       = "ok"
+	StockStatusLow      = "low"
+	StockStatusCritical = "critical"
+	StockStatusOut      = "out_of_stock"
+)
+
+// StockInfo is the response model of the dedicated stock endpoints.
+// It intentionally contains no price/description so stock checks stay cheap.
+type StockInfo struct {
+	ProductID uuid.UUID `json:"product_id"`
+	Name      string    `json:"name"`
+	Category  string    `json:"category"`
+	Stock     uint32    `json:"stock"`
+	Status    string    `json:"status"`
+}
+
+// TotalStock sums the stock of all variants.
+func (p Product) TotalStock() uint32 {
+	var total uint32
+	for _, variant := range p.ProductVariants {
+		total += variant.Stock
+	}
+	return total
+}
+
+// StockStatus maps a raw stock value onto one of the StockStatus* levels.
+func StockStatus(stock uint32) string {
+	switch {
+	case stock == 0:
+		return StockStatusOut
+	case stock <= CriticalStockThreshold:
+		return StockStatusCritical
+	case stock <= LowStockThreshold:
+		return StockStatusLow
+	default:
+		return StockStatusOK
+	}
+}
+
+// NewStockInfo builds the stock response for a single product.
+func NewStockInfo(product Product) StockInfo {
+	stock := product.TotalStock()
+	return StockInfo{
+		ProductID: product.ProductID,
+		Name:      product.Name,
+		Category:  product.Category,
+		Stock:     stock,
+		Status:    StockStatus(stock),
+	}
 }

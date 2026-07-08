@@ -4,7 +4,9 @@ import './checkout.css';
 import { useAuth } from "../context/authContext";
 import { useCart } from "../context/cartContext";
 import orderApi from '../api/orderApi';
-import { formatEuro, getVariantLabel } from "../utils/productHelpers";
+import { formatEuro, getOfferPricing, getVariantLabel } from "../utils/productHelpers";
+import OfferBadge from '../components/offerBadge';
+import ProductPrice from '../components/productPrice';
 
 
 
@@ -333,16 +335,15 @@ function Checkout(){
 
                       <div className="flex-grow-1">
                         <h5>{item.name}</h5>
-
-                        {/* Gewählte Variante (Gebindegröße) */}
                         {item.volume > 0 && (
                           <p className="mb-1 text-muted">
                             {getVariantLabel({ packSize: item.packSize, volume: item.volume })}
                           </p>
                         )}
 
-                        <span>
-                          {formatEuro(item.price)}
+                        <OfferBadge product={item} />
+                        <span className="d-block">
+                          <ProductPrice product={item} showDiscount={false} />
                           {item.deposit > 0 && (
                             <span className="text-muted">
                               {" "}zzgl. {formatEuro(item.deposit)} Pfand
@@ -363,7 +364,7 @@ function Checkout(){
                         className="text-nowrap text-end flex-shrink-0" 
                         style={{ width: "85px"}}
                       >
-                        {formatEuro((item.price + (item.deposit || 0)) * item.quantity)}
+                        {formatEuro((getOfferPricing(item).currentPrice + (item.deposit || 0)) * item.quantity)}
                       </strong>
                     </article>
                   ))}   

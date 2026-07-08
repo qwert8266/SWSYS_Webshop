@@ -68,3 +68,31 @@ type ReturnRequestItem struct {
 	PackSize  uint16 `bson:"pack_size" json:"pack_size"`
 	Volume    uint16 `bson:"volume" json:"volume"`
 }
+
+type Statistics struct {
+	TotalOrders        int64  `bson:"total_orders" json:"totalOrders"`
+	TotalRevenue       uint32 `bson:"total_revenue" json:"totalRevenue"`
+	AverageOrderValue  uint32 `bson:"average_order_value" json:"averageOrderValue"`
+	RegisteredUsers    int64  `bson:"registered_users" json:"registeredUsers"`
+	ProductsSold       uint32 `bson:"products_sold" json:"productsSold"`
+	ProductsInStock    uint32 `bson:"products_in_stock" json:"productsInStock"`
+	LowStockProducts   uint32 `bson:"low_stock_products" json:"lowStockProducts"`
+	CanceledOrders     uint32 `bson:"canceled_orders" json:"canceledOrders"`
+	AverageUserRevenue uint32 `bson:"average_user_revenue" json:"averageUserRevenue"`
+	//CategoryStatistics map[string]CategoryStatistics `json:"categoryStatistics"`
+}
+
+type CategoryStatistics struct {
+	Revenue      float64 `json:"revenue"`
+	Orders       uint32  `json:"orders"`
+	ProductsSold uint32  `json:"productsSold"`
+}
+
+type ProductStatistics struct {
+	Name         string  `json:"name"`
+	Revenue      float64 `json:"revenue"`
+	ProductsSold uint32  `json:"productsSold"`
+}
+
+type UserStatistics struct {
+}

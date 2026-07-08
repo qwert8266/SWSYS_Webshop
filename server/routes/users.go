@@ -25,6 +25,11 @@ func RegisterUserRoutes(userRoutes *gin.RouterGroup) {
 		// Protected so the backend can validate the submitted Bearer token before the frontend removes it from localStorage
 		protected.POST("/logout", handlers.LogoutUser)
 		protected.GET("/me", handlers.GetCurrentUser)
+		protected.GET("/me/lists", handlers.GetUserLists)
+		protected.GET("/me/favorites", handlers.GetFavoriteProducts)
+		protected.GET("/me/wishlist", handlers.GetWishlistProducts)
+		protected.POST("/me/favorites/:productId", handlers.ToggleFavoriteProduct)
+		protected.POST("/me/wishlist/:productId", handlers.ToggleWishlistProduct)
 		protected.PATCH("/me/password", handlers.ChangeOwnPassword)
 
 		// route was allowed for workers too, so that they can see the customer names when managing orders

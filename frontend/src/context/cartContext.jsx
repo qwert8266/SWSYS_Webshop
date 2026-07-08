@@ -1,19 +1,17 @@
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { getOfferPricing } from "../utils/productHelpers";
 
 
 const CartContext = createContext(null);
 const CART_STORAGE_KEY = "schmidt-shoping-cart";
 
 
-/* Lädt einen ursprünglichen Warenkorb 
- * aus dem localStorage des Browsers. 
-*/
+
 function loadInitialCart() {
   try {
     const storedCart = window.localStorage.getItem(CART_STORAGE_KEY);
     const parsedCart = storedCart ? JSON.parse(storedCart) : [];
 
-    /* Einträge aus altem Format ohne Varianten-Schlüssel verwerfen */
     return parsedCart.filter((item) => item?.cartKey);
   } catch (error) {
     console.warn("Warenkorb konnte nicht geladen werden", error);
@@ -21,11 +19,6 @@ function loadInitialCart() {
   }
 }
 
-/**
- * Eindeutiger Schlüssel eines Warenkorb-Eintrags.
- * Dasselbe Produkt kann in verschiedenen Varianten (Gebindegrößen)
- * als separate Einträge im Warenkorb liegen.
- */
 function getCartKey(productId, variant) {
   if (!variant) {
     return String(productId);
@@ -34,16 +27,12 @@ function getCartKey(productId, variant) {
 }
 
 
-/**
- * Stellt den Warenkorb-Zustand für alle untergeordneten Komponenten bereit.
- */ 
 export function CartProvider({ children }) {
   const [items, setItems] = useState(loadInitialCart);
+  const [isCartPreviewOpen, setIsCartPreviewOpen] = useState(false);
+  const cartPreviewTimeoutRef = useRef(null);
 
-  /**
-   * Speichert den aktuellen Warenkorb automatisch im localStorage.
-   * immer wenn sich [items] ändert.
-   */
+
   useEffect(() => {
     try {
       window.localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
@@ -52,94 +41,139 @@ export function CartProvider({ children }) {
     }
   }, [items]);
 
-  /**
-   * Fügt eine Produktvariante dem Warenkorb hinzu.
-   * Ist dieselbe Variante schon vorhanden, wird die Menge erhöht.
-   */
-  function addItem(product, quantity, variant) {
-    const cartKey = getCartKey(product.id, variant);
-
-    setItems((currentItems) => {
-      const existingItem = currentItems.find((item) => item.cartKey === cartKey);
-    
-      /* Wenn die Variante bereits im Warenkorb ist */
-      if (existingItem) {
-        return currentItems.map((item) =>
-        item.cartKey === cartKey ? {
-          ...item, quantity: item.quantity + quantity
-        } : item
-        );
+  useEffect(() => {
+    return () => {
+      if (cartPreviewTimeoutRef.current) {
+        clearTimeout(cartPreviewTimeoutRef.current);
       }
+    };
+  }, []);
 
-      const cartItem = {
-        cartKey,
-        id: product.id,
-        product_id: product.product_id || product.id,
-        name: product.name,
-        image: product.image,
-        category: product.category,
-        quantity,
-
-        /* Daten der gewählten Variante */
-        price: variant?.price ?? product.price,
-        volume: variant?.volume ?? 0,
-        packSize: variant?.packSize ?? 1,
-        deposit: variant?.depositPerPack ?? 0,
-        stock: variant?.stock ?? product.stock,
-      };
-
-      return [...currentItems, cartItem];
-    });
+  function showCartPreview() {
+    if (cartPreviewTimeoutRef.current) {
+      clearTimeout(cartPreviewTimeoutRef.current);
+      cartPreviewTimeoutRef.current = null;
+    }
+    setIsCartPreviewOpen(true);
   }
 
-  /**
-   * Entfernt eine Produktvariante volständig aus dem Warenkorb 
-   */
+  function hideCartPreview() {
+    if (cartPreviewTimeoutRef.current) {
+      clearTimeout(cartPreviewTimeoutRef.current);
+    }
+    cartPreviewTimeoutRef.current = setTimeout(() => {
+      setIsCartPreviewOpen(false);
+      cartPreviewTimeoutRef.current = null;
+    }, 500);
+  }
+
+  function openCartPreviewTemporarily() {
+    if (cartPreviewTimeoutRef.current) {
+      clearTimeout(cartPreviewTimeoutRef.current);
+    }
+    setIsCartPreviewOpen(true);
+    cartPreviewTimeoutRef.current = setTimeout(() => {
+      setIsCartPreviewOpen(false);
+      cartPreviewTimeoutRef.current = null;
+    }, 3000);
+  }
+
+  function addItem(product, quantity, variant, availableStock) {
+    const cartKey = getCartKey(product.id, variant);
+    const variantStock = variant?.stock ?? product.stock;
+    const maxStock = Number.isFinite(availableStock)
+      ? availableStock
+      : (Number.isFinite(variantStock) ? variantStock : Infinity);
+
+    const existingItem = items.find((item) => item.cartKey === cartKey);
+    const quantityInCart = existingItem ? existingItem.quantity : 0;
+
+    const addableQuantity = Math.max(
+      0,
+      Math.min(quantity, maxStock - quantityInCart)
+    );
+
+    if (addableQuantity > 0) {
+      setItems((currentItems) => {
+        const currentExisting = currentItems.find((item) => item.cartKey === cartKey);
+
+        if (currentExisting) {
+          return currentItems.map((item) =>
+            item.cartKey === cartKey
+              ? { ...item, quantity: item.quantity + addableQuantity }
+              : item
+          );
+        }
+
+        const cartItem = {
+          cartKey,
+          id: product.id,
+          product_id: product.product_id || product.id,
+          name: product.name,
+          image: product.image ?? product.images?.[0],
+          category: product.category,
+          discount: product.discount,
+          quantity: addableQuantity,
+          price: variant?.price ?? product.price,
+          volume: variant?.volume ?? 0,
+          packSize: variant?.packSize ?? 1,
+          deposit: variant?.depositPerPack ?? 0,
+          stock: variantStock,
+        };
+
+        return [...currentItems, cartItem];
+      });
+
+      openCartPreviewTemporarily();
+    }
+
+    return {
+      added: addableQuantity,
+      requested: quantity,
+      capped: addableQuantity < quantity,
+    };
+  }
+
   function removeItem(cartKey) {
-    setItems((currentItems) => currentItems.filter((item) => item.cartKey !== cartKey))
+    setItems((currentItems) => currentItems.filter((item) => item.cartKey !== cartKey));
   }
 
-  /**
-   * Erhöht die Menge einer bestimmten Produktvariante um eins.
-   */
-  function increaseQuantity(cartKey) {
-    setItems((currentItems) => 
+  function increaseQuantity(cartKey, availableStock) {
+    const maxStock = Number.isFinite(availableStock) ? availableStock : Infinity;
+
+    setItems((currentItems) =>
       currentItems.map((item) =>
-        item.cartKey === cartKey ? { 
-          ...item, quantity: item.quantity + 1} : item
+        item.cartKey === cartKey
+          ? { ...item, quantity: Math.min(item.quantity + 1, maxStock) }
+          : item
       )
     );
   }
 
-  /**
-   * Verringert die Menge einer bestimmten Produktvariante um eins.
-   */
   function decreaseQuantity(cartKey) {
-    setItems((currentItems) => 
-      currentItems.map((item) =>
-        item.cartKey === cartKey ? { 
-          ...item, quantity: item.quantity - 1} : item
-      )
-      .filter((item) => item.quantity > 0)
+    setItems((currentItems) =>
+      currentItems
+        .map((item) =>
+          item.cartKey === cartKey ? { ...item, quantity: item.quantity - 1 } : item
+        )
+        .filter((item) => item.quantity > 0)
     );
   }
 
-  /* Leert den gesamten Warenkorb */
   function clearCart() {
     setItems([]);
   }
 
-
   const totalQuantity = items.reduce((sum, item) => sum + item.quantity, 0);
 
-  /* Warenwert ohne Pfand */
   const totalProductPrice = items.reduce(
-    (sum, item) => sum + item.price * item.quantity, 0
+    (sum, item) => sum + getOfferPricing(item).currentPrice * item.quantity,
+    0
   );
 
-  /* Pfand über alle Gebinde */
   const totalDeposit = items.reduce(
-    (sum, item) => sum + (item.deposit || 0) * item.quantity, 0
+    (sum, item) => sum + (item.deposit || 0) * item.quantity,
+    0
   );
 
   const totalPrice = totalProductPrice + totalDeposit;
@@ -156,16 +190,18 @@ export function CartProvider({ children }) {
       increaseQuantity,
       decreaseQuantity,
       clearCart,
+      isCartPreviewOpen,
+      showCartPreview,
+      hideCartPreview,
+      openCartPreviewTemporarily,
     }),
-    [items, totalQuantity, totalProductPrice, totalDeposit, totalPrice]
+    [items, totalQuantity, totalProductPrice, totalDeposit, totalPrice, isCartPreviewOpen]
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }
 
-/**
- * Stellt einen einfachen Zugriff auf den Warenkorb-Context bereit.
- */
+
 export function useCart() {
   const context = useContext(CartContext);
 

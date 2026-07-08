@@ -2,9 +2,12 @@ import { useEffect, useState } from "react";
 import { NavLink, useSearchParams } from "react-router-dom";
 
 import productApi from "../api/productApi";
+import OfferBadge from "../components/offerBadge";
+import ProductPrice from "../components/productPrice";
+import StockIndicator from "../components/stockIndicator";
+import { useStockMap } from "../hooks/useStockMap";
 import { getCategoryConfig } from "../utils/categoryConfig";
 import {
-  formatEuro,
   getProductImagePath,
   normalizeProduct,
 } from "../utils/productHelpers";
@@ -19,6 +22,8 @@ function SearchResults() {
   const [products, setProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [loadError, setLoadError] = useState("");
+  // Bestände kommen gesammelt vom Stock-Endpunkt, nicht aus der Produkt-Response
+  const stockMap = useStockMap();
 
   useEffect(() => {
     let ignoreResult = false;
@@ -80,6 +85,11 @@ function SearchResults() {
 
           return (
             <article className="product" key={product.id}>
+              <OfferBadge
+                product={product}
+                showDiscount
+                className="offer-badge--on-image"
+              />
               <NavLink
                 className="product_link"
                 to={`/sortiment/${category.slug}/${encodeURIComponent(
@@ -95,14 +105,9 @@ function SearchResults() {
                 <h3>{product.name}</h3>
               </NavLink>
 
-              <strong>{product.hasMultipleVariants && "ab "}{formatEuro(product.price)}</strong>
+              <ProductPrice product={product} />
 
-              {product.stock !== null &&
-                product.stock <= 15 && (
-                  <p className="text-danger">
-                    Nur noch {product.stock} verfügbar
-                  </p>
-                )}
+              <StockIndicator stockInfo={stockMap[product.id]} />
             </article>
           );
         })}
