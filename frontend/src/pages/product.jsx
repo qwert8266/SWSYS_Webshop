@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 
 import productApi from '../api/productApi';
 import { getCategoryConfig } from '../utils/categoryConfig';
-import { formatEuro, normalizeProduct } from '../utils/productHelpers';
+import { formatEuro, formatVolume, getVariantLabel, normalizeProduct } from '../utils/productHelpers';
 import FourOFour from './404';
 
 /*export const produkte = [
@@ -42,6 +42,7 @@ function Product(){
 
     const { addItem } = useCart();
     const [quantity, setQuantity] = useState(1);
+    const [selectedVariantKey, setSelectedVariantKey] = useState(null);
     const [product, setProduct] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
     const [loadError, setLoadError] = useState("");
@@ -66,7 +67,11 @@ function Product(){
                 const loadedProduct = await productApi.getProductById(requestedProductId);
                 
                 if (!ignoreResult) {
-                    setProduct(normalizeProduct(loadedProduct));
+                    const normalizedProduct = normalizeProduct(loadedProduct);
+                    setProduct(normalizedProduct);
+
+                    /* Standardmäßig die erste Variante vorauswählen */
+                    setSelectedVariantKey(normalizedProduct.variants[0]?.key ?? null);
                 }
             } catch (error) {
                 if (!ignoreResult) {
@@ -94,11 +99,17 @@ function Product(){
     }, [requestedProductId]);
     
 
+    const selectedVariant = product?.variants?.find(
+        (variant) => variant.key === selectedVariantKey
+    ) ?? null;
+
     function handleAddToCart(){
         if (!product) { return; }
         
-        addItem(product, quantity);
-        setCartMessage(`${product.name} wurde in den Warenkorb gelegt.`);
+        addItem(product, quantity, selectedVariant);
+
+        const variantLabel = selectedVariant ? ` (${getVariantLabel(selectedVariant)})` : "";
+        setCartMessage(`${product.name}${variantLabel} wurde in den Warenkorb gelegt.`);
     }
 
     {if(productNotFound || !selectedCategory){
@@ -134,8 +145,72 @@ function Product(){
                     <div className='other-information'>
                         <p>{product.description || "Keine Beschreibung zu diesem Produkt vorhanden."}</p>
                         <p>{"★".repeat(Math.round(product.rating))}{"☆".repeat(5 - Math.round(product.rating))}{`(${product.rating})`}</p>
-                        <p>{formatEuro(product.price)}</p>
-                        {product.stock !== null && product.stock <= 15 && <p className='text-danger'>Nur noch {product.stock} verfügbar</p>}
+                    </div>
+
+                    {/* Auswahl der Produktvariante (Gebindegröße) */}
+                    {product.variants.length > 0 && (
+                        <div className='variant-selection'>
+                            <p className='variant-selection-title'>Gebindegröße wählen:</p>
+                            <div className='variant-options'>
+                                {product.variants.map((variant) => (
+                                    <button
+                                        key={variant.key}
+                                        type='button'
+                                        className={
+                                            "variant-option" +
+                                            (variant.key === selectedVariantKey ? " variant-option-selected" : "") +
+                                            (variant.stock === 0 ? " variant-option-sold-out" : "")
+                                        }
+                                        onClick={() => setSelectedVariantKey(variant.key)}
+                                    >
+                                        <span className='variant-option-label'>{getVariantLabel(variant)}</span>
+                                        <span className='variant-option-price'>{formatEuro(variant.price)}</span>
+                                        {variant.depositPerPack > 0 && (
+                                            <span className='variant-option-deposit'>
+                                                zzgl. {formatEuro(variant.depositPerPack)} Pfand
+                                            </span>
+                                        )}
+                                        {variant.stock === 0 && (
+                                            <span className='variant-option-stock text-danger'>Ausverkauft</span>
+                                        )}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    <div className='other-information'>
+                        {selectedVariant ? (
+                            <>
+                                <p className='variant-price'>
+                                    {formatEuro(selectedVariant.price)}
+                                    {selectedVariant.depositPerPack > 0 && (
+                                        <span className='variant-deposit-hint'>
+                                            {" "}zzgl. {formatEuro(selectedVariant.depositPerPack)} Pfand
+                                        </span>
+                                    )}
+                                </p>
+                                {selectedVariant.depositPerPack > 0 && (
+                                    <p className='variant-deposit-details'>
+                                        Pfand: {selectedVariant.packSize} × {formatEuro(selectedVariant.deposit)} Flaschenpfand
+                                        {selectedVariant.crateDeposit > 0 &&
+                                            ` + ${formatEuro(selectedVariant.crateDeposit)} Kistenpfand`}
+                                        {` (${formatVolume(selectedVariant.volume)} je Flasche)`}
+                                    </p>
+                                )}
+                                {selectedVariant.stock > 0 && selectedVariant.stock <= 15 && (
+                                    <p className='text-danger'>Nur noch {selectedVariant.stock} verfügbar</p>
+                                )}
+                                {selectedVariant.stock === 0 && (
+                                    <p className='text-danger'>Diese Variante ist derzeit ausverkauft.</p>
+                                )}
+                            </>
+                        ) : (
+                            <>
+                                <p>{formatEuro(product.price)}</p>
+                                {product.stock !== null && product.stock <= 15 && <p className='text-danger'>Nur noch {product.stock} verfügbar</p>}
+                            </>
+                        )}
                     </div>
                     <div className='cart-input'>
                         <input 
@@ -150,7 +225,7 @@ function Product(){
                             className='cart-button' 
                             type="button"
                             onClick={handleAddToCart}
-                            disabled={product.stock === 0}
+                            disabled={selectedVariant ? selectedVariant.stock === 0 : product.stock === 0}
                         >
                             <img className="cart-at-product" src={`/img/cart-icon_white.png`} alt="In den Warenkorb" />
                         </button>

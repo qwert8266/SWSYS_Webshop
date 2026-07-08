@@ -1,6 +1,6 @@
 import { Link, NavLink } from 'react-router-dom';
 import { useCart } from "../context/cartContext";
-import { formatEuro } from '../utils/productHelpers';
+import { formatEuro, getVariantLabel } from '../utils/productHelpers';
 
 
 
@@ -10,6 +10,8 @@ function ShoppingCart() {
   const {
     items,
     totalQuantity,
+    totalProductPrice,
+    totalDeposit,
     totalPrice,
     increaseQuantity,
     decreaseQuantity,
@@ -65,7 +67,7 @@ function ShoppingCart() {
               {items.map((item) => (
                 <article 
                   className="d-flex flex-column flex-md-row align-items-md-center gap-3 p-3 rounded-4 bg-light" 
-                  key={item.id}
+                  key={item.cartKey}
                 >
                   <img
                     className="rounded-3 object-fit-contain flex-shrink-0" 
@@ -76,9 +78,21 @@ function ShoppingCart() {
 
                   <div className="flex-grow-1">
                     <h5>{item.name}</h5>
+
+                    {/* Gewählte Variante (Gebindegröße) */}
+                    {item.volume > 0 && (
+                      <p className="mb-1 text-muted">
+                        {getVariantLabel({ packSize: item.packSize, volume: item.volume })}
+                      </p>
+                    )}
                     
                     <span>
                       {formatEuro(item.price)}
+                      {item.deposit > 0 && (
+                        <span className="text-muted">
+                          {" "}zzgl. {formatEuro(item.deposit)} Pfand
+                        </span>
+                      )}
                     </span>
                   </div>
                   
@@ -86,12 +100,12 @@ function ShoppingCart() {
                   <div
                     className="d-flex align-items-center gap-2 justify-content-center flex-shrink-0"
                     style={{ width: "115px" }}
-                    aria-label={`Menge für ${items.name}`}    
+                    aria-label={`Menge für ${item.name}`}    
                   >
                     <button
                       className="btn btn-outline-secondary btn-sm"
                       type="button"
-                      onClick={() => decreaseQuantity(item.id)}
+                      onClick={() => decreaseQuantity(item.cartKey)}
                       aria-label="Menge verringern"
                     >
                       -
@@ -100,7 +114,7 @@ function ShoppingCart() {
                     <button
                       className="btn btn-outline-secondary btn-sm"
                       type="button"
-                      onClick={() => increaseQuantity(item.id)}
+                      onClick={() => increaseQuantity(item.cartKey)}
                       aria-label="Menge erhöhen"
                     >
                       +
@@ -109,15 +123,15 @@ function ShoppingCart() {
 
                   <strong 
                     className="text-nowrap text-end flex-shrink-0" 
-                    style={{ width: "55px"}}
+                    style={{ width: "85px"}}
                   >
-                    {formatEuro(item.price * item.quantity)}
+                    {formatEuro((item.price + (item.deposit || 0)) * item.quantity)}
                   </strong>
 
                   <button
                     className="btn p-2 border-0 bg-transparent flex-shrink-0  cart-delete-button"
                     type="button"
-                    onClick={() => removeItem(item.id)}
+                    onClick={() => removeItem(item.cartKey)}
                   >
                     <img
                       src="/img/trash.svg"
@@ -138,6 +152,16 @@ function ShoppingCart() {
               <div className='d-flex justify-content-between gap-3 py-2 border-bottom'>
                 <span>Artikel</span>
                 <strong>{totalQuantity}</strong>
+              </div>
+
+              <div className='d-flex justify-content-between gap-3 py-2 border-bottom'>
+                <span>Zwischensumme</span>
+                <strong>{formatEuro(totalProductPrice)}</strong>
+              </div>
+
+              <div className='d-flex justify-content-between gap-3 py-2 border-bottom'>
+                <span>Pfand</span>
+                <strong>{formatEuro(totalDeposit)}</strong>
               </div>
 
               <div className='d-flex justify-content-between gap-3 py-3 border-bottom'>

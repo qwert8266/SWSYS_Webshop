@@ -11,11 +11,26 @@ const CART_STORAGE_KEY = "schmidt-shoping-cart";
 function loadInitialCart() {
   try {
     const storedCart = window.localStorage.getItem(CART_STORAGE_KEY);
-    return storedCart ? JSON.parse(storedCart) : [];
+    const parsedCart = storedCart ? JSON.parse(storedCart) : [];
+
+    /* Einträge aus altem Format ohne Varianten-Schlüssel verwerfen */
+    return parsedCart.filter((item) => item?.cartKey);
   } catch (error) {
     console.warn("Warenkorb konnte nicht geladen werden", error);
     return [];
   }
+}
+
+/**
+ * Eindeutiger Schlüssel eines Warenkorb-Eintrags.
+ * Dasselbe Produkt kann in verschiedenen Varianten (Gebindegrößen)
+ * als separate Einträge im Warenkorb liegen.
+ */
+function getCartKey(productId, variant) {
+  if (!variant) {
+    return String(productId);
+  }
+  return `${productId}__${variant.volume}__${variant.packSize}`;
 }
 
 
@@ -38,52 +53,72 @@ export function CartProvider({ children }) {
   }, [items]);
 
   /**
-   * Fügt ein Produkt dem Warenkorb hinzu
-   * ist es schon vorhanden, wird die Menge erhöht 
+   * Fügt eine Produktvariante dem Warenkorb hinzu.
+   * Ist dieselbe Variante schon vorhanden, wird die Menge erhöht.
    */
-  function addItem(product, quantity) {
+  function addItem(product, quantity, variant) {
+    const cartKey = getCartKey(product.id, variant);
+
     setItems((currentItems) => {
-      const existingItem = currentItems.find((item) => item.id === product.id);
+      const existingItem = currentItems.find((item) => item.cartKey === cartKey);
     
-      /* Wenn das Produkt bereits im Warenkorb ist */
+      /* Wenn die Variante bereits im Warenkorb ist */
       if (existingItem) {
         return currentItems.map((item) =>
-        item.id === product.id ? {
+        item.cartKey === cartKey ? {
           ...item, quantity: item.quantity + quantity
         } : item
         );
       }
-      return [...currentItems, {...product, quantity: quantity}];
+
+      const cartItem = {
+        cartKey,
+        id: product.id,
+        product_id: product.product_id || product.id,
+        name: product.name,
+        image: product.image,
+        category: product.category,
+        quantity,
+
+        /* Daten der gewählten Variante */
+        price: variant?.price ?? product.price,
+        volume: variant?.volume ?? 0,
+        packSize: variant?.packSize ?? 1,
+        deposit: variant?.depositPerPack ?? 0,
+        stock: variant?.stock ?? product.stock,
+      };
+
+      return [...currentItems, cartItem];
     });
   }
 
   /**
-   * Entfernt ein Produkt volständig aus dem Warenkorb 
+   * Entfernt eine Produktvariante volständig aus dem Warenkorb 
    */
-  function removeItem(productId) {
-    setItems((currentItems) => currentItems.filter((item) => item.id !== productId))
+  function removeItem(cartKey) {
+    setItems((currentItems) => currentItems.filter((item) => item.cartKey !== cartKey))
   }
 
   /**
-   * Erhöht die Menge eines bestimmten Produkts um eins.
+   * Erhöht die Menge einer bestimmten Produktvariante um eins.
    */
-  function increaseQuantity(productId) {
+  function increaseQuantity(cartKey) {
     setItems((currentItems) => 
       currentItems.map((item) =>
-        item.id === productId ? { 
-          ... item, quantity: item.quantity + 1} : item
+        item.cartKey === cartKey ? { 
+          ...item, quantity: item.quantity + 1} : item
       )
     );
   }
 
   /**
-   * Verringert die Menge eines bestimmten Produkts um eins.
+   * Verringert die Menge einer bestimmten Produktvariante um eins.
    */
-  function decreaseQuantity(productId) {
+  function decreaseQuantity(cartKey) {
     setItems((currentItems) => 
       currentItems.map((item) =>
-        item.id === productId ? { 
-          ... item, quantity: item.quantity - 1} : item
+        item.cartKey === cartKey ? { 
+          ...item, quantity: item.quantity - 1} : item
       )
       .filter((item) => item.quantity > 0)
     );
@@ -96,12 +131,25 @@ export function CartProvider({ children }) {
 
 
   const totalQuantity = items.reduce((sum, item) => sum + item.quantity, 0);
-  const totalPrice = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+  /* Warenwert ohne Pfand */
+  const totalProductPrice = items.reduce(
+    (sum, item) => sum + item.price * item.quantity, 0
+  );
+
+  /* Pfand über alle Gebinde */
+  const totalDeposit = items.reduce(
+    (sum, item) => sum + (item.deposit || 0) * item.quantity, 0
+  );
+
+  const totalPrice = totalProductPrice + totalDeposit;
 
   const value = useMemo(
     () => ({
       items,
       totalQuantity,
+      totalProductPrice,
+      totalDeposit,
       totalPrice,
       addItem,
       removeItem,
@@ -109,7 +157,7 @@ export function CartProvider({ children }) {
       decreaseQuantity,
       clearCart,
     }),
-    [items, totalQuantity, totalPrice]
+    [items, totalQuantity, totalProductPrice, totalDeposit, totalPrice]
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

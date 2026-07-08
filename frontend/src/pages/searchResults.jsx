@@ -95,7 +95,7 @@ function SearchResults() {
                 <h3>{product.name}</h3>
               </NavLink>
 
-              <strong>{formatEuro(product.price)}</strong>
+              <strong>{product.hasMultipleVariants && "ab "}{formatEuro(product.price)}</strong>
 
               {product.stock !== null &&
                 product.stock <= 15 && (

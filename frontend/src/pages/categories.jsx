@@ -105,7 +105,7 @@ function Category({ category: fixedCategory }){
                             <h3>{product.name}</h3>
                         </NavLink>
                         <p>{"★".repeat(Math.round(product.rating))}{"☆".repeat(5 - Math.round(product.rating))}</p>
-                        <strong>{formatEuro(product.price)}</strong>
+                        <strong>{product.hasMultipleVariants && "ab "}{formatEuro(product.price)}</strong>
                         {product.stock !== null && product.stock <= 15 && <p className='text-danger'>Nur noch {product.stock} verfügbar</p>}
                     </div>
                 ))}

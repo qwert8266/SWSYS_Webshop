@@ -194,7 +194,7 @@ function handleShowAllResults() {
                       </div>
 
                       <strong className="search-suggestion-price">
-                        {formatEuro(product.price)}
+                        {product.hasMultipleVariants && "ab "}{formatEuro(product.price)}
                       </strong>
                     </button>
                   ))}
