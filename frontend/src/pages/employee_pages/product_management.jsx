@@ -39,7 +39,7 @@ function ProductManagement(){
         id: 0,
         name: "",
         description: "",
-        image: "",
+        images: [],
         price: null,
         stock: null,
         categorySlugs: [],
@@ -50,7 +50,7 @@ function ProductManagement(){
         id: 0,
         name: "",
         description: "",
-        image: "",
+        images: [],
         price: null,
         stock: null,
         categorySlugs: [],
@@ -126,11 +126,17 @@ function ProductManagement(){
         const productPayload = {
             name: productData.name,
             description: productData.description,
-            image: productData.image,
             price: productData.price,
             stock: productData.stock,
             categories: selectedCategories,
         };
+
+        const formData = new FormData();
+        formData.append("data", JSON.stringify(productPayload));
+
+        productData.images.forEach((imageFile) => {
+            formData.append("image", imageFile);
+        });
         
         try{
             const createdProduct = await createProduct(productPayload, accessToken);
@@ -146,7 +152,7 @@ function ProductManagement(){
                 id: 0,
                 name: "",
                 description: "",
-                image: "",
+                images: [],
                 price: null,
                 stock: null,
                 categorySlugs: [],
@@ -156,12 +162,30 @@ function ProductManagement(){
                 setShowSuccessCreateLabel(false);
             }, 5000)
 
+        {/*console.log("handleCreateProduct gestartet");
+        try{
+            const formData = new FormData();
+            formData.append(
+                "data",JSON.stringify({
+                    name: productData.name,
+                    description: productData.description,
+                    price: productData.price,
+                    stock: productData.stock,
+                    category: productData.category,
+                })
+            );
+            console.log(formData);
+            console.log(productData.images);
+            console.log(productData.images.length);
+            productData.images.forEach((image) => {formData.append("image",image)});
+            await createProduct(formData, accessToken);
+            */}
         }catch{
             setShowNotSuccessfulLabel(true)
             setTimeout(() => {
             setShowNotSuccessfulLabel(false);
             }, 5000)
-            return
+            //return
         }
 
         
@@ -454,10 +478,23 @@ function ProductManagement(){
                             <label className='fs-5 me-3' style={{ width: "150px" }}>Beschreibung</label>
                             <input className='fs-5 border rounded ' type="text" placeholder='Beschreibung' name='description' value={productData.description} onChange={handleChange}/>
                         </div>
-                        <div className='d-flex flex-row align-items-center pb-2'>
+                        
+                        {/*<div className='d-flex flex-row align-items-center pb-2'>
                             <label className='fs-5 me-3' style={{ width: "150px" }}>Bild</label>
                             <input className='fs-5 border rounded ' type="text" placeholder='Bild(bier.png)' name='image' value={productData.image} onChange={handleChange}/>
+                        </div> */}
+
+                        <div className='d-flex flex-row align-items-center pb-2'>
+                            <label className='fs-5 me-3' style={{ width: "150px" }}>Bild</label>
+                            <input className="file-input" multiple type="file" onChange={(e) =>
+                                                                                        setProductData(prev => ({
+                                                                                            ...prev,
+                                                                                            images: [...e.target.files]
+                                                                                        }))
+                                                                                    }/>
+                        <   input className='fs-5 border rounded ' type="text" placeholder='Bild(Dateiname)' name='image' value={productData.image} onChange={handleChange}/>
                         </div>
+
                         <div className='d-flex flex-row align-items-center pb-2'>
                             <label className='fs-5 me-3' style={{ width: "150px" }}>Preis</label>
                             <input className='fs-5 border rounded ' type="text" placeholder='Preis(in Cent)' name='price' value={productData.price} onChange={handleChange}/>
@@ -555,7 +592,6 @@ function ProductManagement(){
                                             className="product_link" 
                                             to={`/sortiment/${getProductCategorySlug(product)}/${encodeURIComponent(product.id)}`}>
                                             <img className="product_png w-75 ps-5" style={{width: "70px"}} src={getProductImagePath(product)} alt={product.name} />
-                                            
                                         </NavLink>
                                     </div>
                                     

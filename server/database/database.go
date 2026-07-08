@@ -90,4 +90,11 @@ func OrderCollection() *mongo.Collection {
 }
 
 // CategoryCollection returns the category collection of the webshop database
-func CategoryCollection() *mongo.Collection { return collection("categories") }
+func CategoryCollection() *mongo.Collection {
+	return collection("categories")
+}
+
+// ContactRequestCollection return the contact-requests collection ot the webshop database
+func ContactRequestCollection() *mongo.Collection {
+	return collection("contact_requests")
+}

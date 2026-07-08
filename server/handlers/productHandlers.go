@@ -1,9 +1,11 @@
 package handlers
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -87,12 +89,38 @@ func GetProductByCategory(c *gin.Context) {
 
 // CreateProduct creates a new product and generates an uuid for it.
 func CreateProduct(c *gin.Context) {
-	var incomingProduct models.ProductData
+	newProductID := uuid.New()
 
 	//parsing all incoming data
-	if err := c.BindJSON(&incomingProduct); err != nil {
+	form, err := c.MultipartForm()
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error retrieving form": err.Error()})
+		return
+	}
+	var incomingProduct models.ProductData
+	if err := json.Unmarshal([]byte(c.PostForm("data")), &incomingProduct); err != nil {
 		c.IndentedJSON(http.StatusBadRequest, gin.H{"error parsing product data": err.Error()})
 		return
+	}
+
+	// adding image if provided
+	images := form.File["image"]
+	var imagePaths []string
+	if images != nil {
+		for _, image := range images {
+			// if an image is provided, a new directory is created and the image is saved
+			directory := filepath.Join("/images/", newProductID.String())
+			imagePaths = append(imagePaths, filepath.Join(newProductID.String(), image.Filename))
+
+			if err = os.MkdirAll(directory, os.ModePerm); err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error creating directory": err.Error()})
+				return
+			}
+			if err = c.SaveUploadedFile(image, filepath.Join(directory, image.Filename)); err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error creating file": err.Error()})
+				return
+			}
+		}
 	}
 
 	validProductData, err := checkIncomingProductData(c, incomingProduct)
@@ -104,7 +132,6 @@ func CreateProduct(c *gin.Context) {
 	//trimming strings:
 	name := strings.TrimSpace(validProductData.Name)
 	description := strings.TrimSpace(validProductData.Description)
-	image := strings.TrimSpace(validProductData.Image)
 
 	for _, category := range validProductData.Categories {
 		if !category.IsValid() {
@@ -115,10 +142,10 @@ func CreateProduct(c *gin.Context) {
 
 	// creating new user and generating a new user ID.
 	newProduct := models.Product{
-		ProductID:   uuid.New(),
+		ProductID:   newProductID,
 		Name:        name,
 		Description: description,
-		Image:       image,
+		Images:      imagePaths,
 		Price:       incomingProduct.Price,
 		Stock:       incomingProduct.Stock,
 		Categories:  incomingProduct.Categories,
@@ -160,13 +187,11 @@ func UpdateProduct(c *gin.Context) {
 	//trimming strings:
 	name := strings.TrimSpace(validProductData.Name)
 	description := strings.TrimSpace(validProductData.Description)
-	image := strings.TrimSpace(validProductData.Image)
 
 	//updateOne() needs to be told how to modify the Document in the collection. (in this case using $set)
 	updatedProduct := bson.D{
 		{"$set", bson.D{{"name", name}}},
 		{"$set", bson.D{{"description", description}}},
-		{"$set", bson.D{{"image", image}}},
 		{"$set", bson.D{{"price", updatedProductData.Price}}},
 		{"$set", bson.D{{"stock", updatedProductData.Stock}}},
 		{"$set", bson.D{{"categories", updatedProductData.Categories}}},
@@ -201,6 +226,12 @@ func DeleteProduct(c *gin.Context) {
 	} else if result.DeletedCount == 0 {
 		c.IndentedJSON(http.StatusNotFound, gin.H{"message": "product not found"})
 	} else {
+		directory := filepath.Join("/images", id.String())
+		if err := os.RemoveAll(directory); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Bilder konnten nicht gelöscht werden",
+			})
+		}
 		c.IndentedJSON(http.StatusNoContent, gin.H{"message": "product deleted"})
 	}
 }
@@ -211,10 +242,10 @@ func checkIncomingProductData(c *gin.Context, pd models.ProductData) (models.Pro
 		return pd, errors.New("name invalid")
 	}
 
-	if ext := strings.ToLower(filepath.Ext(pd.Image)); ext != ".png" && ext != ".jpg" && ext != ".jpeg" {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Image ungültig"})
-		return pd, errors.New("image invalid")
-	}
+	//if ext := strings.ToLower(filepath.Ext(pd.Image)); ext != ".png" && ext != ".jpg" && ext != ".jpeg" {
+	//	c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Image ungültig"})
+	//	return pd, errors.New("image invalid")
+	//}
 
 	if pd.Price <= 0 {
 		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Preis ungültig"})
@@ -268,7 +299,7 @@ func ModifyStock(c *gin.Context) {
 	if operation.Value > 0 {
 		message.WriteString(fmt.Sprintf("stock amount increased by %d", operation.Value))
 	} else if operation.Value < 0 {
-		//adding a minimum stock to the filter to prevent modification if stock is insufficient
+		//adding a minimum stock to the filter to prevent modification if stock is not enough
 		filter = bson.M{
 			"product_id": productID,
 			"stock": bson.M{
@@ -304,6 +335,96 @@ func ModifyStock(c *gin.Context) {
 		return
 	}
 	c.IndentedJSON(http.StatusOK, gin.H{"message": message.String(), "new_stock": product.Stock})
+}
+
+// GetProductStock returns only the stock information of a single product.
+// Used by the frontend to display availability without loading the full product.
+func GetProductStock(c *gin.Context) {
+	id, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "the requested uuid is not a valid uuid"})
+		return
+	}
+
+	var product models.Product
+
+	err = database.ProductCollection().FindOne(c.Request.Context(), bson.M{"product_id": id}).Decode(&product)
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			c.IndentedJSON(http.StatusNotFound, gin.H{"message": "requested product not found"})
+		} else {
+			c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
+		return
+	}
+
+	c.IndentedJSON(http.StatusOK, models.NewStockInfo(product))
+}
+
+// GetAllStock returns the stock information of every product.
+// The thresholds are included so clients never have to hardcode them.
+func GetAllStock(c *gin.Context) {
+	cursor, err := database.ProductCollection().Find(c.Request.Context(), bson.M{})
+	if err != nil {
+		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	var products []models.Product
+	if err = cursor.All(c.Request.Context(), &products); err != nil {
+		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	stocks := make([]models.StockInfo, 0, len(products))
+	for _, product := range products {
+		stocks = append(stocks, models.NewStockInfo(product))
+	}
+
+	c.IndentedJSON(http.StatusOK, gin.H{
+		"thresholds": gin.H{
+			"low":      models.LowStockThreshold,
+			"critical": models.CriticalStockThreshold,
+		},
+		"stocks": stocks,
+	})
+}
+
+// GetLowStock returns all products at or below the low-stock threshold,
+// sorted ascending by stock so the most urgent products come first.
+// Intended for the employee logistics panel.
+func GetLowStock(c *gin.Context) {
+	// filtering in the database instead of in Go keeps the response small
+	filter := bson.M{"stock": bson.M{"$lte": models.LowStockThreshold}}
+
+	cursor, err := database.ProductCollection().Find(
+		c.Request.Context(),
+		filter,
+		options.Find().SetSort(bson.D{{"stock", 1}}),
+	)
+	if err != nil {
+		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	var products []models.Product
+	if err = cursor.All(c.Request.Context(), &products); err != nil {
+		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	stocks := make([]models.StockInfo, 0, len(products))
+	for _, product := range products {
+		stocks = append(stocks, models.NewStockInfo(product))
+	}
+
+	c.IndentedJSON(http.StatusOK, gin.H{
+		"thresholds": gin.H{
+			"low":      models.LowStockThreshold,
+			"critical": models.CriticalStockThreshold,
+		},
+		"stocks": stocks,
+	})
 }
 
 func SearchProducts(c *gin.Context) {
@@ -392,7 +513,6 @@ func productSearchScore(product models.Product, query string) (int, bool) {
 		{Value: product.Name, Penalty: 0},
 		{Value: categoryValue, Penalty: 15},
 		{Value: product.Description, Penalty: 30},
-		{Value: product.Image, Penalty: 40},
 	}
 
 	bestScore := 1_000_000
@@ -577,7 +697,7 @@ func levenshteinDistance(a string, b string) int {
 				replaceCost++
 			}
 
-			currentRow[j+1] = min(insertCost, deleteCost, replaceCost)
+			currentRow[j+1] = minimum(insertCost, deleteCost, replaceCost)
 		}
 
 		previousRow, currentRow = currentRow, previousRow
@@ -586,7 +706,7 @@ func levenshteinDistance(a string, b string) int {
 	return previousRow[len(bRunes)]
 }
 
-func min(values ...int) int {
+func minimum(values ...int) int {
 	smallest := values[0]
 
 	for _, value := range values[1:] {
