@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Passwort zurücksetzen</title>
+    <style>
+      {{.CSS}}
+    </style>
+  </head>
+
+  <body >
+    <div class="page">
+      <main class="main-card">
+        <div class="brand">
+          <img class="brand-icon" src="{{.CompanyLogo}}" alt="Schmidt + Söhne">
+        </div>
+          
+          <h1>Kontaktanfrage #{{.ReferenceNumber}}</h1>
+
+          <p1> 
+            Es wurde eine neue Kontaktanfrage über das Kontaktformular abgesendet.
+          </p1>
+
+          <hr/>
+          <div class="info-box">
+            <p>Referenznummer: <strong>{{.ReferenceNumber}}</strong></p>
+          </div>
+
+          <table class="detail-table">
+            <tr>
+              <td class="label">Grund des Anliegens</td>
+              <td>{{.Reason}}</td>
+            </tr>
+            <tr>
+              <td class="label">Name </td>
+              <td>{{.Name}} </td>
+            </tr>
+            <tr>
+              <td class="label">E-Mail </td>
+              <td>{{.Email}} </td>
+            </tr>
+            <tr>
+              <td class="label">Telefon </td>
+              <td>{{.Phone}} </td>
+            </tr>
+            <tr>
+              <td class="label">Eingegangen am</td>
+              <td>{{.CreatedAt}} Uhr</td>
+            </tr>
+          </table>
+
+          <h2>Beschreibung</h2>
+
+          <div class="description-box">
+            {{.Description}}
+          </div>
+      </main>
+
+      <footer class="footer">
+        <p>© {{.Year}} Schmidt + Söhne. Alle Rechte vorbehalten</p>
+      </footer>
+
+    </div>
+  </body>
+</html>

@@ -1,8 +1,10 @@
 import { NavLink } from "react-router-dom";
 import { findCategoryConfig } from "../utils/categoryConfig";
-import { formatEuro, getProductImagePath } from "../utils/productHelpers";
+import { getProductImagePath } from "../utils/productHelpers";
 import FavoriteButton from "./favoriteButton";
 import "./favoriteButton.css";
+import OfferBadge from "./offerBadge";
+import ProductPrice from "./productPrice";
 import StockIndicator from "./stockIndicator";
 
 function getProductCategorySlug(product, categorySlug) {
@@ -25,6 +27,7 @@ function ProductGrid({ products, categorySlug, stockMap = {}, showListActions = 
 
         return (
           <div className="product" key={product.id || product.name}>
+            <OfferBadge product={product} showDiscount className="offer-badge--on-image" />
             {showListActions && product.id && (
               <div className="product-card-actions">
                 <FavoriteButton productId={product.id} listType="favorite" />
@@ -46,7 +49,7 @@ function ProductGrid({ products, categorySlug, stockMap = {}, showListActions = 
               {"★".repeat(Math.round(product.rating))}
               {"☆".repeat(5 - Math.round(product.rating))}
             </p>
-            <strong>{formatEuro(product.price)}</strong>
+            <ProductPrice product={product} />
             <StockIndicator stockInfo={stockMap[product.id]} />
           </div>
         );

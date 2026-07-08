@@ -88,3 +88,8 @@ func UserCollection() *mongo.Collection {
 func OrderCollection() *mongo.Collection {
 	return collection("orders")
 }
+
+// ContactRequestCollection return the contact-requests collection ot the webshop database
+func ContactRequestCollection() *mongo.Collection {
+	return collection("contact_requests")
+}

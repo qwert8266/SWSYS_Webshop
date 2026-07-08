@@ -17,7 +17,7 @@ func RegisterProductRoutes(productRoutes *gin.RouterGroup) {
 	// not the full product response
 	productRoutes.GET("/stock", handlers.GetAllStock)
 	productRoutes.GET("/:id/stock", handlers.GetProductStock)
-  productRoutes.GET("/:id", handlers.GetProductByID)
+	productRoutes.GET("/:id", handlers.GetProductByID)
 
 	// protected routes
 	protectedProductRoutes := productRoutes.Group("")
