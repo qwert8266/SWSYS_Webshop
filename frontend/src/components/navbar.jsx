@@ -7,9 +7,11 @@ import productApi from '../api/productApi';
 import { getCategoryConfig } from '../utils/categoryConfig';
 import {
   formatEuro,
+  getOfferPricing,
   getProductImagePath,
   normalizeProduct
 } from "../utils/productHelpers";
+import ProductPrice from "./productPrice";
 import "../custom.scss";
 
 import './navbar.css';
@@ -197,9 +199,11 @@ function handleShowAllResults() {
                         </span>
                       </div>
 
-                      <strong className="search-suggestion-price">
-                        {formatEuro(product.price)}
-                      </strong>
+                      <ProductPrice
+                        product={product}
+                        showDiscount={false}
+                        className="search-suggestion-price"
+                      />
                     </button>
                   ))}
 
@@ -349,7 +353,7 @@ function handleShowAllResults() {
 
                             <div>
                               <strong>{item.name}</strong>
-                              <span>{item.quantity}x {formatEuro(item.price)}</span>
+                              <span>{item.quantity}x {formatEuro(getOfferPricing(item).currentPrice)}</span>
                             </div>
                           </div>
                         ))}
