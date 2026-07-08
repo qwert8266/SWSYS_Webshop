@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { getOfferPricing } from "../utils/productHelpers";
 
 
 const CartContext = createContext(null);
@@ -142,7 +143,12 @@ function openCartPreviewTemporarily() {
 
 
   const totalQuantity = items.reduce((sum, item) => sum + item.quantity, 0);
-  const totalPrice = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  // Angebotspreise fließen in die Gesamtsumme ein,
+  // damit Warenkorb und Checkout den reduzierten Preis verwenden
+  const totalPrice = items.reduce(
+    (sum, item) => sum + getOfferPricing(item).currentPrice * item.quantity,
+    0
+  );
 
   const value = useMemo(
     () => ({
