@@ -15,7 +15,7 @@ func SearchProducts(c *gin.Context) {
 	query := strings.TrimSpace(c.Query("q"))
 
 	if len([]rune(query)) < 2 {
-		c.IndentedJSON(
+		c.JSON(
 			http.StatusBadRequest,
 			gin.H{"message": "search query must contain at least two characters"},
 		)
@@ -27,7 +27,7 @@ func SearchProducts(c *gin.Context) {
 		bson.M{},
 	)
 	if err != nil {
-		c.IndentedJSON(
+		c.JSON(
 			http.StatusInternalServerError,
 			gin.H{"error": err.Error()},
 		)
@@ -37,7 +37,7 @@ func SearchProducts(c *gin.Context) {
 	var products []models.Product
 
 	if err = cursor.All(c.Request.Context(), &products); err != nil {
-		c.IndentedJSON(
+		c.JSON(
 			http.StatusInternalServerError,
 			gin.H{"error": err.Error()},
 		)
@@ -76,7 +76,7 @@ func SearchProducts(c *gin.Context) {
 		results = append(results, match.Product)
 	}
 
-	c.IndentedJSON(http.StatusOK, results)
+	c.JSON(http.StatusOK, results)
 }
 
 type searchableField struct {

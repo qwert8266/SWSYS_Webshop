@@ -49,7 +49,7 @@ const (
 )
 
 // StockInfo is the response model of the dedicated stock endpoints.
-// It intentionally contains no price/description so stock checks stay cheap.
+// It intentionally contains no price/ description, so stock checks stay cheap.
 type StockInfo struct {
 	ProductID uuid.UUID `json:"product_id"`
 	Name      string    `json:"name"`

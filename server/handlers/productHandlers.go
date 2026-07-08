@@ -197,7 +197,7 @@ func UpdateProduct(c *gin.Context) {
 
 	//updating product in collection:
 	if result, err := productCollection.UpdateOne(c.Request.Context(), bson.M{"product_id": productID}, updatedProduct); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error updating product": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "error updating product" + err.Error()})
 	} else if result.MatchedCount == 0 {
 		c.JSON(http.StatusNotFound, gin.H{"message": "product not found"})
 	} else {

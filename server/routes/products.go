@@ -17,14 +17,14 @@ func RegisterProductRoutes(productRoutes *gin.RouterGroup) {
 	// not the full product response
 	productRoutes.GET("/stock", handlers.GetAllStock)
 	productRoutes.GET("/:id/stock", handlers.GetProductStock)
-  productRoutes.GET("/:id", handlers.GetProductByID)
+	productRoutes.GET("/:id", handlers.GetProductByID)
 
 	// protected routes
 	protectedProductRoutes := productRoutes.Group("")
 	protectedProductRoutes.Use(middleware.Authenticate())
 	protectedProductRoutes.Use(middleware.RoleAuth("admin", "worker", "owner"))
 	{
-    protectedProductRoutes.POST("/", handlers.CreateProduct)
+		protectedProductRoutes.POST("/", handlers.CreateProduct)
 		protectedProductRoutes.PUT("/:id", handlers.UpdateProduct)
 		protectedProductRoutes.PATCH("/:id", handlers.ModifyStock)
 		protectedProductRoutes.DELETE("/:id", handlers.DeleteProduct)
