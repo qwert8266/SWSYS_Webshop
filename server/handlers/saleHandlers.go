@@ -30,6 +30,9 @@ func GetSales(c *gin.Context) {
 		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+	if sales == nil {
+		sales = []models.Sale{}
+	}
 	c.IndentedJSON(http.StatusOK, sales)
 }
 
