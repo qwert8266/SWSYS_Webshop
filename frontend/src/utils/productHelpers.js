@@ -1,6 +1,16 @@
 
 const FALLBACK_PRODUCT_IMAGE = "no_picture.png";
 
+
+export function productHasCategory(product, categorySlugOrName) {
+  
+  return (product?.categories).some((category) => {
+    return (
+      category.slug === categorySlugOrName || category.name === categorySlugOrName
+    );
+  }); 
+}
+
 export function getProductImagePath(product) {
   const image = product?.images?.[0] ?? FALLBACK_PRODUCT_IMAGE;
 
@@ -13,15 +23,21 @@ export function normalizeProduct(product) {
   const productId = product?.product_id;
   const name = product?.name || "Unbekanntes Produkt";
   const price = product?.price;
-  const image = product?.image;
+  const images = Array.isArray(product?.images)
+    ? product.images.filter(Boolean)
+    : product?.image
+      ? [product.image]
+      : [];
+  const firstCategory = Array.isArray(product?.categories) ? product.categories[0] : null;
+  const category = product?.category || firstCategory?.slug || firstCategory?.name || "";
 
   return {
     ...product,
-    id: productId,
+    id: product?.product_id || productId,
     name,
     price: price / 100,
-    image,
-    category: product?.category,
+    images,
+    categories: Array.isArray(product?.categories) ? product.categories : [],
     description: product?.description || "",
     stock: product?.stock ?? null,
     rating: product?.raing ?? 0,

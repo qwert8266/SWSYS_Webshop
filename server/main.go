@@ -7,6 +7,7 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/qwert8266/SWSYS_Webshop/server/database"
+	"github.com/qwert8266/SWSYS_Webshop/server/handlers"
 	"github.com/qwert8266/SWSYS_Webshop/server/routes"
 )
 
@@ -17,7 +18,7 @@ func main() {
 	defer database.DisconnectDB(database.DB)
 
 	// add owner as user to the db
-	result, err := database.AddOwnerIfNotExist()
+	result, err := handlers.AddOwnerIfNotExist()
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -27,7 +28,7 @@ func main() {
 
 	server.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"http://localhost:3000", "http://localhost:3001"},
-		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"}, //only used methods should be allowed
+		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE"}, //only used methods should be allowed
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
 		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: true,
@@ -39,6 +40,7 @@ func main() {
 	routes.RegisterUserRoutes(server.Group("/user"))
 	routes.RegisterProductRoutes(server.Group("/products"))
 	routes.RegisterOrderRoutes(server.Group("/order"))
+	routes.RegisterCategoryRoutes(server.Group("/category"))
 	routes.RegisterCartRoutes(server.Group("/cart"))
 	routes.RegisterContactRoutes(server.Group("/contact"))
 

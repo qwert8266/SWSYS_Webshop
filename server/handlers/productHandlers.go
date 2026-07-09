@@ -68,7 +68,14 @@ func GetProductByCategory(c *gin.Context) {
 	var products []models.Product
 	productCollection := database.ProductCollection()
 
-	cursor, err := productCollection.Find(c.Request.Context(), bson.M{"category": category})
+	filter := bson.M{
+		"$or": bson.A{
+			bson.M{"categories.slug": category},
+			bson.M{"categoeirs.name": category},
+		},
+	}
+
+	cursor, err := productCollection.Find(c.Request.Context(), filter)
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			c.JSON(http.StatusNotFound, gin.H{"message": "requested product not found"})
@@ -132,7 +139,14 @@ func CreateProduct(c *gin.Context) {
 	//trimming strings:
 	name := strings.TrimSpace(validProductData.Name)
 	description := strings.TrimSpace(validProductData.Description)
-	normalizedCategory := strings.ToLower(strings.TrimSpace(validProductData.Category))
+
+	for _, category := range validProductData.Categories {
+		if !category.IsValid() {
+			c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "invalid category"})
+			return
+		}
+	}
+	//normalizedCategory := strings.ToLower(strings.TrimSpace(validProductData.Category))
 
 	// creating new user and generating a new user ID.
 	newProduct := models.Product{
@@ -142,7 +156,7 @@ func CreateProduct(c *gin.Context) {
 		Images:      imagePaths,
 		Price:       incomingProduct.Price,
 		Stock:       incomingProduct.Stock,
-		Category:    normalizedCategory,
+		Categories:  incomingProduct.Categories,
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),
 	}
@@ -164,24 +178,100 @@ func UpdateProduct(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error parsing product id": err.Error()})
 		return
 	}
-	var updatedProductData models.ProductData
 
-	//parsing all incoming data
-	if err = c.BindJSON(&updatedProductData); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error: ": "error parsing product data " + err.Error()})
+	var incomingProduct models.ProductData
+	if err := json.Unmarshal([]byte(c.PostForm("data")), &incomingProduct); err != nil {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error parsing product data": err.Error()})
 		return
 	}
 
-	validProductData, err := checkIncomingProductData(c, updatedProductData)
+	updatedProductData, err := checkIncomingProductData(c, incomingProduct)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error: ": "error checking product data: " + err.Error()})
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
+	}
+
+	productCollection := database.ProductCollection()
+
+	// Existing product is loaded so image change can be merged safely
+	var existingProduct models.Product
+	if err := productCollection.FindOne(c.Request.Context(), bson.M{"product_id": productID}).Decode(&existingProduct); err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			c.IndentedJSON(http.StatusNotFound, gin.H{"message": "product not found"})
+		} else {
+			c.IndentedJSON(http.StatusInternalServerError, gin.H{"error retrieving product": err.Error()})
+		}
+		return
+	}
+
+	//parsing all incoming data
+	form, err := c.MultipartForm()
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error retrieving form": err.Error()})
+		return
+	}
+
+	// Keeps the existing images
+	// if none are sent the old image list stays untouched
+	imagePaths := existingProduct.Images
+	if incomingProduct.Images != nil {
+		imagePaths = incomingProduct.Images
+	}
+
+	// Add newly uploaded image file to the product image list and save them in Docker Volume
+	uploadedImages := form.File["image"]
+	if len(uploadedImages) > 0 {
+		directory := filepath.Join("/images/", productID.String())
+
+		if err = os.MkdirAll(directory, os.ModePerm); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error creating directory": err.Error()})
+			return
+		}
+
+		for _, image := range uploadedImages {
+			if err = c.SaveUploadedFile(image, filepath.Join(directory, image.Filename)); err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error creating file": err.Error()})
+				return
+			}
+
+			imagePaths = append(imagePaths, filepath.Join(productID.String(), image.Filename))
+		}
+	}
+
+	// Delete removed image from Docker volume
+	for _, imageToDelete := range incomingProduct.RemovedImages {
+		imageFilePath := filepath.Join("/images", imageToDelete)
+
+		if err := os.Remove(imageFilePath); err != nil && !errors.Is(err, os.ErrNotExist) {
+			c.JSON(http.StatusInternalServerError, gin.H{"error deleting image": err.Error()})
+			return
+		}
+	}
+
+	// Remove deleted images from imagePaths
+	if len(incomingProduct.RemovedImages) > 0 {
+		removedImageSet := make(map[string]bool)
+
+		for _, removedImage := range incomingProduct.RemovedImages {
+			removedImageSet[removedImage] = true
+		}
+
+		filteredImages := make([]string, 0, len(imagePaths))
+
+		for _, image := range imagePaths {
+			cleanImage := image
+
+			if !removedImageSet[cleanImage] {
+				filteredImages = append(filteredImages, cleanImage)
+			}
+		}
+
+		imagePaths = filteredImages
 	}
 
 	//trimming strings:
-	name := strings.TrimSpace(validProductData.Name)
-	description := strings.TrimSpace(validProductData.Description)
-	normalizedCategory := strings.ToLower(strings.TrimSpace(validProductData.Category))
+	name := strings.TrimSpace(updatedProductData.Name)
+	description := strings.TrimSpace(updatedProductData.Description)
 
 	//updateOne() needs to be told how to modify the Document in the collection. (in this case using $set)
 	updatedProduct := bson.D{
@@ -189,19 +279,25 @@ func UpdateProduct(c *gin.Context) {
 		{"$set", bson.D{{"description", description}}},
 		{"$set", bson.D{{"price", updatedProductData.Price}}},
 		{"$set", bson.D{{"stock", updatedProductData.Stock}}},
-		{"$set", bson.D{{"category", normalizedCategory}}},
+		{"$set", bson.D{{"images", imagePaths}}},
+		{"$set", bson.D{{"categories", updatedProductData.Categories}}},
 		{"$set", bson.D{{"updated_at", time.Now()}}},
 	}
 
-	productCollection := database.ProductCollection()
-
 	//updating product in collection:
 	if result, err := productCollection.UpdateOne(c.Request.Context(), bson.M{"product_id": productID}, updatedProduct); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "error updating product" + err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error updating product": err.Error()})
 	} else if result.MatchedCount == 0 {
 		c.JSON(http.StatusNotFound, gin.H{"message": "product not found"})
 	} else {
-		c.JSON(http.StatusOK, updatedProduct)
+		// returnes the complete product object
+		var savedProduct models.Product
+
+		if err := productCollection.FindOne(c.Request.Context(), bson.M{"product_id": productID}).Decode(&savedProduct); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error retrieving product": err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, savedProduct)
 	}
 }
 
@@ -247,11 +343,17 @@ func checkIncomingProductData(c *gin.Context, pd models.ProductData) (models.Pro
 		return pd, errors.New("stock invalid")
 	}
 
-	if pd.Category == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Kategorie ungültig"})
-		return pd, errors.New("category invalid")
+	if len(pd.Categories) == 0 {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Mindestens eine Kategorie muss ausgewählt sein"})
+		return pd, errors.New("no category")
 	}
 
+	for _, category := range pd.Categories {
+		if !category.IsValid() {
+			c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Kategorie ungültig"})
+			return pd, fmt.Errorf("category %s is invalid", category.Name)
+		}
+	}
 	return pd, nil
 }
 

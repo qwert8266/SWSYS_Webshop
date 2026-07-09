@@ -2,15 +2,12 @@ package database
 
 import (
 	"context"
-	"errors"
 	"log"
 	"os"
 	"strings"
 	"time"
 
 	"github.com/joho/godotenv"
-	"github.com/qwert8266/SWSYS_Webshop/server/models"
-	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
@@ -92,13 +89,19 @@ func OrderCollection() *mongo.Collection {
 	return collection("orders")
 }
 
-// ContactRequestCollection return the contact-requests collection of the webshop database
+// CategoryCollection returns the category collection of the webshop database
+func CategoryCollection() *mongo.Collection {
+	return collection("categories")
+}
+
+// ContactRequestCollection return the contact-requests collection ot the webshop database
 func ContactRequestCollection() *mongo.Collection {
 	return collection("contact_requests")
 }
 
 func CartCollection() *mongo.Collection { return collection("carts") }
 
+/**
 func AddOwnerIfNotExist() (string, error) {
 	result := UserCollection().FindOne(context.TODO(), bson.M{"role": "owner"})
 	if result.Err() != nil {
@@ -119,3 +122,4 @@ func AddOwnerIfNotExist() (string, error) {
 	// if the owner already exists, return nothing
 	return "", nil
 }
+*/
