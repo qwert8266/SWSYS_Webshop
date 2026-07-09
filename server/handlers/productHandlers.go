@@ -68,7 +68,14 @@ func GetProductByCategory(c *gin.Context) {
 	var products []models.Product
 	productCollection := database.ProductCollection()
 
-	cursor, err := productCollection.Find(c.Request.Context(), bson.M{"category": category})
+	filter := bson.M{
+		"$or": bson.A{
+			bson.M{"categories.slug": category},
+			bson.M{"categoeirs.name": category},
+		},
+	}
+
+	cursor, err := productCollection.Find(c.Request.Context(), filter)
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			c.JSON(http.StatusNotFound, gin.H{"message": "requested product not found"})

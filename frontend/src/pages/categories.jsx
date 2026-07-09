@@ -3,35 +3,61 @@ import './categories.css';
 import { useState, useEffect } from 'react';
 
 import productApi from "../api/productApi";
+import categoryApi from "../api/categoryApi";
 import ProductGrid from "../components/productGrid";
 import StockIndicator from "../components/stockIndicator";
 import { useStockMap } from "../hooks/useStockMap";
-import { getCategoryConfig } from "../utils/categoryConfig";
+import { getCategoryPresentation } from "../utils/categoryConfig";
 import { normalizeProduct } from '../utils/productHelpers';
 
 
 function Category({ category: fixedCategory }){
     const { categorySlug } = useParams();
-    const selectedCategory = getCategoryConfig(fixedCategory || categorySlug);
+    
+    // Kategorie kommt aus der Route-Komponente oder aus der URL
+    const requestedCategorySlug = fixedCategory || categorySlug;
+    
+    const [category, setCategory] = useState(null);
     const [categoryProducts, setCategoryProducts] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [loadError, setLoadError] = useState("");
     // Bestände kommen gesammelt vom Stock-Endpunkt, nicht aus der Produkt-Response
     const stockMap = useStockMap();
 
+    const categoryPresentation = getCategoryPresentation(requestedCategorySlug);
+
+
     useEffect(() => {
         let ignoreResult = false;
 
         async function loadProducts() {
+            if (!requestedCategorySlug) {
+                setLoadError("Kategorien konnte nicht geladen werden");
+                return;
+            }
+            
             setIsLoading(true);
             setLoadError("");
             setCategoryProducts([]);
 
             try {
-                const productsFromDatabase = await productApi.getProductsByCategory(selectedCategory.dbCategory); 
+                const [categoriesFromDatabase, productsFromDatabase] = await Promise.all([
+                    categoryApi.getCategories(),
+                    productApi.getProductsByCategory(requestedCategorySlug),
+                ]); 
+
+                const selectedCategory = categoriesFromDatabase.find((databaseCategory) => {
+                    return databaseCategory.slug === requestedCategorySlug;
+                });
                 
                 if (!ignoreResult) {
-                    setCategoryProducts(productsFromDatabase.map(normalizeProduct))
+
+                    setCategory(selectedCategory || {
+                        name: fixedCategory || categorySlug,
+                        slug: requestedCategorySlug
+                    })
+
+                    setCategoryProducts((productsFromDatabase || []).map(normalizeProduct))
                 }
             } catch (error) {
                 if (!ignoreResult) {
@@ -49,7 +75,7 @@ function Category({ category: fixedCategory }){
         return () => {
             ignoreResult = true;
         };
-    }, [selectedCategory.dbCategory]);
+    }, [categorySlug, fixedCategory, requestedCategorySlug]);
 
 
     return(
@@ -58,11 +84,11 @@ function Category({ category: fixedCategory }){
                 <div>
                     <img 
                         className='picture_top' 
-                        src={`/img/product_images/${selectedCategory.banner.png}`} 
-                        alt={selectedCategory.name}
+                        src={`/img/product_images/${categoryPresentation.banner.png}`} 
+                        alt={category?.name || requestedCategorySlug}
                     />
                 </div>
-                <div className='sentence_top'>{selectedCategory.banner.sentence}</div>
+                <div className='sentence_top'>{categoryPresentation.banner.sentence}</div>
                 <div className='sentence_below_top'>
                     Entdecken Sie neue Sorten oder genießen Sie ihre Favoriten.
                 </div>
@@ -75,7 +101,11 @@ function Category({ category: fixedCategory }){
                 <p className='category-info'>Hoppla. Leider konnten wir keine Produkte finden.</p>
             )}
 
-            <ProductGrid products={categoryProducts} categorySlug={selectedCategory.slug} />
+            <ProductGrid 
+                products={categoryProducts} 
+                categorySlug={category?.slug || requestedCategorySlug} 
+                stockMap={stockMap}
+            />
         </div>
     );
 }

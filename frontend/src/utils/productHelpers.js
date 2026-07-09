@@ -1,6 +1,16 @@
 
 const FALLBACK_PRODUCT_IMAGE = "no_picture.png";
 
+
+export function productHasCategory(product, categorySlugOrName) {
+  
+  return (product?.categories).some((category) => {
+    return (
+      category.slug === categorySlugOrName || category.name === categorySlugOrName
+    );
+  }); 
+}
+
 export function getProductImagePath(product) {
   const image = product?.images?.[0] ?? FALLBACK_PRODUCT_IMAGE;
 

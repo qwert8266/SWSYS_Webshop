@@ -81,7 +81,8 @@ function SearchResults() {
 
       <div className="product_row">
         {products.map((product) => {
-          const category = getCategoryConfig(product.category);
+          const productCategories = Array.isArray(product?.categories) ? product.categories : [];
+          const categorySlug = productCategories[0];
 
           return (
             <article className="product" key={product.id}>
@@ -92,7 +93,7 @@ function SearchResults() {
               />
               <NavLink
                 className="product_link"
-                to={`/sortiment/${category.slug}/${encodeURIComponent(
+                to={`/sortiment/${categorySlug}/${encodeURIComponent(
                   product.id
                 )}`}
               >
