@@ -1,0 +1,22 @@
+.logistics-page {
+  padding: 40px 60px 60px;
+  min-height: 60vh;
+}
+
+.logistics-page h1 {
+  color: #15406e;
+}
+
+.logistics-subtitle {
+  color: #495057;
+  margin-bottom: 24px;
+}
+
+.logistics-table {
+  max-width: 900px;
+}
+
+.logistics-table td,
+.logistics-table th {
+  vertical-align: middle;
+}

@@ -90,3 +90,8 @@ func OrderCollection() *mongo.Collection {
 }
 
 func SalesCollection() *mongo.Collection { return collection("sales") }
+
+// ContactRequestCollection return the contact-requests collection ot the webshop database
+func ContactRequestCollection() *mongo.Collection {
+	return collection("contact_requests")
+}

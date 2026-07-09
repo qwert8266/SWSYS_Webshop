@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Passwort zurücksetzen</title>
+    <style>
+      {{.CSS}}
+    </style>
+  </head>
+
+  <body >
+    <div class="page">
+      <main class="main-card">
+        <div class="brand">
+          <img class="brand-icon" src="{{.CompanyLogo}}" alt="Schmidt + Söhne">
+        </div>
+          
+          <h1>Hallo {{.Username}},</h1>
+
+          <p>
+            vielen Dank für deine Kontaktanfrage. Wir haben dein Anliegen erhalten
+            und werden es schnellstmöglich bearbeiten.
+          </p>
+
+          <p>
+            Grund des Anliegens: <strong>{{.Reason}}</strong>
+          </p>
+
+          <div class="info-box">
+            <p>Deine Referenznummer: <strong>{{.ReferenceNumber}}</strong></p>
+          </div>
+
+          <p>
+            Bitte gib diese Referenznummer an, falls du Rückfragen zu deinem Anliegen hast.
+          </p>
+
+          <p>
+            Viele Grüße<br />
+            dein Schmidt+Söhne-Getränkemarkt Team
+          </p>
+        
+      </main>
+
+      <footer class="footer">
+        <p>© {{.Year}} Schmidt + Söhne. Alle Rechte vorbehalten</p>
+      </footer>
+
+    </div>
+  </body>
+</html>

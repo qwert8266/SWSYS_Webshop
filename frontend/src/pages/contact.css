@@ -135,7 +135,7 @@
 }
 
 .suggestions {
-    position: relative;
+    position: absolute;
     top: 100%;
     left: 0;
     width: 300px;

@@ -33,6 +33,7 @@ func main() {
 	routes.RegisterProductRoutes(server.Group("/products"))
 	routes.RegisterOrderRoutes(server.Group("/order"))
 	routes.RegisterSaleRoutes(server.Group("/sales"))
+	routes.RegisterContactRoutes(server.Group("/contact"))
 
 	// the addr is explicitly 0.0.0.0 because if the application is running inside a container,
 	//it must handle requests from outside the container.

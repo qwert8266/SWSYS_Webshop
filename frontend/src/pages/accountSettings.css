@@ -12,7 +12,7 @@
     margin-bottom: 24px;
     border-radius: 24px;
     background: linear-gradient(135deg, #d2d1d1, #d5d5d5c5);
-    border: 1px soid #dbeafe;
+    border: 1px solid #dbeafe;
 }
 
 .account-avatar {
@@ -293,6 +293,33 @@ div {
     padding-right: 10px;
 }
 
+.account-preview-section {
+    margin-top: 28px;
+    padding-top: 24px;
+    border-top: 1px solid #e2e8f0;
+}
+
+.account-section-info {
+    margin: 0;
+    padding: 0 4px;
+    color: #475569;
+}
+
+.account-link-button {
+    padding: 0;
+    text-decoration: none;
+    color: #15406e;
+    font-weight: 600;
+}
+
+.account-link-button:hover {
+    color: #ab8d51;
+}
+
+.account-card .product_row {
+    padding-left: 0;
+    padding-right: 0;
+}
 
 .account-card-header.compact {
     padding-bottom: 14px;

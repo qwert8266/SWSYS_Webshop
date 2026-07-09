@@ -11,18 +11,20 @@ import App from "./App";
 
 import { CartProvider } from "./context/cartContext";
 import { AuthProvider } from "./context/authContext";
+import { ProductListsProvider } from "./context/productListsContext";
 import { ProductProvider } from "./context/productContext";
 
 const root = createRoot(document.getElementById("root"));
 
-root.render(
 
+  root.render(
   <AuthProvider>
-    <CartProvider>
-      <ProductProvider>
-        <App />
-      </ProductProvider>
-    </CartProvider>
+    <ProductListsProvider>
+      <CartProvider>
+        <ProductProvider>
+          <App />
+        </ProductProvider>
+      </CartProvider>
+    </ProductListsProvider>
   </AuthProvider>
-
 );
