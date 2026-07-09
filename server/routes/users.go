@@ -32,16 +32,16 @@ func RegisterUserRoutes(userRoutes *gin.RouterGroup) {
 		protected.POST("/me/wishlist/:productId", handlers.ToggleWishlistProduct)
 		protected.PATCH("/me/password", handlers.ChangeOwnPassword)
 
-		// route was allowed for workers too, so that they can see the customer names when managing orders
+		// this route is allowed for workers too, so that they can see the customer names when managing orders
 		employeeRoutes := protected.Group("")
-		employeeRoutes.Use(middleware.RoleAuth("worker", "admin"))
+		employeeRoutes.Use(middleware.RoleAuth("worker", "admin", "owner"))
 		{
 			employeeRoutes.GET("/", handlers.GetUsers)
 		}
 
 		// routes modifying users are only allowed for admins
 		adminRoutes := protected.Group("")
-		adminRoutes.Use(middleware.RoleAuth("admin"))
+		adminRoutes.Use(middleware.RoleAuth("admin", "owner"))
 		{
 			adminRoutes.GET("/:id", handlers.GetUserByID)
 			adminRoutes.PATCH("/:id", handlers.ModifyUser)

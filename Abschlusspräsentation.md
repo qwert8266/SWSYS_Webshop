@@ -48,7 +48,7 @@
 	- Diagramm für Modell (Lucas)
 
 - Welche Features müssen für V1.0 umgesetzt werden 
-- Authentifizierung und Rollenvergabe (abstakt und konzeptionell) (Linus)
+
 ### Ergebnisse
 
 - Wie Anforderungen umgesetzt wurden

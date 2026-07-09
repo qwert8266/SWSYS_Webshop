@@ -38,9 +38,48 @@ export const CATEGORY_CONFIGS = [
     name: "Kaffe & Tee",
     slug: "kaffe&tee",
     dbCategory: "kaffe-tee",
-    banner: { png: "kaffee_top.png", sentence: "Kaffee und Tee für deine Pause" },
+    banner: { png: "kaffee_banner.png", sentence: "Kaffee und Tee für deine Pause" },
   },
 ];
+
+
+export const DEFAULT_CATEGORY_CONFIG_PRESENTATION = {
+  banner: {
+    png: "bier_top.png",
+    sentence: "Unser Sortiment",
+  },
+};
+
+export const CATEGORY_CONFIGS_PRESENTATION = {
+  angebote: {
+    banner: { png: "angebote_top.png", sentence: "Schnell einkaufen!" },
+  },
+  bier: {
+    banner: { png: "bier_top.png", sentence: "Bier geht doch immer!" },
+  },
+  "wein-sekt": {
+    banner: { png: "wein_top.png", sentence: "Wein in meinen Mund!" },
+  },
+  spirituosen: {
+    banner: { png: "schnaps_top.png", sentence: "Ich fühl mich Osborne!" },
+  },
+  softdrinks: { 
+    banner: { png: "", sentence: "Erfrischende Softgetränke" },
+  },
+  wasser: {
+    banner: { png: "water_top.png", sentence: "Wasser für jeden Tag" },
+  },
+  "kaffe-tee": {
+    banner: { png: "kaffee_banner.png", sentence: "Kaffee und Tee für deine Pause" },
+  },
+};
+
+export function getCategoryPresentation(slug) {
+  return (
+    CATEGORY_CONFIGS_PRESENTATION[slug] ||
+    DEFAULT_CATEGORY_CONFIG_PRESENTATION
+  );
+}
 
 export function findCategoryConfig(slugOrCategory) {
   const normalizedValue = String(slugOrCategory || "").trim().toLowerCase();
@@ -50,6 +89,7 @@ export function findCategoryConfig(slugOrCategory) {
   );
 } 
 
+ 
 export function getCategoryConfig(slugOrCategory) {
   return findCategoryConfig(slugOrCategory) || {
     name: slugOrCategory || "Kategorie",
@@ -58,3 +98,4 @@ export function getCategoryConfig(slugOrCategory) {
     banner: { png: "bier_top.png", sentence: "Unser Sortiment"},
   };
 }
+  

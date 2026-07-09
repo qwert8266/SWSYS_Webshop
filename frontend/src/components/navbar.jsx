@@ -2,9 +2,9 @@ import React, { useEffect, useRef, useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from "../context/authContext";
 import { useCart } from "../context/cartContext";
-import { CATEGORY_CONFIGS } from "../utils/categoryConfig";
 import productApi from '../api/productApi';
-import { getCategoryConfig } from '../utils/categoryConfig';
+import categoryApi from '../api/categoryApi';
+import { getCategoryConfig, normalizeCategories } from '../utils/categoryConfig';
 import {
   formatEuro,
   getOfferPricing,
@@ -29,9 +29,35 @@ function Navbar() {
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isSuggestionsLoading, setIsSuggestionsLoading] = useState(false);
+  const [categories, setCategories] = useState([]);
 
   const searchWrapperRef = useRef(null);
 
+
+  useEffect(() => {
+    let ignoreResult = false;
+
+    async function loadCategories() {
+      try {
+        const categoriesFromDatabase = await categoryApi.getCategories();
+        
+        if (!ignoreResult) {
+          setCategories(categoriesFromDatabase);
+        }
+      } catch (error) {
+        if (!ignoreResult) { 
+          setCategories([]); 
+        }
+      }
+    }
+    loadCategories();
+
+    return () => {
+      ignoreResult = true;
+    };
+  }, []);
+
+  
   useEffect(() => {
     const query = searchQuery.trim();
 
@@ -89,49 +115,50 @@ function Navbar() {
   }, []);
 
 
+  function handleSearchSubmit(event) {
+    event.preventDefault();
 
-function handleSearchSubmit(event) {
-  event.preventDefault();
+    const query = searchQuery.trim();
 
-  const query = searchQuery.trim();
-
-  if (query.length < 2) {
-    return;
-  }
-  
-  setShowSuggestions(false);
-  navigate(`/suche?q=${encodeURIComponent(query)}`);
-}
-
-function handleSuggestionClick(product) {
-  const category = getCategoryConfig(product.category);
-
-  setSearchQuery("");
-  setSuggestions([]);
-  setShowSuggestions(false);
-
-  navigate(
-    `/sortiment/${category.slug}/${encodeURIComponent(product.id)}`
-  );
-}
-
-function handleShowAllResults() {
-  const query = searchQuery.trim();
-
-  if (query.length < 2) {
-    return;
+    if (query.length < 2) {
+      return;
+    }
+    
+    setShowSuggestions(false);
+    navigate(`/suche?q=${encodeURIComponent(query)}`);
   }
 
-  setShowSuggestions(false);
-  navigate(`/suche?q=${encodeURIComponent(query)}`);
-}
+  function handleSuggestionClick(product) {
+    //const category = categories.find(product.category);
+    
+    //const category = getCategoryConfig(product.category);
+    const category = categories.find((category) => {
+      return (
+        category.name === product.category ||
+        category.slug === product.category
+      );
+    });
+    const categorySlug = category?.slug || product.category;
 
-  function handleAccountClick() {
-    navigate(isAuthenticated ? "/account-settings" : "/login");
+    setSearchQuery("");
+    setSuggestions([]);
+    setShowSuggestions(false);
+
+    navigate(
+      `/sortiment/${encodeURIComponent(categorySlug)}/${encodeURIComponent(product.id)}`
+    );
   }
 
-  //const location = useLocation();
-  const categories = CATEGORY_CONFIGS;
+  function handleShowAllResults() {
+    const query = searchQuery.trim();
+
+    if (query.length < 2) {
+      return;
+    }
+
+    setShowSuggestions(false);
+    navigate(`/suche?q=${encodeURIComponent(query)}`);
+  }
 
   return (
     <nav className="navbar navbar-expand-md bg-body-tertiary" fixed="top">
@@ -247,7 +274,7 @@ function handleShowAllResults() {
             <ul className="navbar-nav mb-2 mb-lg-0 gap-2">
               <li className="nav-item">
                 <NavLink className="nav-link" to="/home">
-                  Home
+                  <a>Home</a>
                 </NavLink>
               </li>
               
@@ -256,17 +283,17 @@ function handleShowAllResults() {
                   className="nav-link" 
                   to="/sortiment"
                 >
-                  Sortiment
+                  <a>Sortiment</a>
                 </NavLink>
 
                 <div className="nav-dropdown-menu">
-                  {categories.map((Category) => (
+                  {categories.map((category) => (
                     <NavLink
-                      key={Category.slug}
+                      key={category.slug}
                       className="nav-dropdown-link"
-                      to={`/sortiment/${Category.slug}`}
+                      to={`/sortiment/${category.slug}`}
                     >
-                      {Category.name}
+                      <a>{category.name}</a>
                     </NavLink>
                   ))}
                 </div>
@@ -274,17 +301,19 @@ function handleShowAllResults() {
               
               <li className='nav-item'>
                 <NavLink className="nav-link" to="/about">
-                  About
+                  <a>About</a>
                 </NavLink>
               </li>
               
               <li className='nav-item'>
                 <NavLink className="nav-link" to="/contact">
-                  Kontakt
+                  <a>Kontakt</a>
                 </NavLink>
               </li>
-
+              
+              
               {/* Nur für Mitarbeiter sichtbar */}
+              {/*
               {isEmployee && (
                 <li className='nav-item'>
                   <NavLink className="nav-link" to="/logistik">
@@ -292,6 +321,7 @@ function handleShowAllResults() {
                   </NavLink>
                 </li>
               )}
+              */}
             </ul>
           </div>
 
@@ -388,6 +418,7 @@ function handleShowAllResults() {
               </div>
 
               <div className="dropdown-menu-custom">
+                <NavLink to="/logistik">Logistik</NavLink>
                 <NavLink to="/product_management">Produktverwaltung</NavLink>
                 <NavLink to="/order_management">Bestellungen</NavLink>
                 <NavLink to="/marketing">Marketing</NavLink>

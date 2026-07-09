@@ -7,13 +7,6 @@ import OfferBadge from "./offerBadge";
 import ProductPrice from "./productPrice";
 import StockIndicator from "./stockIndicator";
 
-function getProductCategorySlug(product, categorySlug) {
-  if (categorySlug) {
-    return categorySlug;
-  }
-
-  return findCategoryConfig(product.category)?.slug || product.category;
-}
 
 function ProductGrid({ products, categorySlug, stockMap = {}, showListActions = true }) {
   if (!products.length) {
@@ -23,7 +16,7 @@ function ProductGrid({ products, categorySlug, stockMap = {}, showListActions = 
   return (
     <div className="product_row">
       {products.map((product) => {
-        const slug = getProductCategorySlug(product, categorySlug);
+        const slug = categorySlug;  // oder von dem Produkt
 
         return (
           <div className="product" key={product.id || product.name}>
@@ -36,7 +29,7 @@ function ProductGrid({ products, categorySlug, stockMap = {}, showListActions = 
             )}
             <NavLink
               className="product_link"
-              to={`/sortiment/${slug}/${encodeURIComponent(product.id)}`}
+              to={`/sortiment/${encodeURIComponent(slug)}/${encodeURIComponent(product.id)}`}
             >
               <img
                 className="product_png"

@@ -2,19 +2,17 @@ import { useEffect, useMemo, useState } from "react";
 import { NavLink } from "react-router-dom";
 
 import productApi from "../api/productApi";
+import categoryApi from "../api/categoryApi";
 import ProductGrid from "../components/productGrid";
-import { CATEGORY_CONFIGS } from "../utils/categoryConfig";
-import { normalizeProduct, isOnOffer } from "../utils/productHelpers";
+import { normalizeProduct, isOnOffer, productHasCategory } from "../utils/productHelpers";
 
 import "./categories.css";
 import "./sortiment.css";
 
-const SUBCATEGORY_CONFIGS = CATEGORY_CONFIGS.filter(
-  (category) => category.slug !== "angebote"
-);
 
 function Sortiment() {
   const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
 
@@ -26,10 +24,14 @@ function Sortiment() {
       setLoadError("");
 
       try {
-        const productsFromDatabase = await productApi.getProducts();
+        const [productsFromDatabase, categoriesFromDatabase] = await Promise.all([
+          productApi.getProducts(),
+          categoryApi.getCategories(),
+        ]); 
 
         if (!ignoreResult) {
-          setProducts(productsFromDatabase.map(normalizeProduct));
+          setProducts((productsFromDatabase || []).map(normalizeProduct));
+          setCategories(categoriesFromDatabase || []);
         }
       } catch {
         if (!ignoreResult) {
@@ -56,13 +58,14 @@ function Sortiment() {
 
   const productsByCategory = useMemo(
     () =>
-      SUBCATEGORY_CONFIGS.map((category) => ({
-        category,
-        products: products.filter(
-          (product) => product.category === category.dbCategory
-        ),
-      })),
-    [products]
+      categories
+        .filter((category) => category.slug !== "angebot")
+        .map((category) => ({
+          category,
+          products: products.filter((product) => productHasCategory(product, category.slug)),
+        })),
+
+    [categories, products]
   );
 
   return (

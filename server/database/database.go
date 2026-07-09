@@ -15,7 +15,7 @@ import (
 // DB contains the shared MongoDB client after main() has initialized it.
 var DB *mongo.Client
 
-// LoadEnv loading environment variables from .env file.
+// LoadEnv loading environment variables from the .env file.
 func LoadEnv() {
 	err := godotenv.Load()
 	if err != nil {
@@ -76,22 +76,51 @@ func collection(name string) *mongo.Collection {
 	return DB.Database(Name()).Collection(name)
 }
 
-// ProductCollection returns the products collection of the webshop database
+// ProductCollection returns the product collection of the webshop database
 func ProductCollection() *mongo.Collection { return collection("products") }
 
-// UserCollection returns the users collection of the webshop database
+// UserCollection returns the user collection of the webshop database
 func UserCollection() *mongo.Collection {
 	return collection("users")
 }
 
-// OrderCollection returns the orders collection of the webshop database
+// OrderCollection returns the order collection of the webshop database
 func OrderCollection() *mongo.Collection {
 	return collection("orders")
 }
 
 func SalesCollection() *mongo.Collection { return collection("sales") }
+// CategoryCollection returns the category collection of the webshop database
+func CategoryCollection() *mongo.Collection {
+	return collection("categories")
+}
 
 // ContactRequestCollection return the contact-requests collection ot the webshop database
 func ContactRequestCollection() *mongo.Collection {
 	return collection("contact_requests")
 }
+
+func CartCollection() *mongo.Collection { return collection("carts") }
+
+/**
+func AddOwnerIfNotExist() (string, error) {
+	result := UserCollection().FindOne(context.TODO(), bson.M{"role": "owner"})
+	if result.Err() != nil {
+		if !errors.Is(result.Err(), mongo.ErrNoDocuments) {
+			// return the error
+			return "", result.Err()
+		}
+		// if no owner exists, add one
+		owner := models.CreateOwner(os.Getenv("OWNER_PASSWORD"))
+		_, err := UserCollection().InsertOne(context.TODO(), owner)
+		if err != nil {
+			return "", err
+		}
+
+		return "owner created successfully", nil
+	}
+
+	// if the owner already exists, return nothing
+	return "", nil
+}
+*/

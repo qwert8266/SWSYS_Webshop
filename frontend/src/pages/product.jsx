@@ -1,29 +1,16 @@
-import { NavLink, useParams } from 'react-router-dom';
+import { Link, NavLink, useParams } from 'react-router-dom';
 import './product.css';
 import { useCart } from '../context/cartContext';
 import { useEffect, useState } from 'react';
 
 import productApi from '../api/productApi';
 import StockIndicator from '../components/stockIndicator';
-import { getCategoryConfig } from '../utils/categoryConfig';
 import FavoriteButton from '../components/favoriteButton';
 import '../components/favoriteButton.css';
 import { getProductImagePath, normalizeProduct } from '../utils/productHelpers';
 import OfferBadge from '../components/offerBadge';
 import ProductPrice from '../components/productPrice';
 import FourOFour from './404';
-
-/*export const produkte = [
-  { name: "Becks", id: "001", price: "14.99", rating: 3.8, image: "becks.png", category: "bier", quantity: 0},
-  { name: "Corona", id: "002", price: "19.99", rating: 3.4, image: "corona.png", category: "bier"  },
-  { name: "Desperados", id: "003", price: "34.99", rating: 4.5, image: "desperados.png", category: "bier" },
-  { name: "Merlot", id: "004", price: "9.99", rating: 2.8, image: "merlot.png", category: "wein" },
-  { name: "Riesling", id: "005", price: "12.99", rating: 3.6, image: "riesling.png", category: "wein" },
-  { name: "Jägermeister", id: "006", price: "14.99", rating: 1.1, image: "jägermeister.png", category: "schnaps" },
-  { name: "Havana", id: "007", price: "12.99", rating: 3.8, image: "havana.png", category: "schnaps" },
-  { name: "Veterano", id: "008", price: "5.99", rating: 4.9, image: "veterano.png", category: "schnaps" },
-
-];*/
 
 const rezensionen = [
     {username: "Mathis Gronewold", profilePicture: "profile_picture.png", rating: 5, evaluation: "Da geht mir einer ab!"},
@@ -42,7 +29,7 @@ const rezensionen = [
 
 function Product(){
     const { category, productName, categorySlug, productId } = useParams();
-    const selectedCategory = getCategoryConfig(categorySlug || category);
+    const requestedCategorySlug = categorySlug || category;
     const requestedProductId = productId || productName;
 
     const { addItem } = useCart();
@@ -55,11 +42,6 @@ function Product(){
     const [productNotFound, setProductNotFound] = useState(false);
     const [slideIndex, setSlideIndex] = useState(0);
 
-    /*const product = produkte.find(
-        p =>
-            p.category === category &&
-        p.name.toLowerCase() === productName
-    );*/
 
     useEffect(() => {
         let ignoreResult = false;
@@ -108,6 +90,11 @@ function Product(){
             ignoreResult = true;
         };
     }, [requestedProductId]);
+    
+    const productCategories = Array.isArray(product?.categories) ? product.categories : [];
+    const selectedCategory = productCategories.find((productCategory) => {
+        return productCategory?.slug === requestedCategorySlug;
+    }) || productCategories[0] || null;
     
 
     // Bei stock === 0 (Status "out_of_stock") ist kein Kauf möglich
@@ -204,7 +191,15 @@ function Product(){
                 </div>
                 <div className='product-information'> 
                     <div className='blue-header'>
-                        <strong>{product.name}</strong><p> -- {selectedCategory.name} (Kategorie)</p>
+                        <strong>{product.name}</strong>
+                        <p className='fs-6'>
+                            Kategorie: {" "}
+                            {(selectedCategory?.slug) ? (
+                                <Link to={`/sortiment/${selectedCategory.slug}`}>{selectedCategory.name}</Link>
+                            ) : (
+                                selectedCategory.name
+                            )} 
+                        </p>     
                     </div>
                     <div className='other-information'>
                         <OfferBadge product={product} />
