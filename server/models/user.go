@@ -137,8 +137,8 @@ func CreateOwner(password string) User {
 	passwordHash, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 
 	return User{
-		ID:           uuid.New(),
-		CustomerType: "owner",
+		ID:   uuid.New(),
+		Role: "owner",
 
 		Email:        "owner@webshop.de",
 		PasswordHash: string(passwordHash),
