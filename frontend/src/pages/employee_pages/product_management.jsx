@@ -138,8 +138,8 @@ function ProductManagement(){
             existingImages: (currentProductData.existingImages || []).filter((image) => {
                 return image !== imageToRemove;
             }),
-            removedImage: [
-                ...NavLink(currentProductData.removedImage || []),
+            removedImages: [
+                ...(currentProductData.removedImages || []),
                 imageToRemove,
             ],
         }));
@@ -281,7 +281,7 @@ function ProductManagement(){
         ];
 
          const productPayload = {
-            id: productDataModify.id,
+            product_id: productDataModify.id,
             name: productDataModify.name,
             description: productDataModify.description,
             price: productDataModify.price,
@@ -290,14 +290,11 @@ function ProductManagement(){
 
             // Liste beschreibt, welche bereits gespeicherten Bilder erhalten bleiben soll
             images: mergedImages,
-            //removed_images: productDataModify.removedImages || [],
+            removed_images: productDataModify.removedImages || [],
         };
 
-        // Nur wenn Bilder hionzugefügt oder entfernt wurden, muss multipart/form-data verwendet werden
-        const hasImageChanges = newImages.length > 0 || (productDataModify.removedImages || []).length > 0;
-
-        // Ohne Bildänderung reicht ein normales JSON-Objekt
-        const updateBody = hasImageChanges ? buildProductUpdateFormData(productPayload, newImages) : productPayload;
+       
+        const updateBody = buildProductUpdateFormData(productPayload, newImages);
 
         try{
             const updatedProduct = await updateProduct(updateBody, accessToken);
@@ -308,19 +305,19 @@ function ProductManagement(){
 
             // Falls das backend kein vollständiges Produkt zurückgibt, 
             // wird das Anzeigeprodukt lokal aus den Formulardaten aufgebaut
-
-            const updateProductForList = normalizeProduct(updatedProduct || {
+            const updateProductForList = normalizeProduct({
                 ...productToModify,
                 ...productPayload,
-                product_id: productPayload.id,
+                ...(updatedProduct && updatedProduct.product_id ? updateProduct : {}),
+                id: productPayload.product_id,
+                product_id: productPayload.product_id,
                 images: mergedImages,
-                image: mergedImages[0] || "",
             });
             
             // Aktualisiert nur das bearbeitete Produkt in der lokalen Liste
             setCategoryProducts((currentProducts) =>
                 currentProducts.map((product) => {
-                    if (product.id !== productPayload.id) {
+                    if (product.id !== productPayload.product_id) {
                         return product;
                     }
 
@@ -493,8 +490,8 @@ function ProductManagement(){
 
         // productApi.updateProduct liest die id für die URL aus productData.id
         // FormData selbst transportiert die ID zusätzlich im JSON-Teil
-        formData.id = productPayload.id;
-        formData.append("id", productPayload.id);
+        formData.id = productPayload.product_id;
+        //formData.append("id", productPayload.product_id);
         formData.append("data", JSON.stringify(productPayload));
 
         newImages.forEach((imageFile) => {

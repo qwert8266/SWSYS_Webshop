@@ -183,6 +183,84 @@ func UpdateProduct(c *gin.Context) {
 		return
 	}
 
+	productCollection := database.ProductCollection()
+
+	// Existing product is loaded so image change can be merged safely
+	var existingProduct models.Product
+	if err := productCollection.FindOne(c.Request.Context(), bson.M{"product_id": productID}).Decode(&existingProduct); err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			c.IndentedJSON(http.StatusNotFound, gin.H{"message": "product not found"})
+		} else {
+			c.IndentedJSON(http.StatusInternalServerError, gin.H{"error retrieving product": err.Error()})
+		}
+		return
+	}
+
+	//parsing all incoming data
+	form, err := c.MultipartForm()
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error retrieving form": err.Error()})
+		return
+	}
+
+	// Keeps the existing images
+	// if none are sent the old image list stays untouched
+	imagePaths := existingProduct.Images
+	if incomingProduct.Images != nil {
+		imagePaths = incomingProduct.Images
+	}
+
+	// Add newly uploaded image file to the product image list and save them in Docker Volume
+	uploadedImages := form.File["image"]
+	if len(uploadedImages) > 0 {
+		directory := filepath.Join("/images/", productID.String())
+
+		if err = os.MkdirAll(directory, os.ModePerm); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error creating directory": err.Error()})
+			return
+		}
+
+		for _, image := range uploadedImages {
+			if err = c.SaveUploadedFile(image, filepath.Join(directory, image.Filename)); err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error creating file": err.Error()})
+				return
+			}
+
+			imagePaths = append(imagePaths, filepath.Join(productID.String(), image.Filename))
+		}
+	}
+
+	// Delete removed image from Docker volume
+	for _, imageToDelete := range incomingProduct.RemovedImages {
+		imageFilePath := filepath.Join("/images", imageToDelete)
+
+		if err := os.Remove(imageFilePath); err != nil && !errors.Is(err, os.ErrNotExist) {
+			c.JSON(http.StatusInternalServerError, gin.H{"error deleting image": err.Error()})
+			return
+		}
+	}
+
+	// Remove deleted images from imagePaths
+	if len(incomingProduct.RemovedImages) > 0 {
+		removedImageSet := make(map[string]bool)
+
+		for _, removedImage := range incomingProduct.RemovedImages {
+			removedImageSet[removedImage] = true
+		}
+
+		filteredImages := make([]string, 0, len(imagePaths))
+
+		for _, image := range imagePaths {
+			cleanImage := image
+
+			if !removedImageSet[cleanImage] {
+				filteredImages = append(filteredImages, cleanImage)
+			}
+		}
+
+		imagePaths = filteredImages
+	}
+
 	//trimming strings:
 	name := strings.TrimSpace(updatedProductData.Name)
 	description := strings.TrimSpace(updatedProductData.Description)
@@ -193,19 +271,25 @@ func UpdateProduct(c *gin.Context) {
 		{"$set", bson.D{{"description", description}}},
 		{"$set", bson.D{{"price", updatedProductData.Price}}},
 		{"$set", bson.D{{"stock", updatedProductData.Stock}}},
+		{"$set", bson.D{{"images", imagePaths}}},
 		{"$set", bson.D{{"categories", updatedProductData.Categories}}},
 		{"$set", bson.D{{"updated_at", time.Now()}}},
 	}
 
-	productCollection := database.ProductCollection()
-
 	//updating product in collection:
 	if result, err := productCollection.UpdateOne(c.Request.Context(), bson.M{"product_id": productID}, updatedProduct); err != nil {
-		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error updating product": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error updating product": err.Error()})
 	} else if result.MatchedCount == 0 {
-		c.IndentedJSON(http.StatusNotFound, gin.H{"message": "product not found"})
+		c.JSON(http.StatusNotFound, gin.H{"message": "product not found"})
 	} else {
-		c.IndentedJSON(http.StatusOK, updatedProduct)
+		// returnes the complete product object
+		var savedProduct models.Product
+
+		if err := productCollection.FindOne(c.Request.Context(), bson.M{"product_id": productID}).Decode(&savedProduct); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error retrieving product": err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, savedProduct)
 	}
 }
 
@@ -221,7 +305,7 @@ func DeleteProduct(c *gin.Context) {
 
 	result, err := productCollection.DeleteOne(c.Request.Context(), bson.M{"product_id": id})
 	if err != nil {
-		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 	} else if result.DeletedCount == 0 {
 		c.IndentedJSON(http.StatusNotFound, gin.H{"message": "product not found"})
 	} else {

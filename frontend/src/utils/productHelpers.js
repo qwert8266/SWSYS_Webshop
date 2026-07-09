@@ -23,8 +23,7 @@ export function normalizeProduct(product) {
 
   return {
     ...product,
-    id: productId,
-    product_id: product?.product_id || productId,
+    id: product?.product_id || productId,
     name,
     price: price / 100,
     images,
