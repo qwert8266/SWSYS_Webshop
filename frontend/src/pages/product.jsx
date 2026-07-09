@@ -1,4 +1,4 @@
-import { NavLink, useParams } from 'react-router-dom';
+import { Link, NavLink, useParams } from 'react-router-dom';
 import './product.css';
 import { useCart } from '../context/cartContext';
 import { useEffect, useState } from 'react';
@@ -212,7 +212,11 @@ function Product(){
                 </div>
                 <div className='product-information'> 
                     <div className='blue-header'>
-                        <strong>{product.name}</strong><p> -- {selectedCategory.name} (Kategorie)</p>
+                        <strong>{product.name}</strong>
+                        <p className="fs-6"> 
+                            Kategorie: {" "}
+                            <Link to={`/sortiment/${selectedCategory.slug}`}>{selectedCategory.name}</Link> 
+                        </p>
                     </div>
                     <div className='other-information'>
                         <OfferBadge product={product} />
