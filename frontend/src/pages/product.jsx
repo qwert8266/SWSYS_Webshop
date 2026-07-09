@@ -8,7 +8,9 @@ import StockIndicator from '../components/stockIndicator';
 import { getCategoryConfig } from '../utils/categoryConfig';
 import FavoriteButton from '../components/favoriteButton';
 import '../components/favoriteButton.css';
-import { formatEuro,getProductImagePath, normalizeProduct } from '../utils/productHelpers';
+import { getProductImagePath, normalizeProduct } from '../utils/productHelpers';
+import OfferBadge from '../components/offerBadge';
+import ProductPrice from '../components/productPrice';
 import FourOFour from './404';
 
 /*export const produkte = [
@@ -205,9 +207,10 @@ function Product(){
                         <strong>{product.name}</strong><p> -- {selectedCategory.name} (Kategorie)</p>
                     </div>
                     <div className='other-information'>
+                        <OfferBadge product={product} />
                         <p>{product.description || "Keine Beschreibung zu diesem Produkt vorhanden."}</p>
                         <p>{"★".repeat(Math.round(product.rating))}{"☆".repeat(5 - Math.round(product.rating))}{`(${product.rating})`}</p>
-                        <p>{formatEuro(product.price)}</p>
+                        <p><ProductPrice product={product} /></p>
                         {/* Status kommt vom Backend -- kein hardcodierter Schwellwert mehr */}
                         <StockIndicator stockInfo={stockInfo} showInStock />
                     </div>

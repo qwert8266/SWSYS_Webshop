@@ -38,7 +38,7 @@ export const CATEGORY_CONFIGS = [
     name: "Kaffe & Tee",
     slug: "kaffe&tee",
     dbCategory: "kaffe-tee",
-    banner: { png: "kaffee_top.png", sentence: "Kaffee und Tee für deine Pause" },
+    banner: { png: "kaffee_banner.png", sentence: "Kaffee und Tee für deine Pause" },
   },
 ];
 
