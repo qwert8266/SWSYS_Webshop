@@ -8,7 +8,7 @@ function Home(){
             title: "Bier",
             image: "/img/Bier.png",
             text: "Hol dir bei uns deine Lieblingsbiere und spannende Spezialitäten, die du noch nie gesehen hast.",
-            path: "/sortiment/Bier"
+            path: "/sortiment/bier"
         },
         {
             title: "Wein & Sekt",
@@ -38,7 +38,7 @@ function Home(){
             title: "Kaffee & Tee",
             image: "/img/Kaffee.png",
             text: "Von aromatischem Kaffee bis zu wohltuendem Tee – entdecke deine Lieblingsmomente in der Tasse.",
-            path: "/sortiment/kaffee&tee"
+            path: "/sortiment/kaffee-tee"
         }
     ]
     const slides = [

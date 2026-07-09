@@ -4,6 +4,8 @@ import { useStockMap } from "../hooks/useStockMap";
 import { formatEuro, getOfferPricing } from '../utils/productHelpers';
 import OfferBadge from './offerBadge';
 import ProductPrice from './productPrice';
+import { getProductImagePath, normalizeProduct } from '../utils/productHelpers';
+
 
 
 
@@ -83,7 +85,7 @@ function ShoppingCart() {
                 >
                   <img
                     className="rounded-3 object-fit-contain flex-shrink-0" 
-                    src={"/img/product_images/" + item.image} alt={item.name} 
+                    src={getProductImagePath(item)} alt={item.name} 
                     style={{ width: "95px", height: "95px"}}
                     alt={item.name}
                   />
