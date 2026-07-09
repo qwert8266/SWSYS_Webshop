@@ -934,7 +934,7 @@ function AccountSettings() {
                   </label>
                   <p></p>
                   <p>
-                    "Kleine Gasse 15, 29188 Bremen, Deutschland"
+                    "{user?.address.street} {user?.address.houseNumber}, {user?.address.zipCode} {user?.address.city}, {user?.address.country}"
                   </p>
                   <button
                     className='btn text-primary w-25'

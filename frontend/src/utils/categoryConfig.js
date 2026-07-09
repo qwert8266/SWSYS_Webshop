@@ -55,7 +55,7 @@ export const CATEGORY_CONFIGS_PRESENTATION = {
     banner: { png: "angebote_top.png", sentence: "Schnell einkaufen!" },
   },
   bier: {
-    banner: { png: "bier_top.png", sentence: "Bier geht doch immer!" },
+    banner: { png: "bier_top2.png", sentence: "Bier geht doch immer!" },
   },
   "wein-sekt": {
     banner: { png: "wein_top.png", sentence: "Wein in meinen Mund!" },
@@ -64,7 +64,7 @@ export const CATEGORY_CONFIGS_PRESENTATION = {
     banner: { png: "schnaps_top.png", sentence: "Ich fühl mich Osborne!" },
   },
   softdrinks: { 
-    banner: { png: "", sentence: "Erfrischende Softgetränke" },
+    banner: { png: "softdrinks_top.png", sentence: "Erfrischende Softgetränke" },
   },
   wasser: {
     banner: { png: "water_top.png", sentence: "Wasser für jeden Tag" },
