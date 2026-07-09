@@ -310,8 +310,10 @@ function Navbar() {
                   <a>Kontakt</a>
                 </NavLink>
               </li>
-
+              
+              
               {/* Nur für Mitarbeiter sichtbar */}
+              {/*
               {isEmployee && (
                 <li className='nav-item'>
                   <NavLink className="nav-link" to="/logistik">
@@ -319,6 +321,7 @@ function Navbar() {
                   </NavLink>
                 </li>
               )}
+              */}
             </ul>
           </div>
 
@@ -415,6 +418,7 @@ function Navbar() {
               </div>
 
               <div className="dropdown-menu-custom">
+                <NavLink to="/logistik">Logistik</NavLink>
                 <NavLink to="/product_management">Produktverwaltung</NavLink>
                 <NavLink to="/order_management">Bestellungen</NavLink>
                 <NavLink to="/marketing">Marketing</NavLink>
