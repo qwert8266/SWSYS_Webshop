@@ -164,15 +164,15 @@ func GetContactRequests(c *gin.Context) {
 
 	cursor, err := contactRequestCollection.Find(c.Request.Context(), bson.M{})
 	if err != nil {
-		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
 	var contactRequests []models.ContactRequest
 
 	if err = cursor.All(c.Request.Context(), &contactRequests); err != nil {
-		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.IndentedJSON(http.StatusOK, contactRequests)
+	c.JSON(http.StatusOK, contactRequests)
 }

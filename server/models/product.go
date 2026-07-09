@@ -56,6 +56,13 @@ func (c Category) AddToDB() bool {
 	return true
 }
 
+func NormalizeProductIDs(ids []uuid.UUID) []uuid.UUID {
+	if ids == nil {
+		return []uuid.UUID{}
+	}
+	return ids
+}
+
 // Central stock thresholds. These are the single source of truth --
 // the frontend receives the resulting status via the stock endpoints
 // instead of hardcoding its own thresholds.
@@ -75,7 +82,7 @@ const (
 )
 
 // StockInfo is the response model of the dedicated stock endpoints.
-// It intentionally contains no price/description so stock checks stay cheap.
+// It intentionally contains no price/ description, so stock checks stay cheap.
 type StockInfo struct {
 	ProductID  uuid.UUID  `json:"product_id"`
 	Name       string     `json:"name"`

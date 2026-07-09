@@ -1,7 +1,9 @@
 import { Link, NavLink } from 'react-router-dom';
 import { useCart } from "../context/cartContext";
 import { useStockMap } from "../hooks/useStockMap";
-import { formatEuro } from '../utils/productHelpers';
+import { formatEuro, getOfferPricing } from '../utils/productHelpers';
+import OfferBadge from './offerBadge';
+import ProductPrice from './productPrice';
 
 
 
@@ -71,6 +73,8 @@ function ShoppingCart() {
                 const availableStock = stockMap[item.id]?.stock;
                 const isAtStockLimit =
                   Number.isFinite(availableStock) && item.quantity >= availableStock;
+                // Reduzierter Preis, falls das Produkt im Angebot ist
+                const itemPrice = getOfferPricing(item).currentPrice;
 
                 return (
                 <article 
@@ -86,9 +90,9 @@ function ShoppingCart() {
 
                   <div className="flex-grow-1">
                     <h5>{item.name}</h5>
-                    
-                    <span>
-                      {formatEuro(item.price)}
+                    <OfferBadge product={item} />
+                    <span className="d-block">
+                      <ProductPrice product={item} showDiscount={false} />
                     </span>
 
                     {/* Hinweis, wenn der Bestand die Warenkorbmenge nicht mehr deckt */}
@@ -130,7 +134,7 @@ function ShoppingCart() {
                     className="text-nowrap text-end flex-shrink-0" 
                     style={{ width: "55px"}}
                   >
-                    {formatEuro(item.price * item.quantity)}
+                    {formatEuro(itemPrice * item.quantity)}
                   </strong>
 
                   <button

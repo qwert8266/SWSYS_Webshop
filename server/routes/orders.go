@@ -13,14 +13,11 @@ func RegisterOrderRoutes(orderRoutes *gin.RouterGroup) {
 	orderRoutes.PUT("/:id", handlers.UpdateOrder)
 	orderRoutes.GET("/me", handlers.GetMyOrders)
 	orderRoutes.POST("/:id/return-request", handlers.RequestOrderReturn)
-	orderRoutes.GET("/", handlers.GetOrders)
 
 	protectedOrderRoutes := orderRoutes.Group("")
-	protectedOrderRoutes.Use(middleware.RoleAuth("admin", "worker"))
+	protectedOrderRoutes.Use(middleware.RoleAuth("admin", "worker", "owner"))
 	{
 		protectedOrderRoutes.GET("/statistics", handlers.GetStatistics)
-		//TODO:
-		//protectedOrderRoutes.GET("", handlers.GetAllOrders)
-		//protectedOrderRoutes.GET("", handlers.GetActiveOrders)
+		orderRoutes.GET("/", handlers.GetOrders)
 	}
 }

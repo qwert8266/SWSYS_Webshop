@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"sort"
 	"strings"
 	"time"
 
@@ -26,24 +25,24 @@ func GetProducts(c *gin.Context) {
 
 	cursor, err := productCollection.Find(c.Request.Context(), bson.M{})
 	if err != nil {
-		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
 	var products []models.Product
 
 	if err = cursor.All(c.Request.Context(), &products); err != nil {
-		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.IndentedJSON(http.StatusOK, products)
+	c.JSON(http.StatusOK, products)
 }
 
 // GetProductByID returns a specific Product by its ID.
 func GetProductByID(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "the requested uuid is not a valid uuid"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "the requested uuid is not a valid uuid"})
 		return
 	}
 
@@ -53,13 +52,13 @@ func GetProductByID(c *gin.Context) {
 	err = productCollection.FindOne(c.Request.Context(), bson.M{"product_id": id}).Decode(&product)
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			c.IndentedJSON(http.StatusNotFound, gin.H{"message": "requested product not found"})
+			c.JSON(http.StatusNotFound, gin.H{"message": "requested product not found"})
 		} else {
-			c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		}
 		return
 	}
-	c.IndentedJSON(http.StatusOK, product)
+	c.JSON(http.StatusOK, product)
 }
 
 // GetProductByCategory returns all products of a specific category.
@@ -72,19 +71,19 @@ func GetProductByCategory(c *gin.Context) {
 	cursor, err := productCollection.Find(c.Request.Context(), bson.M{"category": category})
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			c.IndentedJSON(http.StatusNotFound, gin.H{"message": "requested product not found"})
+			c.JSON(http.StatusNotFound, gin.H{"message": "requested product not found"})
 		} else {
-			c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		}
 		return
 	}
 
 	if err = cursor.All(c.Request.Context(), &products); err != nil {
-		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.IndentedJSON(http.StatusOK, products)
+	c.JSON(http.StatusOK, products)
 }
 
 // CreateProduct creates a new product and generates an uuid for it.
@@ -99,7 +98,7 @@ func CreateProduct(c *gin.Context) {
 	}
 	var incomingProduct models.ProductData
 	if err := json.Unmarshal([]byte(c.PostForm("data")), &incomingProduct); err != nil {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error parsing product data": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error parsing product data": err.Error()})
 		return
 	}
 
@@ -113,19 +112,20 @@ func CreateProduct(c *gin.Context) {
 			imagePaths = append(imagePaths, filepath.Join(newProductID.String(), image.Filename))
 
 			if err = os.MkdirAll(directory, os.ModePerm); err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"error creating directory": err.Error()})
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "error creating directory" + err.Error()})
 				return
 			}
 			if err = c.SaveUploadedFile(image, filepath.Join(directory, image.Filename)); err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"error creating file": err.Error()})
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "error creating file" + err.Error()})
 				return
 			}
 		}
 	}
 
+	// validating incoming product data
 	validProductData, err := checkIncomingProductData(c, incomingProduct)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "error checking incoming data: " + err.Error()})
 		return
 	}
 
@@ -139,6 +139,7 @@ func CreateProduct(c *gin.Context) {
 			return
 		}
 	}
+	//normalizedCategory := strings.ToLower(strings.TrimSpace(validProductData.Category))
 
 	// creating new user and generating a new user ID.
 	newProduct := models.Product{
@@ -156,18 +157,18 @@ func CreateProduct(c *gin.Context) {
 	// adding the new user to the collection
 	productCollection := database.ProductCollection()
 	if _, err := productCollection.InsertOne(c.Request.Context(), newProduct); err != nil {
-		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error creating new product": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error creating new product": err.Error()})
 		return
 	}
 
-	c.IndentedJSON(http.StatusCreated, newProduct)
+	c.JSON(http.StatusCreated, newProduct)
 }
 
 // UpdateProduct allows modification of existing products values
 func UpdateProduct(c *gin.Context) {
 	productID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error parsing product id": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error parsing product id": err.Error()})
 		return
 	}
 
@@ -297,7 +298,7 @@ func UpdateProduct(c *gin.Context) {
 func DeleteProduct(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error parsing product id": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error parsing product id": err.Error()})
 		return
 	}
 
@@ -307,7 +308,7 @@ func DeleteProduct(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 	} else if result.DeletedCount == 0 {
-		c.IndentedJSON(http.StatusNotFound, gin.H{"message": "product not found"})
+		c.JSON(http.StatusNotFound, gin.H{"message": "product not found"})
 	} else {
 		directory := filepath.Join("/images", id.String())
 		if err := os.RemoveAll(directory); err != nil {
@@ -315,23 +316,23 @@ func DeleteProduct(c *gin.Context) {
 				"error": "Bilder konnten nicht gelöscht werden",
 			})
 		}
-		c.IndentedJSON(http.StatusNoContent, gin.H{"message": "product deleted"})
+		c.JSON(http.StatusNoContent, gin.H{"message": "product deleted"})
 	}
 }
 
 func checkIncomingProductData(c *gin.Context, pd models.ProductData) (models.ProductData, error) {
 	if pd.Name == "" {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Name ungültig"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Name ungültig"})
 		return pd, errors.New("name invalid")
 	}
 
 	if pd.Price <= 0 {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Preis ungültig"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Preis ungültig"})
 		return pd, errors.New("price invalid")
 	}
 
 	if pd.Stock < 0 {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Stock ungültig"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Stock ungültig"})
 		return pd, errors.New("stock invalid")
 	}
 
@@ -354,7 +355,7 @@ func ModifyStock(c *gin.Context) {
 	//retrieving the product ID
 	productID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error parsing product id": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error parsing product id": err.Error()})
 		return
 	}
 
@@ -386,7 +387,7 @@ func ModifyStock(c *gin.Context) {
 		}
 		message.WriteString(fmt.Sprintf("stock amount decreased by %d", -operation.Value))
 	} else {
-		c.IndentedJSON(http.StatusOK, gin.H{"message": "congratulations, increasing by zero did absolutely nothing!"})
+		c.JSON(http.StatusOK, gin.H{"message": "congratulations, increasing by zero did absolutely nothing!"})
 		return
 	}
 
@@ -406,13 +407,13 @@ func ModifyStock(c *gin.Context) {
 		// checking if the product exists
 		var foundProduct models.Product
 		if err = database.ProductCollection().FindOne(c.Request.Context(), idFilter).Decode(&foundProduct); err != nil {
-			c.IndentedJSON(http.StatusNotFound, gin.H{"message": "product not found"})
+			c.JSON(http.StatusNotFound, gin.H{"message": "product not found"})
 			return
 		}
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "insufficient stock", "available": foundProduct.Stock})
+		c.JSON(http.StatusBadRequest, gin.H{"message": "insufficient stock", "available": foundProduct.Stock})
 		return
 	}
-	c.IndentedJSON(http.StatusOK, gin.H{"message": message.String(), "new_stock": product.Stock})
+	c.JSON(http.StatusOK, gin.H{"message": message.String(), "new_stock": product.Stock})
 }
 
 // GetProductStock returns only the stock information of a single product.
@@ -420,7 +421,7 @@ func ModifyStock(c *gin.Context) {
 func GetProductStock(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "the requested uuid is not a valid uuid"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "the requested uuid is not a valid uuid"})
 		return
 	}
 
@@ -429,14 +430,14 @@ func GetProductStock(c *gin.Context) {
 	err = database.ProductCollection().FindOne(c.Request.Context(), bson.M{"product_id": id}).Decode(&product)
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			c.IndentedJSON(http.StatusNotFound, gin.H{"message": "requested product not found"})
+			c.JSON(http.StatusNotFound, gin.H{"message": "requested product not found"})
 		} else {
-			c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		}
 		return
 	}
 
-	c.IndentedJSON(http.StatusOK, models.NewStockInfo(product))
+	c.JSON(http.StatusOK, models.NewStockInfo(product))
 }
 
 // GetAllStock returns the stock information of every product.
@@ -444,13 +445,13 @@ func GetProductStock(c *gin.Context) {
 func GetAllStock(c *gin.Context) {
 	cursor, err := database.ProductCollection().Find(c.Request.Context(), bson.M{})
 	if err != nil {
-		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
 	var products []models.Product
 	if err = cursor.All(c.Request.Context(), &products); err != nil {
-		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -459,7 +460,7 @@ func GetAllStock(c *gin.Context) {
 		stocks = append(stocks, models.NewStockInfo(product))
 	}
 
-	c.IndentedJSON(http.StatusOK, gin.H{
+	c.JSON(http.StatusOK, gin.H{
 		"thresholds": gin.H{
 			"low":      models.LowStockThreshold,
 			"critical": models.CriticalStockThreshold,
@@ -481,13 +482,13 @@ func GetLowStock(c *gin.Context) {
 		options.Find().SetSort(bson.D{{"stock", 1}}),
 	)
 	if err != nil {
-		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
 	var products []models.Product
 	if err = cursor.All(c.Request.Context(), &products); err != nil {
-		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -496,310 +497,11 @@ func GetLowStock(c *gin.Context) {
 		stocks = append(stocks, models.NewStockInfo(product))
 	}
 
-	c.IndentedJSON(http.StatusOK, gin.H{
+	c.JSON(http.StatusOK, gin.H{
 		"thresholds": gin.H{
 			"low":      models.LowStockThreshold,
 			"critical": models.CriticalStockThreshold,
 		},
 		"stocks": stocks,
 	})
-}
-
-func SearchProducts(c *gin.Context) {
-	query := strings.TrimSpace(c.Query("q"))
-
-	if len([]rune(query)) < 2 {
-		c.IndentedJSON(
-			http.StatusBadRequest,
-			gin.H{"message": "search query must contain at least two characters"},
-		)
-		return
-	}
-
-	cursor, err := database.ProductCollection().Find(
-		c.Request.Context(),
-		bson.M{},
-	)
-	if err != nil {
-		c.IndentedJSON(
-			http.StatusInternalServerError,
-			gin.H{"error": err.Error()},
-		)
-		return
-	}
-
-	var products []models.Product
-
-	if err = cursor.All(c.Request.Context(), &products); err != nil {
-		c.IndentedJSON(
-			http.StatusInternalServerError,
-			gin.H{"error": err.Error()},
-		)
-		return
-	}
-
-	type scoredProduct struct {
-		Product models.Product
-		Score   int
-	}
-
-	ranked := make([]scoredProduct, 0)
-
-	for _, product := range products {
-		score, matches := productSearchScore(product, query)
-
-		if matches {
-			ranked = append(ranked, scoredProduct{
-				Product: product,
-				Score:   score,
-			})
-		}
-	}
-
-	sort.SliceStable(ranked, func(i, j int) bool {
-		return ranked[i].Score < ranked[j].Score
-	})
-
-	if len(ranked) > 30 {
-		ranked = ranked[:30]
-	}
-
-	results := make([]models.Product, 0, len(ranked))
-
-	for _, match := range ranked {
-		results = append(results, match.Product)
-	}
-
-	c.IndentedJSON(http.StatusOK, results)
-}
-
-type searchableField struct {
-	Value   string
-	Penalty int
-}
-
-func productSearchScore(product models.Product, query string) (int, bool) {
-	normalizedQuery := normalizeSearchText(query)
-
-	if normalizedQuery == "" {
-		return 0, false
-	}
-
-	categoryValue := getProductCategoryValue(product)
-
-	fields := []searchableField{
-		{Value: product.Name, Penalty: 0},
-		{Value: categoryValue, Penalty: 15},
-		{Value: product.Description, Penalty: 30},
-	}
-
-	bestScore := 1_000_000
-	matched := false
-
-	for _, field := range fields {
-		normalizedField := normalizeSearchText(field.Value)
-
-		if normalizedField == "" {
-			continue
-		}
-
-		if normalizedField == normalizedQuery {
-			score := field.Penalty
-			if score < bestScore {
-				bestScore = score
-			}
-			matched = true
-			continue
-		}
-
-		if strings.Contains(normalizedField, normalizedQuery) {
-			score := field.Penalty + 5
-			if score < bestScore {
-				bestScore = score
-			}
-			matched = true
-			continue
-		}
-
-		tokenScore, tokenMatches := fuzzyTokenScore(normalizedField, normalizedQuery)
-		if tokenMatches {
-			score := field.Penalty + tokenScore
-			if score < bestScore {
-				bestScore = score
-			}
-			matched = true
-		}
-	}
-
-	return bestScore, matched
-}
-
-func getProductCategoryValue(product models.Product) string {
-	if len(product.Categories) > 0 {
-		if product.Categories[0].Slug != "" {
-			return product.Categories[0].Slug
-		}
-
-		if product.Categories[0].Name != "" {
-			return product.Categories[0].Name
-		}
-	}
-	return ""
-}
-
-func normalizeSearchText(value string) string {
-	value = strings.ToLower(strings.TrimSpace(value))
-
-	replacer := strings.NewReplacer(
-		"ä", "ae",
-		"ö", "oe",
-		"ü", "ue",
-		"ß", "ss",
-		"'", "",
-		"`", "",
-		"´", "",
-		"-", " ",
-		"_", " ",
-		".", " ",
-		",", " ",
-		":", " ",
-		";", " ",
-		"/", " ",
-		"\\", " ",
-		"&", " und ",
-	)
-
-	value = replacer.Replace(value)
-
-	return strings.Join(strings.Fields(value), " ")
-}
-
-func fuzzyTokenScore(normalizedField string, normalizedQuery string) (int, bool) {
-	queryTokens := strings.Fields(normalizedQuery)
-	fieldTokens := strings.Fields(normalizedField)
-
-	if len(queryTokens) == 0 || len(fieldTokens) == 0 {
-		return 0, false
-	}
-
-	totalScore := 0
-
-	for _, queryToken := range queryTokens {
-		bestTokenScore := 1_000_000
-		tokenMatched := false
-
-		for _, fieldToken := range fieldTokens {
-			if fieldToken == queryToken {
-				bestTokenScore = 0
-				tokenMatched = true
-				break
-			}
-
-			if strings.Contains(fieldToken, queryToken) || strings.Contains(queryToken, fieldToken) {
-				score := 5 + abs(len(fieldToken)-len(queryToken))
-				if score < bestTokenScore {
-					bestTokenScore = score
-				}
-				tokenMatched = true
-				continue
-			}
-
-			distance := levenshteinDistance(queryToken, fieldToken)
-			maxDistance := allowedDistance(queryToken)
-
-			if distance <= maxDistance {
-				score := 10 + distance*10
-				if score < bestTokenScore {
-					bestTokenScore = score
-				}
-				tokenMatched = true
-			}
-		}
-
-		if !tokenMatched {
-			return 0, false
-		}
-
-		totalScore += bestTokenScore
-	}
-
-	return totalScore, true
-}
-
-func allowedDistance(value string) int {
-	length := len([]rune(value))
-
-	if length <= 2 {
-		return 0
-	}
-
-	if length <= 4 {
-		return 1
-	}
-
-	if length <= 7 {
-		return 2
-	}
-
-	return 3
-}
-
-func levenshteinDistance(a string, b string) int {
-	aRunes := []rune(a)
-	bRunes := []rune(b)
-
-	if len(aRunes) == 0 {
-		return len(bRunes)
-	}
-
-	if len(bRunes) == 0 {
-		return len(aRunes)
-	}
-
-	previousRow := make([]int, len(bRunes)+1)
-	currentRow := make([]int, len(bRunes)+1)
-
-	for j := range previousRow {
-		previousRow[j] = j
-	}
-
-	for i, aRune := range aRunes {
-		currentRow[0] = i + 1
-
-		for j, bRune := range bRunes {
-			insertCost := currentRow[j] + 1
-			deleteCost := previousRow[j+1] + 1
-			replaceCost := previousRow[j]
-
-			if aRune != bRune {
-				replaceCost++
-			}
-
-			currentRow[j+1] = minimum(insertCost, deleteCost, replaceCost)
-		}
-
-		previousRow, currentRow = currentRow, previousRow
-	}
-
-	return previousRow[len(bRunes)]
-}
-
-func minimum(values ...int) int {
-	smallest := values[0]
-
-	for _, value := range values[1:] {
-		if value < smallest {
-			smallest = value
-		}
-	}
-
-	return smallest
-}
-
-func abs(value int) int {
-	if value < 0 {
-		return -value
-	}
-
-	return value
 }

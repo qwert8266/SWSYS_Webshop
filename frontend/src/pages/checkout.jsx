@@ -4,7 +4,9 @@ import './checkout.css';
 import { useAuth } from "../context/authContext";
 import { useCart } from "../context/cartContext";
 import orderApi from '../api/orderApi';
-import { formatEuro } from "../utils/productHelpers";
+import { formatEuro, getOfferPricing } from "../utils/productHelpers";
+import OfferBadge from '../components/offerBadge';
+import ProductPrice from '../components/productPrice';
 
 
 
@@ -330,8 +332,9 @@ function Checkout(){
 
                       <div className="flex-grow-1">
                         <h5>{item.name}</h5>
-                        <span>
-                          {formatEuro(item.price)}
+                        <OfferBadge product={item} />
+                        <span className="d-block">
+                          <ProductPrice product={item} showDiscount={false} />
                         </span>
                       </div>
                       
@@ -347,7 +350,7 @@ function Checkout(){
                         className="text-nowrap text-end flex-shrink-0" 
                         style={{ width: "55px"}} /* 90 px*/
                       >
-                        {formatEuro(item.price * item.quantity)}
+                        {formatEuro(getOfferPricing(item).currentPrice * item.quantity)}
                       </strong>
                     </article>
                   ))}   

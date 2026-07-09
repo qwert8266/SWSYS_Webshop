@@ -282,7 +282,7 @@ func GetStatistics(c *gin.Context) {
 		AverageUserRevenue: averageUserRevenue,
 	}
 
-	c.IndentedJSON(http.StatusOK, statistics)
+	c.JSON(http.StatusOK, statistics)
 }
 
 // GetOrders returns all Orders from MongoDB
@@ -291,14 +291,14 @@ func GetOrders(c *gin.Context) {
 
 	cursor, err := orderCollection.Find(c.Request.Context(), bson.M{})
 	if err != nil {
-		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
 	var orders []models.Order
 
 	if err = cursor.All(c.Request.Context(), &orders); err != nil {
-		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -307,23 +307,23 @@ func GetOrders(c *gin.Context) {
 		orders = []models.Order{}
 	}
 
-	c.IndentedJSON(http.StatusOK, orders)
+	c.JSON(http.StatusOK, orders)
 
 }
 
-// UpdateProduct allows modification of existing products values
+// UpdateOrder allows modification of existing orders
 func UpdateOrder(c *gin.Context) {
 	orderID, err := uuid.Parse(c.Param("id"))
 	fmt.Println("OrderID aus URL:", orderID)
 	if err != nil {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error parsing order id": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error parsing order id": err.Error()})
 		return
 	}
 	var updatedOrderData models.Order
 
 	//parsing all incoming data
 	if err := c.BindJSON(&updatedOrderData); err != nil {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error parsing order data": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error parsing order data": err.Error()})
 		return
 	}
 
@@ -344,20 +344,20 @@ func UpdateOrder(c *gin.Context) {
 	)
 
 	if err != nil {
-		c.IndentedJSON(http.StatusInternalServerError, gin.H{
+		c.JSON(http.StatusInternalServerError, gin.H{
 			"error updating order": err.Error(),
 		})
 		return
 	}
 
 	if result.MatchedCount == 0 {
-		c.IndentedJSON(http.StatusNotFound, gin.H{
+		c.JSON(http.StatusNotFound, gin.H{
 			"message": "order not found",
 		})
 		return
 	}
 
-	c.IndentedJSON(http.StatusOK, gin.H{
+	c.JSON(http.StatusOK, gin.H{
 		"message": "order updated successfully",
 	})
 

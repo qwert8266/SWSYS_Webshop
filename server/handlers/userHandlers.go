@@ -32,36 +32,36 @@ func GetUsers(c *gin.Context) {
 
 	cursor, err := users.Find(c.Request.Context(), bson.M{})
 	if err != nil {
-		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
 	var user []models.User
 
 	if err = cursor.All(c.Request.Context(), &user); err != nil {
-		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.IndentedJSON(http.StatusOK, user)
+	c.JSON(http.StatusOK, user)
 }
 
 func GetUserByID(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "the requested uuid is not a valid uuid"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "the requested uuid is not a valid uuid"})
 		return
 	}
 
 	user, err := findUserByID(c, id)
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			c.IndentedJSON(http.StatusNotFound, gin.H{"message": "requested user not found"})
+			c.JSON(http.StatusNotFound, gin.H{"message": "requested user not found"})
 		} else {
-			c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		}
 		return
 	}
-	c.IndentedJSON(http.StatusOK, user)
+	c.JSON(http.StatusOK, user)
 }
 
 func GetCurrentUser(c *gin.Context) {
@@ -134,7 +134,7 @@ func AddNewUser(c *gin.Context) {
 
 	// the new user is added to the list of users
 	if _, err := database.UserCollection().InsertOne(c.Request.Context(), newUser); err != nil {
-		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -150,13 +150,13 @@ func AddNewUser(c *gin.Context) {
 func ModifyUser(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "the requested uuid is not a valid uuid"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "the requested uuid is not a valid uuid"})
 		return
 	}
 
 	var incomingUserData models.RegisterRequest
 	if err := c.BindJSON(&incomingUserData); err != nil {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error parsing user data": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error parsing user data": err.Error()})
 		return
 	}
 
@@ -218,27 +218,27 @@ func ModifyUser(c *gin.Context) {
 	).Decode(&updatedUser)
 
 	if errors.Is(err, mongo.ErrNoDocuments) {
-		c.IndentedJSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 		return
 	} else if err != nil {
-		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 	}
-	c.IndentedJSON(http.StatusOK, models.ToPublicUser(updatedUser))
+	c.JSON(http.StatusOK, models.ToPublicUser(updatedUser))
 }
 
 func DeleteUser(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error parsing user id": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error parsing user id": err.Error()})
 	}
 
 	result, err := database.UserCollection().DeleteOne(c.Request.Context(), bson.M{"id": id})
 	if err != nil {
-		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 	} else if result.DeletedCount == 0 {
-		c.IndentedJSON(http.StatusNotFound, gin.H{"message": "user not found"})
+		c.JSON(http.StatusNotFound, gin.H{"message": "user not found"})
 	} else {
-		c.IndentedJSON(http.StatusNoContent, nil)
+		c.JSON(http.StatusNoContent, nil)
 	}
 }
 
@@ -327,7 +327,6 @@ func buildAuthResponse(message string, user models.User) (models.AuthResponse, e
 
 func buildAddress(rr models.RegisterRequest) models.Address {
 
-	//TODO: verify address data
 	return models.Address{
 		Street:      strings.TrimSpace(rr.Street),
 		HouseNumber: strings.TrimSpace(rr.HouseNumber),
@@ -340,7 +339,7 @@ func buildAddress(rr models.RegisterRequest) models.Address {
 func generateHash(c *gin.Context, password string) (string, error) {
 	passwordHash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
-		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": "Password konnte nicht verarbeitet werden."})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Password konnte nicht verarbeitet werden."})
 		return "", err
 	}
 	return string(passwordHash), nil
@@ -381,20 +380,20 @@ func checkIncomingData(c *gin.Context, rr models.RegisterRequest) (models.Regist
 	// check email
 	normalizedEmail := strings.ToLower(strings.TrimSpace(rr.Email))
 	if !isEmailValid(normalizedEmail) {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Email ungültig"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Email ungültig"})
 		return rr, errors.New("email invalid")
 	}
 
 	// check password length
 	if len(rr.Password) < 8 {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Passwort mit mindestens 8 Zeichen erforderlich."})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Passwort mit mindestens 8 Zeichen erforderlich."})
 		return rr, errors.New("e-Mail und Passwort mit mindestens 8 Zeichen sind erforderlich")
 	}
 
 	// check customer type
 	rr.CustomerType = strings.TrimSpace(rr.CustomerType)
 	if rr.CustomerType != "private" && rr.CustomerType != "business" {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Ungüliger Kundentyp."})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Ungüliger Kundentyp."})
 		return rr, errors.New("invalid customer type")
 	}
 
@@ -402,14 +401,14 @@ func checkIncomingData(c *gin.Context, rr models.RegisterRequest) (models.Regist
 	rr.FirstName = strings.TrimSpace(rr.FirstName)
 	rr.LastName = strings.TrimSpace(rr.LastName)
 	if rr.FirstName == "" || rr.LastName == "" {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Vorname und Nachname sind erforderlich."})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Vorname und Nachname sind erforderlich."})
 		return rr, errors.New("no name given")
 	}
 
 	// check company name
 	rr.CompanyName = strings.TrimSpace(rr.CompanyName)
 	if rr.CustomerType == "business" && rr.CompanyName == "" {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Für ein Geschäftskonto ist der Unternehmensname erforderlich."})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Für ein Geschäftskonto ist der Unternehmensname erforderlich."})
 		return rr, errors.New("no company name given")
 	}
 	return rr, nil
@@ -418,7 +417,7 @@ func checkIncomingData(c *gin.Context, rr models.RegisterRequest) (models.Regist
 func UpdateUserRoleHandler(c *gin.Context) {
 	userID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "the requested uuid is not a valid uuid"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "the requested uuid is not a valid uuid"})
 		return
 	}
 
@@ -451,9 +450,9 @@ func UpdateUserRoleHandler(c *gin.Context) {
 	update := bson.M{"$set": bson.M{"role": roleUpdate.Role}}
 
 	if result, err := userCollection.UpdateOne(c.Request.Context(), bson.M{"id": userID}, update); err != nil {
-		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error updating user": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error updating user": err.Error()})
 	} else if result.MatchedCount == 0 {
-		c.IndentedJSON(http.StatusNotFound, gin.H{"message": "user not found"})
+		c.JSON(http.StatusNotFound, gin.H{"message": "user not found"})
 	} else {
 		c.JSON(http.StatusOK, gin.H{"message": "Role updated successfully"})
 	}
