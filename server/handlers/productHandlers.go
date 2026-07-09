@@ -170,23 +170,22 @@ func UpdateProduct(c *gin.Context) {
 		c.IndentedJSON(http.StatusBadRequest, gin.H{"error parsing product id": err.Error()})
 		return
 	}
-	var updatedProductData models.ProductData
 
-	//parsing all incoming data
-	if err := c.BindJSON(&updatedProductData); err != nil {
+	var incomingProduct models.ProductData
+	if err := json.Unmarshal([]byte(c.PostForm("data")), &incomingProduct); err != nil {
 		c.IndentedJSON(http.StatusBadRequest, gin.H{"error parsing product data": err.Error()})
 		return
 	}
 
-	validProductData, err := checkIncomingProductData(c, updatedProductData)
+	updatedProductData, err := checkIncomingProductData(c, incomingProduct)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
 	//trimming strings:
-	name := strings.TrimSpace(validProductData.Name)
-	description := strings.TrimSpace(validProductData.Description)
+	name := strings.TrimSpace(updatedProductData.Name)
+	description := strings.TrimSpace(updatedProductData.Description)
 
 	//updateOne() needs to be told how to modify the Document in the collection. (in this case using $set)
 	updatedProduct := bson.D{
@@ -241,11 +240,6 @@ func checkIncomingProductData(c *gin.Context, pd models.ProductData) (models.Pro
 		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Name ungültig"})
 		return pd, errors.New("name invalid")
 	}
-
-	//if ext := strings.ToLower(filepath.Ext(pd.Image)); ext != ".png" && ext != ".jpg" && ext != ".jpeg" {
-	//	c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Image ungültig"})
-	//	return pd, errors.New("image invalid")
-	//}
 
 	if pd.Price <= 0 {
 		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Preis ungültig"})
