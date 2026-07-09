@@ -89,6 +89,7 @@ func OrderCollection() *mongo.Collection {
 	return collection("orders")
 }
 
+func SalesCollection() *mongo.Collection { return collection("sales") }
 // CategoryCollection returns the category collection of the webshop database
 func CategoryCollection() *mongo.Collection {
 	return collection("categories")

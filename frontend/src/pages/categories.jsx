@@ -8,7 +8,7 @@ import ProductGrid from "../components/productGrid";
 import StockIndicator from "../components/stockIndicator";
 import { useStockMap } from "../hooks/useStockMap";
 import { getCategoryPresentation } from "../utils/categoryConfig";
-import { normalizeProduct } from '../utils/productHelpers';
+import { normalizeProduct, isOnOffer } from '../utils/productHelpers';
 
 
 function Category({ category: fixedCategory }){
@@ -40,34 +40,41 @@ function Category({ category: fixedCategory }){
             setLoadError("");
             setCategoryProducts([]);
 
-            try {
-                const [categoriesFromDatabase, productsFromDatabase] = await Promise.all([
-                    categoryApi.getCategories(),
-                    productApi.getProductsByCategory(requestedCategorySlug),
-                ]); 
+          
+           try {
+    const isOfferCategory = requestedCategorySlug === "angebote";
 
-                const selectedCategory = categoriesFromDatabase.find((databaseCategory) => {
-                    return databaseCategory.slug === requestedCategorySlug;
-                });
-                
-                if (!ignoreResult) {
+    const [categoriesFromDatabase, productsFromDatabase] = await Promise.all([
+        categoryApi.getCategories(),
+        isOfferCategory
+            ? productApi.getProducts()
+            : productApi.getProductsByCategory(requestedCategorySlug),
+    ]);
 
-                    setCategory(selectedCategory || {
-                        name: fixedCategory || categorySlug,
-                        slug: requestedCategorySlug
-                    })
+    const selectedCategory = categoriesFromDatabase.find((databaseCategory) => {
+        return databaseCategory.slug === requestedCategorySlug;
+    });
 
-                    setCategoryProducts((productsFromDatabase || []).map(normalizeProduct))
-                }
-            } catch (error) {
-                if (!ignoreResult) {
-                    setLoadError("Produkte konnten nicht aus der Datenbank geladen werden.");
-                }
-            } finally {
-                if (!ignoreResult) {
-                    setIsLoading(false);
-                }
-            }
+    if (!ignoreResult) {
+        setCategory(selectedCategory || {
+            name: fixedCategory || categorySlug,
+            slug: requestedCategorySlug
+        });
+
+        const normalizedProducts = (productsFromDatabase || []).map(normalizeProduct);
+        setCategoryProducts(
+            isOfferCategory ? normalizedProducts.filter(isOnOffer) : normalizedProducts
+        );
+    }
+} catch (error) {
+    if (!ignoreResult) {
+        setLoadError("Produkte konnten nicht aus der Datenbank geladen werden.");
+    }
+} finally {
+    if (!ignoreResult) {
+        setIsLoading(false);
+    }
+}
             
         }
         loadProducts();

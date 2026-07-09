@@ -8,7 +8,6 @@ import (
 	"github.com/qwert8266/SWSYS_Webshop/server/database"
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
-
 type Product struct {
 	ProductID   uuid.UUID  `json:"product_id" bson:"product_id"`
 	Name        string     `json:"name" bson:"name"`
@@ -16,10 +15,12 @@ type Product struct {
 	Images      []string   `json:"images" bson:"images"` // multiple paths to images can be stored in a string array
 	Price       uint32     `json:"price" bson:"price"`   //price is stored in Cents
 	Stock       uint32     `json:"stock" bson:"stock"`
+	Discount    *int8      `json:"discount" bson:"discount,omitempty"`
 	Categories  []Category `json:"categories" bson:"categories"`
 	CreatedAt   time.Time  `json:"created_at" bson:"created_at"`
 	UpdatedAt   time.Time  `json:"updated_at" bson:"updated_at"`
 }
+
 
 type ProductData struct {
 	Name          string     `json:"name"`
