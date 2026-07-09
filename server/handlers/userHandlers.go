@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
@@ -26,6 +27,27 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 	"golang.org/x/crypto/bcrypt"
 )
+
+func AddOwnerIfNotExist() (string, error) {
+	result := database.UserCollection().FindOne(context.TODO(), bson.M{"role": "owner"})
+	if result.Err() != nil {
+		if !errors.Is(result.Err(), mongo.ErrNoDocuments) {
+			// return the error
+			return "", result.Err()
+		}
+		// if no owner exists, add one
+		owner := models.CreateOwner(os.Getenv("OWNER_PASSWORD"))
+		_, err := database.UserCollection().InsertOne(context.TODO(), owner)
+		if err != nil {
+			return "", err
+		}
+
+		return "owner created successfully", nil
+	}
+
+	// if the owner already exists, return nothing
+	return "", nil
+}
 
 func GetUsers(c *gin.Context) {
 	users := database.UserCollection()

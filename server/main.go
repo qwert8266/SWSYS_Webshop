@@ -7,6 +7,7 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/qwert8266/SWSYS_Webshop/server/database"
+	"github.com/qwert8266/SWSYS_Webshop/server/handlers"
 	"github.com/qwert8266/SWSYS_Webshop/server/routes"
 )
 
@@ -17,7 +18,7 @@ func main() {
 	defer database.DisconnectDB(database.DB)
 
 	// add owner as user to the db
-	result, err := database.AddOwnerIfNotExist()
+	result, err := handlers.AddOwnerIfNotExist()
 	if err != nil {
 		fmt.Println(err)
 	}
