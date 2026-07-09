@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // RegisterRequest matches the form fields sent by frontend/src/pages/register.jsx
@@ -92,7 +93,7 @@ type PublicUser struct {
 	CompanyName        string      `json:"companyName,omitempty"`
 	Address            Address     `json:"address"`
 	Email              string      `json:"email"`
-  Role               string      `json:"role"`
+	Role               string      `json:"role"`
 	FavoriteProductIDs []uuid.UUID `json:"favoriteProductIds"`
 	WishlistProductIDs []uuid.UUID `json:"wishlistProductIds"`
 	CreatedAt          time.Time   `json:"createdAt"`
@@ -129,11 +130,17 @@ func ToPublicUser(user User) PublicUser {
 	}
 }
 
-func NormalizeProductIDs(ids []uuid.UUID) []uuid.UUID {
-	if ids == nil {
-		return []uuid.UUID{}
-	}
-	return ids
-}
+var AllowedRoles = []string{"customer", "worker", "admin", "owner"}
 
-var AllowedRoles = []string{"admin", "customer", "worker", "user"}
+func CreateOwner(password string) User {
+
+	passwordHash, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+
+	return User{
+		ID:           uuid.New(),
+		CustomerType: "owner",
+
+		Email:        "owner@webshop.de",
+		PasswordHash: string(passwordHash),
+	}
+}

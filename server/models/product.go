@@ -30,6 +30,13 @@ type StockOperation struct {
 	Value int32 `json:"value"`
 }
 
+func NormalizeProductIDs(ids []uuid.UUID) []uuid.UUID {
+	if ids == nil {
+		return []uuid.UUID{}
+	}
+	return ids
+}
+
 // Central stock thresholds. These are the single source of truth --
 // the frontend receives the resulting status via the stock endpoints
 // instead of hardcoding its own thresholds.
