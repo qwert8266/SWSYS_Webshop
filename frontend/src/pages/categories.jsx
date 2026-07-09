@@ -7,7 +7,7 @@ import ProductGrid from "../components/productGrid";
 import StockIndicator from "../components/stockIndicator";
 import { useStockMap } from "../hooks/useStockMap";
 import { getCategoryConfig } from "../utils/categoryConfig";
-import { normalizeProduct } from '../utils/productHelpers';
+import { normalizeProduct, isOnOffer } from '../utils/productHelpers';
 
 /*export const biere = [
   { name: "Becks", price: "14.99", rating: 3.8, img: "becks.png" },
@@ -51,10 +51,19 @@ function Category({ category: fixedCategory }){
             setCategoryProducts([]);
 
             try {
-                const productsFromDatabase = await productApi.getProductsByCategory(selectedCategory.dbCategory); 
-                
+                /* "Angebote" ist keine echte DB-Kategorie: Das Backend markiert
+                   Angebotsprodukte über das discount-Feld (Sale-Feature). */
+                const isOfferCategory = selectedCategory.slug === "angebote";
+
+                const productsFromDatabase = isOfferCategory
+                    ? await productApi.getProducts()
+                    : await productApi.getProductsByCategory(selectedCategory.dbCategory);
+
                 if (!ignoreResult) {
-                    setCategoryProducts(productsFromDatabase.map(normalizeProduct))
+                    const normalizedProducts = productsFromDatabase.map(normalizeProduct);
+                    setCategoryProducts(
+                        isOfferCategory ? normalizedProducts.filter(isOnOffer) : normalizedProducts
+                    );
                 }
             } catch (error) {
                 if (!ignoreResult) {

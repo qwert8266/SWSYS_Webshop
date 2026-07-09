@@ -4,7 +4,7 @@ import { NavLink } from "react-router-dom";
 import productApi from "../api/productApi";
 import ProductGrid from "../components/productGrid";
 import { CATEGORY_CONFIGS } from "../utils/categoryConfig";
-import { normalizeProduct } from "../utils/productHelpers";
+import { normalizeProduct, isOnOffer } from "../utils/productHelpers";
 
 import "./categories.css";
 import "./sortiment.css";
@@ -50,7 +50,7 @@ function Sortiment() {
   }, []);
 
   const featuredProducts = useMemo(
-    () => products.filter((product) => product.category === "angebote"),
+    () => products.filter(isOnOffer),
     [products]
   );
 
