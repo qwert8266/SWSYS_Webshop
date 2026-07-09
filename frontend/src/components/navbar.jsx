@@ -378,7 +378,7 @@ function Navbar() {
                       <div className="cart-preview-items">
                         {items.slice(0, 3).map((item)=>(
                           <div className="cart-preview-item" key={item.productId || item.id}>
-                            <img src={`/img/product_images/${item.image}`} alt={item.name}/>
+                            <img src={getProductImagePath(item)} alt={item.name}/>
 
                             <div>
                               <strong>{item.name}</strong>
