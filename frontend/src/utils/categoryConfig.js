@@ -15,7 +15,7 @@ export const CATEGORY_CONFIGS = [
     name: "Wein & Sekt",
     slug: "wein-sekt",
     dbCategory: "wein",
-    banner: { png: "wein_top.png", sentence: "Wein in meinen Mund!" },
+    banner: { png: "wein_top2.png", sentence: "Wein in meinen Mund!" },
   },
   {
     name: "Spirituosen",
@@ -58,18 +58,18 @@ export const CATEGORY_CONFIGS_PRESENTATION = {
     banner: { png: "bier_top2.png", sentence: "Bier geht doch immer!" },
   },
   "wein-sekt": {
-    banner: { png: "wein_top.png", sentence: "Wein in meinen Mund!" },
+    banner: { png: "wein_top2.png", sentence: "Wein in meinen Mund!" },
   },
   spirituosen: {
     banner: { png: "schnaps_top.png", sentence: "Ich fühl mich Osborne!" },
   },
-  softdrinks: { 
+  softgetraenke: { 
     banner: { png: "softdrinks_top.png", sentence: "Erfrischende Softgetränke" },
   },
   wasser: {
     banner: { png: "water_top.png", sentence: "Wasser für jeden Tag" },
   },
-  "kaffe-tee": {
+  "kaffee-tee": {
     banner: { png: "kaffee_banner.png", sentence: "Kaffee und Tee für deine Pause" },
   },
 };
