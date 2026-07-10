@@ -26,7 +26,7 @@ export const CATEGORY_CONFIGS = [
   { name: "Softgetränke",
     slug: "softgetraenke",
     dbCategory: "softdrinks",
-    banner: { png: "", sentence: "Erfrischende Softgetränke" },
+    banner: { png: "softdrinks_top.png", sentence: "Erfrischende Softgetränke" },
   },
   {
     name: "Wasser",

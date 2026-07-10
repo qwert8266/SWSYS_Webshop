@@ -60,7 +60,7 @@ function Register() {
 
     try {
       await register(formData);
-      navigate("/account");
+      navigate("/account-settings");
     } catch (err) {
       setError(err.message);
     } finally {
