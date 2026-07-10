@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useMemo, useRef, useState } from 
 import cartApi from "../api/cartApi";
 import productApi from "../api/productApi";
 import { useAuth } from "./authContext";
-import { getOfferPricing } from "../utils/productHelpers";
+import { getOfferPricing, normalizeProduct } from "../utils/productHelpers";
 
 const CartContext = createContext(null);
 const CART_STORAGE_KEY = "schmidt-shopping-cart";
@@ -41,7 +41,7 @@ function clearGuestCart(items) {
   try {
     window.localStorage.removeItem(CART_STORAGE_KEY);
   } catch (error) {
-    console.warm("Loakler Warenkorb konnte nicht gelöscht werden", error);
+    console.warn("Loakler Warenkorb konnte nicht gelöscht werden", error);
   }
 }
 
@@ -65,7 +65,7 @@ function getCartQuantity(quantity) {
  * Erstellt ein vollständig nutzbares Frontend-Warenkorb 
 */
 function toClientCartItem(product, quantity) {
-  const normalizedProduct = product?.id ? product : normalizedProduct(product);
+  const normalizedProduct = product?.id ? product : normalizeProduct(product);
   const productId = getCartProductId(normalizedProduct);
   const cartQuantity = getCartQuantity(quantity);
 

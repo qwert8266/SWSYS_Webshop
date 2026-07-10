@@ -29,7 +29,7 @@ class CartApi extends BaseApi {
       accessToken,
       body: {
         items: items.map((item) => ({
-          productID: item.product_id,
+          productID: item.product_id || item.productID || item.productId,
           quantity: item.quantity,
         })),
       },

@@ -53,7 +53,7 @@ function ShoppingCart() {
   return (
 
     <section className="container-xl my-4">
-      <div class="row g-4">
+      <div className="row g-4">
         {/* Linke Seite <Warenkorb-Produkte> */}
         <div className="col-12 col-lg-8">
           <div 

@@ -12,6 +12,7 @@ import (
 	"github.com/qwert8266/SWSYS_Webshop/server/models"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 func GetMyCart(c *gin.Context) {
@@ -26,13 +27,20 @@ func GetMyCart(c *gin.Context) {
 	err := database.CartCollection().FindOne(c.Request.Context(), bson.M{"owner_id": claims.UserID}).Decode(&cart)
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			c.IndentedJSON(http.StatusNotFound, gin.H{"message": "user has no cart yet"})
-		} else {
-			c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			c.IndentedJSON(http.StatusNotFound, models.Cart{
+				OwnerID:   claims.UserID,
+				Items:     []models.CartItem{},
+				UpdatedAt: time.Now(),
+			}) //gin.H{"message": "user has no cart yet"}
 		}
-	} else {
-		c.IndentedJSON(http.StatusOK, cart)
+
+		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 	}
+
+	if cart.Items == nil {
+		cart.Items = []models.CartItem{}
+	}
+	c.IndentedJSON(http.StatusOK, cart)
 }
 
 func UpdateCart(c *gin.Context) {
@@ -56,6 +64,29 @@ func UpdateCart(c *gin.Context) {
 		UpdatedAt: time.Now(),
 	}
 
+	filter := bson.M{"owner_id": claims.UserID}
+	update := bson.M{
+		"$set": bson.M{
+			"owner_id":   cart.OwnerID,
+			"items":      cart.Items,
+			"updated_at": cart.UpdatedAt,
+		},
+	}
+
+	_, err := database.CartCollection().UpdateOne(
+		c.Request.Context(),
+		filter,
+		update,
+		options.UpdateOne().SetUpsert(true),
+	)
+	if err != nil {
+		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.IndentedJSON(http.StatusOK, cart)
+	/**
+
 	err := database.CartCollection().FindOneAndReplace(c.Request.Context(), bson.M{"owner_id": claims.UserID}, &cart)
 	if err != nil {
 		if errors.Is(err.Err(), mongo.ErrNoDocuments) {
@@ -66,6 +97,7 @@ func UpdateCart(c *gin.Context) {
 	} else {
 		c.IndentedJSON(http.StatusOK, cart)
 	}
+	*/
 }
 
 func DeleteCart(c *gin.Context) {
