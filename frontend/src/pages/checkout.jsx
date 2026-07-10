@@ -4,12 +4,14 @@ import './checkout.css';
 import { useAuth } from "../context/authContext";
 import { useCart } from "../context/cartContext";
 import orderApi from '../api/orderApi';
-import { formatEuro, getOfferPricing } from "../utils/productHelpers";
+import { formatEuro, getOfferPricing, getProductImagePath } from "../utils/productHelpers";
 import OfferBadge from '../components/offerBadge';
 import ProductPrice from '../components/productPrice';
 
 
-
+/**
+ * Erstellt die vorausgefüllten Checkout-Daten aus dem angemeldeten Benutzerkonto  
+ */
 function buildPersonalData(user) {
   const address = user?.address || {};
 
@@ -29,30 +31,11 @@ function buildPersonalData(user) {
 }
 
 function Checkout(){
-    /*const [personalData, setPersonalData] = useState({
-        salutation: "Herr",
-        firstName: "Weyles",
-        lastName: "Papst",
-        
-        street: "Geile Straße",
-        houseNumber: "420",
-        zipCode: "28282",
-        city: "Bremen",
-        country: "Deutschland",
-
-        email: "weyles.papst@gmail.com",
-        phone: "0173 93643783",
-    
-        paymentMethod: "PayPal",
-        delivery: "Premium"
-    });
-    */
-    
   const { user, accessToken } = useAuth();
-  const { items,totalQuantity, totalPrice, clearCart, } = useCart();
+  const { items,totalQuantity, totalPrice, clearCart, isCartLoading, cartError } = useCart();
 
   const [personalData, setPersonalData] = useState(() => buildPersonalData(user));
-  const [editData, setEditData] =useState(() => buildPersonalData(user));
+  const [editData, setEditData] = useState(() => buildPersonalData(user));
   const [showPlaintextBox, setShowPlaintextBox] = useState(true);
   const [showInputBoxes, setShowInputBoxes] = useState(false);
   const [showSuccessfulOrderScreen, setShowSuccessfulOrderScreen] = useState(false);
@@ -73,8 +56,11 @@ function Checkout(){
     setRechnung(nextPersonalData.paymentMethod === "Rechnung");
   }, [user]);
 
-
-  async function handlePlaceOrder() {
+  /**
+   * Sendet die Bestellung mit den aktuellen Warenkorbposition an das Backend
+   * Nach erfolgreicher Bestellug wird der Warenkorb über den CartContext geleert
+   */
+  async function handlePlaceOrder(selectedPaymentMethod) {
     setSubmitError("");
 
     if (!accessToken) {
@@ -87,6 +73,10 @@ function Checkout(){
       return;
     }
 
+    const paymentMethod = selectedPaymentMethod || personalData.paymentMethod || "Rechnung";
+
+    // Für die Bestellung werden nut Produkt-ID und Menge übertragen
+    // Preise, Bestand und weitere Produktdaten werden serverseitig geprüft
     const orderData = {
       items: items.map((item) => ({
         product_id:  item.product_id,
@@ -99,7 +89,7 @@ function Checkout(){
         city: personalData.city,
         country: personalData.country,
       },
-      paymentMethod: personalData.paymentMethod,
+      paymentMethod,
     };
 
     try {
@@ -109,6 +99,7 @@ function Checkout(){
       setShowInputBoxes(false);
       setShowPlaintextBox(false);
       setShowSuccessfulOrderScreen(true);
+      // Nach Erfolgreicher Bestellung wird auch der backendgespeicherte Warenkorb geleert
       clearCart();
 
     } catch (error) {
@@ -116,6 +107,14 @@ function Checkout(){
     } finally {
       setIsSubmitting(false);
     }
+  }
+
+  if (isCartLoading) {
+    return (
+      <div className='successful_order'>
+        <label className='success_label'>Warenkorb wird geladen...</label>
+      </div>
+    );
   }
 
   // Beim Bezahlen, aber der Warenkorb war leer
@@ -147,6 +146,8 @@ function Checkout(){
                 </div>
 
                 {submitError && <p className="text-danger align-items-center">{submitError}</p>}
+
+                {cartError && <p className='text-danger align-items-center'>{cartError}</p>}
 
                 {/* Lieferdaten */}
                 {showPlaintextBox &&
@@ -180,7 +181,7 @@ function Checkout(){
                         className='blue_button' 
                         type="button"
                         disabled={isSubmitting}
-                        onClick={(e) => {setCard(false); setPayPal(false); setRechnung(true); }, handlePlaceOrder}
+                        onClick={(e) => {setCard(false); setPayPal(false); setRechnung(true); handlePlaceOrder("Rechnung"); }}
                       >
                         {isSubmitting ? "Bestellung wird gesendet..." : "Jetzt bestellen"}
                       </button>
@@ -189,7 +190,7 @@ function Checkout(){
                         className='btn btn-payment btn-paypal'
                         type="button"
                         disabled={isSubmitting}
-                        onClick={(e) => {setCard(false); setPayPal(true); setRechnung(false); }, handlePlaceOrder}
+                        onClick={(e) => {setCard(false); setPayPal(true); setRechnung(false); handlePlaceOrder("PayPal"); }}
                       >
                         <img src="/img/PayPal.svg" alt="PayPal" />
                       </button>
@@ -198,13 +199,10 @@ function Checkout(){
                         className='btn btn-payment btn-sepa'
                         type="button"
                         disabled={isSubmitting}
-                        onClick={(e) => {setCard(true); setPayPal(false); setRechnung(false); }, handlePlaceOrder}
+                        onClick={(e) => {setCard(true); setPayPal(false); setRechnung(false); handlePlaceOrder("SEPA") }}
                       >
                         <img src="/img/sepa-lastschrift-logo.svg" alt="SEPA Lastschrift" />
                       </button>
-
-                      
-                      
                     </div>
                   </div>
                 }
@@ -325,7 +323,7 @@ function Checkout(){
                     >
                       <img
                         className="rounded-3 object-fit-contain flex-shrink-0" 
-                        src={"/img/product_images/" + item.image}
+                        src={getProductImagePath(item)} //{"/img/product_images/" + item.image} 
                         style={{ width: "95px", height: "95px"}}
                         alt={item.name}
                       />
