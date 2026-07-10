@@ -164,7 +164,7 @@ function OrderManagement(){
                             <label className='fs-5' style={{width: "150px"}}>
                                 {users[order.userId]?.firstName}
                                 {" "}
-                                {users[order.userId]?.lastName}
+                                {users[order.userId]?.lastname}
                             </label>
                             <label className='fs-5 text-center' style={{width: "100px"}}>{totalItems(order.items)}</label>
                             <label className='fs-5 text-center' style={{width: "120px"}}>{formatEuro(order.totalPrice)}</label>

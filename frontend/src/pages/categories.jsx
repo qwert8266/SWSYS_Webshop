@@ -4,28 +4,26 @@ import { useState, useEffect } from 'react';
 
 import productApi from "../api/productApi";
 import categoryApi from "../api/categoryApi";
+import saleApi from "../api/saleApi";
 import ProductGrid from "../components/productGrid";
-import StockIndicator from "../components/stockIndicator";
 import { useStockMap } from "../hooks/useStockMap";
 import { getCategoryPresentation } from "../utils/categoryConfig";
-import { normalizeProduct } from '../utils/productHelpers';
+import { normalizeProduct, isOnOffer, getSaleBannerPath } from '../utils/productHelpers';
 
 
 function Category({ category: fixedCategory }){
     const { categorySlug } = useParams();
-    
-    // Kategorie kommt aus der Route-Komponente oder aus der URL
     const requestedCategorySlug = fixedCategory || categorySlug;
     
     const [category, setCategory] = useState(null);
     const [categoryProducts, setCategoryProducts] = useState([]);
+    const [sales, setSales] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [loadError, setLoadError] = useState("");
-    // Bestände kommen gesammelt vom Stock-Endpunkt, nicht aus der Produkt-Response
     const stockMap = useStockMap();
 
     const categoryPresentation = getCategoryPresentation(requestedCategorySlug);
-
+    const isOfferCategory = requestedCategorySlug === "angebote";
 
     useEffect(() => {
         let ignoreResult = false;
@@ -33,31 +31,41 @@ function Category({ category: fixedCategory }){
         async function loadProducts() {
             if (!requestedCategorySlug) {
                 setLoadError("Kategorien konnte nicht geladen werden");
+                
                 return;
             }
-            
+
             setIsLoading(true);
             setLoadError("");
             setCategoryProducts([]);
+            setSales([]);
 
             try {
-                const [categoriesFromDatabase, productsFromDatabase] = await Promise.all([
+                const productRequest = isOfferCategory
+                    ? productApi.getProducts()
+                    : productApi.getProductsByCategory(requestedCategorySlug);
+
+                const [categoriesFromDatabase, productsFromDatabase, salesFromDatabase] = await Promise.all([
                     categoryApi.getCategories(),
-                    productApi.getProductsByCategory(requestedCategorySlug),
-                ]); 
+                    productRequest,
+                    isOfferCategory ? saleApi.getSales() : Promise.resolve([]),
+                ]);
 
                 const selectedCategory = categoriesFromDatabase.find((databaseCategory) => {
                     return databaseCategory.slug === requestedCategorySlug;
                 });
-                
-                if (!ignoreResult) {
 
+                if (!ignoreResult) {
                     setCategory(selectedCategory || {
                         name: fixedCategory || categorySlug,
                         slug: requestedCategorySlug
-                    })
+                    });
 
-                    setCategoryProducts((productsFromDatabase || []).map(normalizeProduct))
+                    const normalizedProducts = (productsFromDatabase || []).map(normalizeProduct);
+                    setCategoryProducts(
+                        isOfferCategory ? normalizedProducts.filter(isOnOffer) : normalizedProducts
+                    );
+                    setSales(Array.isArray(salesFromDatabase) ? salesFromDatabase : []);
                 }
             } catch (error) {
                 if (!ignoreResult) {
@@ -68,25 +76,43 @@ function Category({ category: fixedCategory }){
                     setIsLoading(false);
                 }
             }
-            
         }
+
         loadProducts();
 
         return () => {
             ignoreResult = true;
         };
-    }, [categorySlug, fixedCategory, requestedCategorySlug]);
-
+    }, [categorySlug, fixedCategory, requestedCategorySlug, isOfferCategory]);
 
     return(
         <div className='category-page'>
             <div>
                 <div>
-                    <img 
-                        className='picture_top' 
-                        src={`/img/product_images/${categoryPresentation.banner.png}`} 
-                        alt={category?.name || requestedCategorySlug}
-                    />
+                    {isOfferCategory && sales.length > 0 ? (
+                        sales.map((sale) => {
+                            const bannerSrc = getSaleBannerPath(sale);
+
+                            if (!bannerSrc) {
+                                return null;
+                            }
+
+                            return (
+                                <img
+                                    key={sale.sale_id}
+                                    className='picture_top'
+                                    src={bannerSrc}
+                                    alt={`Angebot ${sale.discount} %`}
+                                />
+                            );
+                        })
+                    ) : (
+                        <img 
+                            className='picture_top' 
+                            src={`/img/product_images/${categoryPresentation.banner.png}`} 
+                            alt={category?.name || requestedCategorySlug}
+                        />
+                    )}
                 </div>
                 <div className='sentence_top'>{categoryPresentation.banner.sentence}</div>
                 <div className='sentence_below_top'>

@@ -39,7 +39,7 @@
 .nav-dropdown-link a:hover::before {
     width: 100%;
 }
-.nav-link.active  {
+.nav-dropdown-link.active  {
     color: #ab8d51;
 }
 

@@ -19,17 +19,13 @@ function Footer(){
               <FontAwesomeIcon icon={faBeerMugEmpty} className="me-2"></FontAwesomeIcon>
               Bier
             </NavLink>
-            <NavLink className="footer-link" to="/schnaps">
+            <NavLink className="footer-link" to="/spirituosen">
               <FontAwesomeIcon icon={faWhiskeyGlass} className="me-2"></FontAwesomeIcon>
-              Schnaps
+              Spirituosen
             </NavLink>
-            <NavLink className="footer-link" to="/wein">
+            <NavLink className="footer-link" to="/wein-sekt">
               <FontAwesomeIcon icon={faWineGlass} className="me-2"></FontAwesomeIcon>
-              Wein
-            </NavLink>
-            <NavLink className="footer-link" to="/veterano">
-              <FontAwesomeIcon icon={faWineBottle} className="me-2"></FontAwesomeIcon>
-              Veterano
+              Wein & Sekt
             </NavLink>
           </div>
           
@@ -42,9 +38,9 @@ function Footer(){
 
           <div className="footer-column">
             <p className="title" >Kontakt</p>
-            <NavLink className="footer-link" to="/jobs">Karriere</NavLink>
-            <NavLink className="footer-link" to="/fuck_you">Beschwerden</NavLink>
-            <NavLink className="footer-link" to="/kontaktformular">Kontaktformular</NavLink>
+            <NavLink className="footer-link" to="/contact">Karriere</NavLink>
+            <NavLink className="footer-link" to="/contact">Beschwerden</NavLink>
+            <NavLink className="footer-link" to="/contact">Großbestellung</NavLink>
             
           </div>
 
@@ -57,10 +53,6 @@ function Footer(){
             <NavLink className="footer-link" to="/facebook">
               <i className="bi bi-facebook me-2"></i>
               Facebook
-            </NavLink>
-            <NavLink className="footer-link" to="/onlyfans">
-              <i className="bi bi-person-arms-up me-2"></i>
-              OnlyFans
             </NavLink>
           </div>
 

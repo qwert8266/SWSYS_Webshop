@@ -40,6 +40,7 @@ func main() {
 	routes.RegisterUserRoutes(server.Group("/user"))
 	routes.RegisterProductRoutes(server.Group("/products"))
 	routes.RegisterOrderRoutes(server.Group("/order"))
+	routes.RegisterSaleRoutes(server.Group("/sales"))
 	routes.RegisterCategoryRoutes(server.Group("/category"))
 	routes.RegisterCartRoutes(server.Group("/cart"))
 	routes.RegisterContactRoutes(server.Group("/contact"))

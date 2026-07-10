@@ -89,6 +89,8 @@ func OrderCollection() *mongo.Collection {
 	return collection("orders")
 }
 
+func SalesCollection() *mongo.Collection { return collection("sales") }
+
 // CategoryCollection returns the category collection of the webshop database
 func CategoryCollection() *mongo.Collection {
 	return collection("categories")
@@ -100,26 +102,3 @@ func ContactRequestCollection() *mongo.Collection {
 }
 
 func CartCollection() *mongo.Collection { return collection("carts") }
-
-/**
-func AddOwnerIfNotExist() (string, error) {
-	result := UserCollection().FindOne(context.TODO(), bson.M{"role": "owner"})
-	if result.Err() != nil {
-		if !errors.Is(result.Err(), mongo.ErrNoDocuments) {
-			// return the error
-			return "", result.Err()
-		}
-		// if no owner exists, add one
-		owner := models.CreateOwner(os.Getenv("OWNER_PASSWORD"))
-		_, err := UserCollection().InsertOne(context.TODO(), owner)
-		if err != nil {
-			return "", err
-		}
-
-		return "owner created successfully", nil
-	}
-
-	// if the owner already exists, return nothing
-	return "", nil
-}
-*/

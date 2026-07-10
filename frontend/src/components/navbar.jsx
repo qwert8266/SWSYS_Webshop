@@ -4,7 +4,6 @@ import { useAuth } from "../context/authContext";
 import { useCart } from "../context/cartContext";
 import productApi from '../api/productApi';
 import categoryApi from '../api/categoryApi';
-import { getCategoryConfig, normalizeCategories } from '../utils/categoryConfig';
 import {
   formatEuro,
   getOfferPricing,
@@ -42,7 +41,7 @@ function Navbar() {
         const categoriesFromDatabase = await categoryApi.getCategories();
         
         if (!ignoreResult) {
-          setCategories(categoriesFromDatabase);
+          setCategories(Array.isArray(categoriesFromDatabase) ? categoriesFromDatabase : []);
         }
       } catch (error) {
         if (!ignoreResult) { 
@@ -287,7 +286,7 @@ function Navbar() {
                 </NavLink>
 
                 <div className="nav-dropdown-menu">
-                  {categories.map((category) => (
+                  {(categories ?? []).map((category) => (
                     <NavLink
                       key={category.slug}
                       className="nav-dropdown-link"
@@ -379,7 +378,7 @@ function Navbar() {
                       <div className="cart-preview-items">
                         {items.slice(0, 3).map((item)=>(
                           <div className="cart-preview-item" key={item.productId || item.id}>
-                            <img src={`/img/product_images/${item.image}`} alt={item.name}/>
+                            <img src={getProductImagePath(item)} alt={item.name}/>
 
                             <div>
                               <strong>{item.name}</strong>

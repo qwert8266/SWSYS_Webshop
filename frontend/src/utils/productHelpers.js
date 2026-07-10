@@ -19,6 +19,18 @@ export function getProductImagePath(product) {
     : `/img/product_images/${image}`;
 }
 
+/** Banner-Pfad eines Sales (Datei liegt unter /images/sale/ im Shared Volume). */
+export function getSaleBannerPath(sale) {
+  const banner = sale?.banner;
+
+  if (!banner) {
+    return null;
+  }
+
+  const normalizedBanner = String(banner).replace(/\\/g, "/");
+  return `/img/product_images/sale/${normalizedBanner}`;
+}
+
 export function normalizeProduct(product) {
   const productId = product?.product_id;
   const name = product?.name || "Unbekanntes Produkt";

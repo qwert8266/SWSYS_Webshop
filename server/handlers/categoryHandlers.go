@@ -26,6 +26,9 @@ func GetCategories(c *gin.Context) {
 		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+	if categories == nil {
+		categories = []models.Category{}
+	}
 	c.IndentedJSON(http.StatusOK, categories)
 }
 

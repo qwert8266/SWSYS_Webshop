@@ -15,12 +15,12 @@
 	- [ ] Warnung bei niedrigem Lagerbestand
 
 ### Backend + Frontend
-- [ ] Kategorien flexibel strukturieren
-	- [ ] In Datenbank speichern (Linus)
-	- [ ] hinzufügen (Linus)
-	- [ ] entfernen (Linus)
-	- [ ] Kategorien bekommen (Linus)
-	- [ ] Check beim erstellen von Produkten (Linus)
+- [x] Kategorien flexibel strukturieren
+	- [x] In Datenbank speichern (Linus)
+	- [x] hinzufügen (Linus)
+	- [x] entfernen (Linus)
+	- [x] Kategorien bekommen (Linus)
+	- [x] Check beim erstellen von Produkten (Linus)
 	- [ ] In Navigation sollen Kategorien angezeigt werden (Wesley)
 
 - [ ] Rabattaktionen & Promotions 
