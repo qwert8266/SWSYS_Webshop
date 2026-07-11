@@ -4,7 +4,7 @@ import './checkout.css';
 import { useAuth } from "../context/authContext";
 import { useCart } from "../context/cartContext";
 import orderApi from '../api/orderApi';
-import { formatEuro, getOfferPricing, getProductImagePath } from "../utils/productHelpers";
+import { formatEuro, getOfferPricing, getProductImagePath, getVariantLabel } from "../utils/productHelpers";
 import OfferBadge from '../components/offerBadge';
 import ProductPrice from '../components/productPrice';
 
@@ -32,7 +32,16 @@ function buildPersonalData(user) {
 
 function Checkout(){
   const { user, accessToken } = useAuth();
-  const { items,totalQuantity, totalPrice, clearCart, isCartLoading, cartError } = useCart();
+  const { 
+    items, 
+    totalQuantity, 
+    totalPrice, 
+    totalProductPrice, 
+    totalDeposit, 
+    clearCart, 
+    isCartLoading, 
+    cartError 
+  } = useCart();
 
   const [personalData, setPersonalData] = useState(() => buildPersonalData(user));
   const [editData, setEditData] = useState(() => buildPersonalData(user));
@@ -80,6 +89,9 @@ function Checkout(){
     const orderData = {
       items: items.map((item) => ({
         product_id:  item.product_id,
+        /* Identifiziert die gewählte Produktvariante (Gebindegröße) */
+        pack_size: item.packSize,
+        volume: item.volume,
         quantity: item.quantity,
       })),
       address: {
@@ -319,7 +331,7 @@ function Checkout(){
                   {items.map((item) => (
                     <article 
                       className="d-flex flex-column flex-md-row align-items-md-center gap-3 p-3 rounded-4 bg-light" 
-                      key={item.id}
+                      key={item.cartKey}
                     >
                       <img
                         className="rounded-3 object-fit-contain flex-shrink-0" 
@@ -330,31 +342,52 @@ function Checkout(){
 
                       <div className="flex-grow-1">
                         <h5>{item.name}</h5>
+                        {item.volume > 0 && (
+                          <p className="mb-1 text-muted">
+                            {getVariantLabel({ packSize: item.packSize, volume: item.volume })}
+                          </p>
+                        )}
+
                         <OfferBadge product={item} />
                         <span className="d-block">
                           <ProductPrice product={item} showDiscount={false} />
+                          {item.deposit > 0 && (
+                            <span className="text-muted">
+                              {" "}zzgl. {formatEuro(item.deposit)} Pfand
+                            </span>
+                          )}
                         </span>
                       </div>
                       
                       <div
                         className="d-flex align-items-center gap-2 justify-content-center flex-shrink-0"
                         style={{ width: "115px" }}
-                        aria-label={`Menge für ${items.name}`}    
+                        aria-label={`Menge für ${item.name}`}    
                       >
                         <strong>{item.quantity}x</strong>
                       </div>
 
                       <strong  
                         className="text-nowrap text-end flex-shrink-0" 
-                        style={{ width: "55px"}} /* 90 px*/
+                        style={{ width: "85px"}}
                       >
-                        {formatEuro(getOfferPricing(item).currentPrice * item.quantity)}
+                        {formatEuro((getOfferPricing(item).currentPrice + (item.deposit || 0)) * item.quantity)}
                       </strong>
                     </article>
                   ))}   
                 </div>
 
-                <div className="d-flex jusify-content-between gap-3 py-3 border-top mt-3">
+                <div className="d-flex justify-content-between gap-3 py-2 border-top mt-3">
+                  <span>Zwischensumme</span>
+                  <strong>{formatEuro(totalProductPrice)}</strong>
+                </div>
+
+                <div className="d-flex justify-content-between gap-3 py-2">
+                  <span>Pfand</span>
+                  <strong>{formatEuro(totalDeposit)}</strong>
+                </div>
+
+                <div className="d-flex justify-content-between gap-3 py-3 border-top">
                   <span>Gesamt</span>
                   <strong>{formatEuro(totalPrice)}</strong>
                 </div>

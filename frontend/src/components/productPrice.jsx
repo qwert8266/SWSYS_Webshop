@@ -14,18 +14,19 @@ function ProductPrice({ product, showDiscount = true, className = "" }) {
   }
 
   const pricing = getOfferPricing(product);
+  const prefix = product?.hasMultipleVariants ? "ab " : "";
 
   if (!pricing.isOnOffer) {
     return (
       <span className={`product-price ${className}`.trim()}>
-        <strong>{formatEuro(pricing.currentPrice)}</strong>
+        <strong>{prefix}{formatEuro(pricing.currentPrice)}</strong>
       </span>
     );
   }
 
   return (
     <span className={`product-price product-price--offer ${className}`.trim()}>
-      <s className="product-price-old">{formatEuro(pricing.originalPrice)}</s>
+      <s className="product-price-old">{prefix}{formatEuro(pricing.originalPrice)}</s>
       <strong className="product-price-new">{formatEuro(pricing.currentPrice)}</strong>
       {showDiscount && (
         <span className="product-price-discount">-{pricing.discountPercent} %</span>

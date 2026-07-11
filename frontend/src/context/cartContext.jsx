@@ -384,10 +384,11 @@ export function CartProvider({ children }) {
   function increaseQuantity(productId, availableStock) {
     const maxStock = Number.isFinite(availableStock) ? availableStock : Infinity;
 
-    setItems((currentItems) => 
+    setItems((currentItems) =>
       currentItems.map((item) =>
-        item.id === productId ? { 
-          ...item, quantity: Math.min(item.quantity + 1, maxStock)} : item
+        item.cartKey === cartKey
+          ? { ...item, quantity: Math.min(item.quantity + 1, maxStock) }
+          : item
       )
     );
   }
@@ -405,24 +406,30 @@ export function CartProvider({ children }) {
     );
   }
 
-  /* Leert den gesamten Warenkorb */
   function clearCart() {
     setItems([]);
   }
 
-
   const totalQuantity = items.reduce((sum, item) => sum + item.quantity, 0);
-  // Angebotspreise fließen in die Gesamtsumme ein,
-  // damit Warenkorb und Checkout den reduzierten Preis verwenden
-  const totalPrice = items.reduce(
+
+  const totalProductPrice = items.reduce(
     (sum, item) => sum + getOfferPricing(item).currentPrice * item.quantity,
     0
   );
+
+  const totalDeposit = items.reduce(
+    (sum, item) => sum + (item.deposit || 0) * item.quantity,
+    0
+  );
+
+  const totalPrice = totalProductPrice + totalDeposit;
 
   const value = useMemo(
     () => ({
       items,
       totalQuantity,
+      totalProductPrice,
+      totalDeposit,
       totalPrice,
       addItem,
       removeItem,
@@ -434,7 +441,7 @@ export function CartProvider({ children }) {
       hideCartPreview,
       openCartPreviewTemporarily,
     }),
-    [items, totalQuantity, totalPrice, isCartPreviewOpen]
+    [items, totalQuantity, totalProductPrice, totalDeposit, totalPrice, isCartPreviewOpen]
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

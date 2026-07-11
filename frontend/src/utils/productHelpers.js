@@ -31,33 +31,113 @@ export function getSaleBannerPath(sale) {
   return `/img/product_images/sale/${normalizedBanner}`;
 }
 
+/**
+ * Wandelt eine Produktvariante aus dem Backend (Preise in Cent)
+ * in das Frontend-Format mit Euro-Beträgen um.
+ */
+export function normalizeVariant(variant) {
+  const volume = variant?.volume ?? 0;
+  const packSize = variant?.pack_size ?? 1;
+  const deposit = (variant?.deposit ?? 0) / 100;
+  const crateDeposit = (variant?.crate_deposit ?? 0) / 100;
+
+  return {
+    key: `${volume}x${packSize}`,
+    price: (variant?.price ?? 0) / 100,
+    volume,
+    packSize,
+    deposit,
+    crateDeposit,
+    depositPerPack: packSize * deposit + crateDeposit,
+    stock: variant?.stock ?? 0,
+    label: variant?.variant_label || null,
+  };
+}
+
+/** Formatiert ein Volumen in Millilitern als Liter-Angabe, z.B. 330 -> "0,33 l" */
+export function formatVolume(volumeInMl) {
+  return `${(volumeInMl / 1000).toLocaleString("de-DE", {
+    maximumFractionDigits: 2,
+  })} l`;
+}
+
+/** Bezeichnung eines Gebindes – bevorzugt variant_label vom Backend */
+export function getVariantLabel(variant) {
+  if (!variant) {
+    return "";
+  }
+  if (variant.label || variant.variant_label) {
+    return variant.label || variant.variant_label;
+  }
+  const packSize = variant.packSize ?? variant.pack_size ?? 0;
+  const volume = variant.volume ?? 0;
+  return `${packSize} × ${formatVolume(volume)}`;
+}
+
+/** Varianten-Label aus Stock-API-Eintrag */
+export function getStockVariantLabel(stockInfo) {
+  if (stockInfo?.variant_label) {
+    return stockInfo.variant_label;
+  }
+
+  const packSize = Number(stockInfo?.pack_size ?? stockInfo?.packSize ?? 0);
+  const volume = Number(stockInfo?.volume ?? 0);
+
+  if (packSize === 0 && volume === 0) {
+    return null;
+  }
+
+  return getVariantLabel({ packSize, volume });
+}
+
 export function normalizeProduct(product) {
   const productId = product?.product_id;
   const name = product?.name || "Unbekanntes Produkt";
-  const price = product?.price;
+  
   const images = Array.isArray(product?.images)
     ? product.images.filter(Boolean)
     : product?.image
       ? [product.image]
       : [];
+  const image = images[0] ?? null;
+
   const firstCategory = Array.isArray(product?.categories) ? product.categories[0] : null;
   const category = product?.category || firstCategory?.slug || firstCategory?.name || "";
+
+  const variants = (product?.product_variants ?? []).map(normalizeVariant);
+
+  /* Fallback für alte Produkte ohne Varianten mit Preis/Bestand auf Produktebene */
+  const legacyPrice =
+    typeof product?.price === "number" ? product.price / 100 : null;
+
+  const minPrice =
+    variants.length > 0
+      ? Math.min(...variants.map((variant) => variant.price))
+      : legacyPrice;
+
+  const totalStock =
+    variants.length > 0
+      ? variants.reduce((sum, variant) => sum + variant.stock, 0)
+      : product?.stock ?? null;
 
   return {
     ...product,
     id: product?.product_id || productId,
     name,
-    price: price / 100,
+    price: minPrice,
+    //image,
     images,
     categories: Array.isArray(product?.categories) ? product.categories : [],
     description: product?.description || "",
-    stock: product?.stock ?? null,
+    stock: totalStock,
     rating: product?.raing ?? 0,
+    variants,
+    hasMultipleVariants: variants.length > 1,
   };
 }
 
-export function formatEuro(valueInCents) {
-  return (Number(valueInCents || 0).toLocaleString("de-DE", {
+export function formatEuro(value) {
+  return (Number(value || 0).toLocaleString("de-DE", {
     style: "currency",
     currency: "EUR",
   }));
@@ -91,7 +171,6 @@ export function getOfferPricing(product) {
   }
 
   const discountPercent = Math.min(100, Math.round(Number(product.discount)));
-  // Auf ganze Cents runden, damit Warenkorb-Summen konsistent bleiben
   const currentPrice = Math.round(originalPrice * (100 - discountPercent)) / 100;
 
   return {
@@ -101,3 +180,4 @@ export function getOfferPricing(product) {
     discountPercent,
   };
 }
+

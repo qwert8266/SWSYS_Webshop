@@ -25,6 +25,8 @@ type OrderItem struct {
 	ProductID      uuid.UUID `bson:"product_id" json:"product_id"`
 	Name           string    `bson:"name" json:"name"`
 	Quantity       uint32    `bson:"quantity" json:"quantity"`
+	PackSize       uint16    `bson:"pack_size" json:"pack_size"`
+	Volume         uint16    `bson:"volume" json:"volume"`
 	UnitPrice      uint32    `bson:"unit_price" json:"unitPrice"`
 	LineTotalPrice uint32    `bson:"line_total_price" json:"lineTotalPrice"`
 }
@@ -39,6 +41,8 @@ type CreateOrderRequest struct {
 // CreateOrderItemRequest contains the ordered product and its quantity
 type CreateOrderItemRequest struct {
 	ProductID string `json:"product_id"`
+	PackSize  uint16 `json:"pack_size"`
+	Volume    uint16 `json:"volume"`
 	Quantity  uint32 `json:"quantity"`
 }
 
@@ -61,6 +65,8 @@ type ReturnRequestItem struct {
 	ProductID string `bson:"product_id" json:"productId"`
 	Name      string `bson:"name" json:"name"`
 	Quantity  uint32 `bson:"quantity" json:"quantity"`
+	PackSize  uint16 `bson:"pack_size" json:"pack_size"`
+	Volume    uint16 `bson:"volume" json:"volume"`
 }
 
 type Statistics struct {
