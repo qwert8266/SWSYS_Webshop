@@ -1,7 +1,7 @@
 import { Link, NavLink } from 'react-router-dom';
 import { useCart } from "../context/cartContext";
 import { useStockMap } from "../hooks/useStockMap";
-import { formatEuro, getOfferPricing, getVariantLabel } from '../utils/productHelpers';
+import { formatEuro, getCartItemPricing, getOfferPricing, getVariantLabel } from '../utils/productHelpers';
 import OfferBadge from './offerBadge';
 import ProductPrice from './productPrice';
 import { getProductImagePath, normalizeProduct } from '../utils/productHelpers';
@@ -67,10 +67,11 @@ function ShoppingCart() {
 
             <div className="d-grid gap-3">
               {items.map((item) => {
-                const availableStock = stockMap[item.id]?.stock;
+                const availableStock = 
+                  item.selectedVariant?.stock ?? stockMap[item.id]?.stock;
                 const isAtStockLimit =
                   Number.isFinite(availableStock) && item.quantity >= availableStock;
-                const itemPrice = getOfferPricing(item).currentPrice;
+                const pricing = getCartItemPricing(item);
 
                 return (
                 <article 
@@ -86,9 +87,12 @@ function ShoppingCart() {
                   <div className="flex-grow-1">
                     <h5>{item.name}</h5>
 
-                    {item.volume > 0 && (
+                    {(item.selectedVariant?.volume ?? item.volume) > 0 && (
                       <p className="mb-1 text-muted">
-                        {getVariantLabel({ packSize: item.packSize, volume: item.volume })}
+                        {getVariantLabel(item.selectedVariant || {
+                          packsize: item.packSize, 
+                          volume: item.volume 
+                          })}
                       </p>
                     )}
 
@@ -97,11 +101,12 @@ function ShoppingCart() {
                       <ProductPrice product={item} showDiscount={false} />
                       {item.deposit > 0 && (
                         <span className="text-muted">
-                          {" "}zzgl. {formatEuro(item.deposit)} Pfand
+                          {" "}zzgl. {formatEuro(pricing.depositUnitPrice)} Pfand je Einheit
                         </span>
                       )}
                     </span>
 
+                    {/* Hinweis, wenn der Bestand die Warenkorbmenge nicht mehr deckt */}
                     {Number.isFinite(availableStock) && item.quantity > availableStock && (
                       <p className="text-danger mb-0 small">
                         Nur noch {availableStock} verfügbar – bitte Menge anpassen.
@@ -109,6 +114,7 @@ function ShoppingCart() {
                     )}
                   </div>
                   
+                  {/* Buttons für Menge anpassen */}
                   <div
                     className="d-flex align-items-center gap-2 justify-content-center flex-shrink-0"
                     style={{ width: "115px" }}
@@ -139,7 +145,7 @@ function ShoppingCart() {
                     className="text-nowrap text-end flex-shrink-0" 
                     style={{ width: "85px"}}
                   >
-                    {formatEuro((itemPrice + (item.deposit || 0)) * item.quantity)}
+                    {formatEuro(pricing.totalPrice)}
                   </strong>
 
                   <button

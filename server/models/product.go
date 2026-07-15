@@ -10,16 +10,15 @@ import (
 )
 
 type Product struct {
-	ProductID   uuid.UUID `json:"product_id" bson:"product_id"`
-	Name        string    `json:"name" bson:"name"`
-	Description string    `json:"description" bson:"description"`
-	Images      []string  `json:"images" bson:"images"`
-
+	ProductID       uuid.UUID        `json:"product_id" bson:"product_id"`
+	Name            string           `json:"name" bson:"name"`
+	Description     string           `json:"description" bson:"description"`
+	Images          []string         `json:"images" bson:"images"`
 	ProductVariants []ProductVariant `json:"product_variants" bson:"product_variants"`
-
-	Categories []Category `json:"categories" bson:"categories"`
-	CreatedAt  time.Time  `json:"created_at" bson:"created_at"`
-	UpdatedAt  time.Time  `json:"updated_at" bson:"updated_at"`
+	Discount        *int8            `json:"discount" bson:"discount,omitempty"`
+	Categories      []Category       `json:"categories" bson:"categories"`
+	CreatedAt       time.Time        `json:"created_at" bson:"created_at"`
+	UpdatedAt       time.Time        `json:"updated_at" bson:"updated_at"`
 }
 
 type ProductData struct {

@@ -181,3 +181,30 @@ export function getOfferPricing(product) {
   };
 }
 
+/** Liefert den Pfandbetrag einer Warenkorbposition */
+export function getItemDeposit(item) {
+  return Number(
+    item?.selectedVariant?.depositPerPack ??
+      item.depositPerPack ??
+      0
+  );
+}
+
+/**
+ * Berechnet die Preisbestandteile einer Warenkorbposition 
+ */
+export function getCartItemPricing(item) {
+  const quantity = Math.max(0, Number(item?.quantity || 0));
+  const productUnitPrice = getOfferPricing(item).currentPrice;
+  const depositUnitPrice = getItemDeposit(item);
+
+  return {
+    quantity,
+    productUnitPrice,
+    depositUnitPrice,
+    productTotalPrice: productUnitPrice * quantity,
+    depositTotalPrice: depositUnitPrice * quantity,
+    totalPrice: (productUnitPrice + depositUnitPrice) * quantity,
+  };
+}
+

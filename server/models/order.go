@@ -29,6 +29,8 @@ type OrderItem struct {
 	Volume         uint16    `bson:"volume" json:"volume"`
 	UnitPrice      uint32    `bson:"unit_price" json:"unitPrice"`
 	LineTotalPrice uint32    `bson:"line_total_price" json:"lineTotalPrice"`
+	VariantLabel   string    `bson:"variant_label" json:"variantLabel"`
+	DepositPerUnit uint32    `bson:"deposit_per_unit" json:"depositPerUnit"`
 }
 
 // CreateOrderRequest is sent by the frontend when checkout is completed

@@ -4,7 +4,7 @@ import './checkout.css';
 import { useAuth } from "../context/authContext";
 import { useCart } from "../context/cartContext";
 import orderApi from '../api/orderApi';
-import { formatEuro, getOfferPricing, getProductImagePath, getVariantLabel } from "../utils/productHelpers";
+import { formatEuro, getProductImagePath, getVariantLabel, getCartItemPricing } from "../utils/productHelpers";
 import OfferBadge from '../components/offerBadge';
 import ProductPrice from '../components/productPrice';
 
@@ -90,9 +90,19 @@ function Checkout(){
       items: items.map((item) => ({
         product_id:  item.product_id,
         /* Identifiziert die gewählte Produktvariante (Gebindegröße) */
-        pack_size: item.packSize,
-        volume: item.volume,
-        quantity: item.quantity,
+        pack_size: Number(
+          item.selectedVariant?.packSize ?? 
+          item.selectedVariant?.pack_size ?? 
+          item.packSize ?? 
+          item.pack_size ?? 
+          0
+        ),
+        volume: Number(
+          item.selectedVariant?.volume ?? 
+          item.volume ?? 
+          0
+        ),
+        quantity: Number(item.quantity),
       })),
       address: {
         street: personalData.street,
@@ -121,7 +131,7 @@ function Checkout(){
     }
   }
 
-  if (isCartLoading) {
+  if (isCartLoading && items.length === 0) {
     return (
       <div className='successful_order'>
         <label className='success_label'>Warenkorb wird geladen...</label>
@@ -342,18 +352,21 @@ function Checkout(){
 
                       <div className="flex-grow-1">
                         <h5>{item.name}</h5>
-                        {item.volume > 0 && (
+                        {(item.selectedVariant?.volume ?? item.volume) > 0 && (
                           <p className="mb-1 text-muted">
-                            {getVariantLabel({ packSize: item.packSize, volume: item.volume })}
+                            {getVariantLabel(item.selectedVariant || { 
+                              packSize: item.packSize, 
+                              volume: item.volume 
+                            })}
                           </p>
                         )}
 
                         <OfferBadge product={item} />
                         <span className="d-block">
                           <ProductPrice product={item} showDiscount={false} />
-                          {item.deposit > 0 && (
+                          {getCartItemPricing(item).depositUnitPrice > 0 && (
                             <span className="text-muted">
-                              {" "}zzgl. {formatEuro(item.deposit)} Pfand
+                              {" "}zzgl. {formatEuro(getCartItemPricing(item).depositUnitPrice)} Pfand
                             </span>
                           )}
                         </span>
@@ -371,7 +384,7 @@ function Checkout(){
                         className="text-nowrap text-end flex-shrink-0" 
                         style={{ width: "85px"}}
                       >
-                        {formatEuro((getOfferPricing(item).currentPrice + (item.deposit || 0)) * item.quantity)}
+                        {formatEuro(getCartItemPricing(item).totalPrice)}
                       </strong>
                     </article>
                   ))}   

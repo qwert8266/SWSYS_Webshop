@@ -59,6 +59,18 @@ func CreateOrder(c *gin.Context) {
 			return
 		}
 
+		// volume and pack size identify the exact variant
+		if requestedItem.Volume == 0 || requestedItem.PackSize == 0 {
+			rollbackReservedStock(c, reservedItems)
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error":     "Die gewählten Produktvariante ist unvollständig.",
+				"productId": requestedItem.ProductID,
+				"volume":    requestedItem.Volume,
+				"packSize":  requestedItem,
+			})
+			return
+		}
+
 		var product models.Product
 		// selects product where stock value is >= quantity of the requested item
 		filter := bson.M{
@@ -79,27 +91,12 @@ func CreateOrder(c *gin.Context) {
 			"$set": bson.M{"updated_at": now},
 		}
 
-		// setting projection to only include the specified product variant
-		projection := bson.M{
-			"product_id":  1,
-			"name":        1,
-			"description": 1,
-			"image":       1,
-			"category":    1,
-			"product_variants": bson.M{
-				"$elemMatch": bson.M{
-					"volume":    requestedItem.Volume,
-					"pack_size": requestedItem.PackSize,
-				},
-			},
-		}
-
 		// only products with enough available stock are updated
 		err = database.ProductCollection().FindOneAndUpdate(
 			c.Request.Context(),
 			filter,
 			update,
-			options.FindOneAndUpdate().SetProjection(projection),
+			options.FindOneAndUpdate().SetReturnDocument(options.Before),
 		).Decode(&product)
 
 		// checks if the stock reduction failed
@@ -124,17 +121,48 @@ func CreateOrder(c *gin.Context) {
 					c.JSON(http.StatusInternalServerError, gin.H{"error": findErr.Error()})
 					return
 				}
+
+				var matchingVariant *models.ProductVariant
+				for i := range existingProduct.ProductVariants {
+					candidate := &existingProduct.ProductVariants[i]
+					if candidate.Volume == requestedItem.Volume && candidate.PackSize == requestedItem.PackSize {
+						matchingVariant = candidate
+						break
+					}
+				}
+
+				if matchingVariant == nil {
+					c.JSON(http.StatusBadRequest, gin.H{
+						"error":     fmt.Sprintf("Die gewählte Produktvariante von %s wurde nicht gefunden.", existingProduct.Name),
+						"productId": productID,
+						"volume":    requestedItem.Volume,
+						"packSize":  requestedItem.PackSize,
+					})
+					return
+				}
+
 				c.JSON(http.StatusBadRequest, gin.H{
-					"error": fmt.Sprintf("Nicht genug Bestand für die gewählte Produktvariante von %s.",
-						existingProduct.Name),
+					"error":     fmt.Sprintf("Nicht genug Bestand für die gewählte Produktvariante von %s.", existingProduct.Name),
 					"productId": productID,
-					"available": existingProduct,
+					"requested": requestedItem.Quantity,
+					"available": matchingVariant.Stock,
+					"volume":    matchingVariant.Volume,
+					"packSize":  matchingVariant.PackSize,
 				})
 				return
 			}
 
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
+		}
+
+		var variant *models.ProductVariant
+		for i := range product.ProductVariants {
+			v := &product.ProductVariants[i]
+			if v.Volume == requestedItem.Volume && v.PackSize == requestedItem.PackSize {
+				variant = v
+				break
+			}
 		}
 
 		reservedItems = append(reservedItems, reservedStock{
@@ -144,16 +172,32 @@ func CreateOrder(c *gin.Context) {
 			Quantity:  requestedItem.Quantity,
 		})
 
-		lineTotal := (product.ProductVariants[0].Price) * (requestedItem.Quantity)
+		// Ein Sale reduziert ausschließlich den Warenpreis. Nicht den Pfand
+		productPrice := variant.Price
+		if product.Discount != nil && *product.Discount > 0 {
+			discount := uint32(*product.Discount)
+			if discount > 100 {
+				discount = 100
+			}
+			productPrice = (variant.Price * (100 - discount)) / 100
+		}
+
+		// Berechnet Preis & Pfand eines Produktens und gesamtpreis einer Variante und alles Produkte
+		deposit := variant.PackSize*variant.Deposit + variant.CrateDeposit
+		unitPrice := productPrice + uint32(deposit)
+		lineTotal := unitPrice * requestedItem.Quantity
 		totalPrice += lineTotal
+
 		orderItems = append(orderItems, models.OrderItem{
 			ProductID:      product.ProductID,
 			Name:           product.Name,
 			Quantity:       requestedItem.Quantity,
+			UnitPrice:      unitPrice,
+			LineTotalPrice: lineTotal,
 			Volume:         requestedItem.Volume,
 			PackSize:       requestedItem.PackSize,
-			UnitPrice:      product.ProductVariants[0].Price,
-			LineTotalPrice: lineTotal,
+			VariantLabel:   variant.VariantLabel,
+			DepositPerUnit: uint32(deposit),
 		})
 	}
 

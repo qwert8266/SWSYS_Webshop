@@ -19,4 +19,6 @@ type IncomingCartData struct {
 type CartItem struct {
 	ProductID string `bson:"product_id" json:"productID"`
 	Quantity  uint32 `bson:"quantity" json:"quantity"`
+	Volume    uint32 `bson:"volume" json:"volume"`
+	PackSize  uint32 `bson:"pack_size" json:"packSize"`
 }

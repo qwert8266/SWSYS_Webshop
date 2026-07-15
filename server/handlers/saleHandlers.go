@@ -50,21 +50,29 @@ func AddSale(c *gin.Context) {
 		return
 	}
 
+	if newSale.Discount <= 0 || newSale.Discount > 100 {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Der Rabatt muss zwischen 1 und 100 Prozent liegen"})
+		return
+	}
+
 	// generating UUID
 	newSale.SaleId = uuid.New()
 
-	image := form.File["image"][0]
-	// if an image is provided, a new directory is created and the image is saved
-	directory := filepath.Join("/images/sale", newSale.SaleId.String())
-	newSale.Banner = filepath.Join(newSale.SaleId.String(), image.Filename)
+	if images := form.File["image"]; len(images) > 0 && images[0] != nil {
+		image := images[0]
+		// if an image is provided, a new directory is created and the image is saved
+		directory := filepath.Join("/images/sale", newSale.SaleId.String())
+		newSale.Banner = filepath.Join(newSale.SaleId.String(), image.Filename)
 
-	if err = os.MkdirAll(directory, os.ModePerm); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error creating directory": err.Error()})
-		return
-	}
-	if err = c.SaveUploadedFile(image, filepath.Join(directory, image.Filename)); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error creating file": err.Error()})
-		return
+		if err = os.MkdirAll(directory, os.ModePerm); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error creating directory": err.Error()})
+			return
+		}
+		if err = c.SaveUploadedFile(image, filepath.Join(directory, image.Filename)); err != nil {
+			_ = os.RemoveAll(directory)
+			c.JSON(http.StatusInternalServerError, gin.H{"error creating file": err.Error()})
+			return
+		}
 	}
 
 	err = registerProductsOnSale(newSale.SaleId, newSale.Discount, newSale.ProductIds)

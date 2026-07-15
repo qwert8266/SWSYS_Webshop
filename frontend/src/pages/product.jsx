@@ -9,6 +9,7 @@ import FavoriteButton from '../components/favoriteButton';
 import '../components/favoriteButton.css';
 import OfferBadge from '../components/offerBadge';
 import FourOFour from './404';
+import ProductPrice from '../components/productPrice';
 import { formatEuro, formatVolume, getProductImagePath, getVariantLabel, normalizeProduct } from '../utils/productHelpers';
 
 const rezensionen = [
@@ -103,15 +104,18 @@ function Product(){
         (variant) => variant.key === selectedVariantKey
     ) ?? null;
 
-    const availableStock = selectedVariant?.stock ?? stockInfo?.stock;
-    const isOutOfStock = selectedVariant
+    const selectedVariantStock = stockInfo?.variants?.find((entry) => Number(entry.volume) === selectedVariant?.volume && Number(entry.packSize) === selectedVariant?.packSize);
+
+    const availableStock = selectedVariantStock?.stock ?? selectedVariant?.stock ?? 0;
+    const isOutOfStock = availableStock === 0;
+    /*const isOutOfStock = selectedVariant
         ? selectedVariant.stock === 0
         : stockInfo?.status === "out_of_stock" || product?.stock === 0;
-
+    */
     function handleAddToCart(){
         if (!product || isOutOfStock) { return; }
 
-        const result = addItem(product, quantity, selectedVariant, availableStock);
+        const result = addItem(product, quantity, availableStock, selectedVariant);
 
         const variantLabel = selectedVariant ? ` (${getVariantLabel(selectedVariant)})` : "";
 
@@ -208,40 +212,55 @@ function Product(){
                         <OfferBadge product={product} />
                         <p>{product.description || "Keine Beschreibung zu diesem Produkt vorhanden."}</p>
                         <p>{"★".repeat(Math.round(product.rating))}{"☆".repeat(5 - Math.round(product.rating))}{`(${product.rating})`}</p>
-                    </div>
+                    
 
-                    {product.variants.length > 0 && (
-                        <div className='variant-selection'>
-                            <p className='variant-selection-title'>Gebindegröße wählen:</p>
-                            <div className='variant-options'>
-                                {product.variants.map((variant) => (
-                                    <button
-                                        key={variant.key}
-                                        type='button'
-                                        className={
-                                            "variant-option" +
-                                            (variant.key === selectedVariantKey ? " variant-option-selected" : "") +
-                                            (variant.stock === 0 ? " variant-option-sold-out" : "")
-                                        }
-                                        onClick={() => setSelectedVariantKey(variant.key)}
-                                    >
-                                        <span className='variant-option-label'>{getVariantLabel(variant)}</span>
-                                        <span className='variant-option-price'>{formatEuro(variant.price)}</span>
-                                        {variant.depositPerPack > 0 && (
-                                            <span className='variant-option-deposit'>
-                                                zzgl. {formatEuro(variant.depositPerPack)} Pfand
-                                            </span>
-                                        )}
-                                        {variant.stock === 0 && (
-                                            <span className='variant-option-stock text-danger'>Ausverkauft</span>
-                                        )}
-                                    </button>
-                                ))}
+                        {product.variants.length > 0 && (
+                            <div className='variant-selection'>
+                                <p className='variant-selection-title'>Gebindegröße wählen:</p>
+                                <div className='variant-options'>
+                                    {product.variants.map((variant) => (
+                                        <button
+                                            key={variant.key}
+                                            type='button'
+                                            className={
+                                                "variant-option" +
+                                                (variant.key === selectedVariantKey ? " variant-option-selected" : "") +
+                                                (variant.stock === 0 ? " variant-option-sold-out" : "")
+                                            }
+                                            onClick={() => setSelectedVariantKey(variant.key)}
+                                        >
+                                            <span className='variant-option-label'>{getVariantLabel(variant)}</span>
+                                            <span className='variant-option-price'>{formatEuro(variant.price)}</span>
+                                            {variant.depositPerPack > 0 && (
+                                                <span className='variant-option-deposit'>
+                                                    zzgl. {formatEuro(variant.depositPerPack)} Pfand
+                                                </span>
+                                            )}
+                                            {variant.stock === 0 && (
+                                                <span className='variant-option-stock text-danger'>Ausverkauft</span>
+                                            )}
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
-                        </div>
-                    )}
+                        )}
 
-                    <div className='other-information'>
+                        <div className="mb-2">
+                            <ProductPrice
+                                product={selectedVariant ? {...product, price: selectedVariant.price} : product}
+                            />
+                        </div>
+                        {selectedVariant && (
+                            <p className='text-muted mb-3'>
+                                zzgl. {formatEuro(selectedVariant.depositPerPack)} Pfand
+                            </p>
+                        )}
+                        <StockIndicator 
+                            stockInfo={selectedVariantStock || {srock: availableStock, status: availableStock === 0 ? "out_of_stock": availableStock <= 5 ? "critical" : availableStock <= 15 ? "low" : "ok"}} showInStock
+                        />
+
+
+                    {/*<div className='other-information'>
                         {selectedVariant ? (
                             <>
                                 <p className='variant-price'>
@@ -273,6 +292,7 @@ function Product(){
                                 <StockIndicator stockInfo={stockInfo} showInStock />
                             </>
                         )}
+                    */}
                     </div>
                     <div className='cart-input'>
                         <input 
