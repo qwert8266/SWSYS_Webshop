@@ -34,8 +34,8 @@ type ProductVariant struct {
 	Price        uint32 `json:"price" bson:"price"` //price is stored in Cents
 	Volume       uint16 `json:"volume" bson:"volume"`
 	PackSize     uint16 `json:"pack_size" bson:"pack_size"`
-	Deposit      uint16 `json:"deposit" bson:"deposit"`            //price is stored in Cents
-	CrateDeposit uint16 `json:"crate_deposit" bson:"crateDeposit"` //price is stored in Cents
+	Deposit      uint16 `json:"deposit" bson:"deposit"`             //price is stored in Cents
+	CrateDeposit uint16 `json:"crate_deposit" bson:"crate_deposit"` //price is stored in Cents
 	Stock        uint32 `json:"stock" bson:"stock"`
 	VariantLabel string `json:"variant_label,omitempty" bson:"-"`
 }

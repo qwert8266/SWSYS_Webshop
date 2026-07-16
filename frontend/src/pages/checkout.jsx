@@ -84,26 +84,32 @@ function Checkout(){
 
     const paymentMethod = selectedPaymentMethod || personalData.paymentMethod || "Rechnung";
 
-    // Für die Bestellung werden nut Produkt-ID und Menge übertragen
+    // Für die Bestellung werden nur Produkt-ID und Menge übertragen
     // Preise, Bestand und weitere Produktdaten werden serverseitig geprüft
     const orderData = {
-      items: items.map((item) => ({
-        product_id:  item.product_id,
+      items: items.map((item) => {
+        
         /* Identifiziert die gewählte Produktvariante (Gebindegröße) */
-        pack_size: Number(
+        const packSize = Number(
           item.selectedVariant?.packSize ?? 
           item.selectedVariant?.pack_size ?? 
           item.packSize ?? 
           item.pack_size ?? 
           0
-        ),
-        volume: Number(
+        );
+        const volume = Number(
           item.selectedVariant?.volume ?? 
           item.volume ?? 
           0
-        ),
-        quantity: Number(item.quantity),
-      })),
+        );
+
+        return {
+          product_id:  item.product_id || item.productId || item.productID || item.id,
+          pack_size: packSize,
+          volume,
+          quantity: Number(item.quantity),
+        }
+      }),
       address: {
         street: personalData.street,
         houseNumber: personalData.houseNumber,

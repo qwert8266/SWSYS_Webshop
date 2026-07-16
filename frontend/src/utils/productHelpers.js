@@ -36,14 +36,25 @@ export function getSaleBannerPath(sale) {
  * in das Frontend-Format mit Euro-Beträgen um.
  */
 export function normalizeVariant(variant) {
-  const volume = variant?.volume ?? 0;
-  const packSize = variant?.pack_size ?? 1;
-  const deposit = (variant?.deposit ?? 0) / 100;
-  const crateDeposit = (variant?.crate_deposit ?? 0) / 100;
+  const volume = Number(variant?.volume ?? 0);
+  const packSize = Number(variant?.pack_size ?? variant?.packSize ?? 0);
+  
+  // Bereits normalisierte Frontend-Varianten enthalten Euro-Werte
+  // Rohe Backend-Varianten enthalten Cent-Werte
+  const isFrontendVariant = variant?.packSize !== undefined;
+  const deposit = isFrontendVariant 
+    ? Number(variant?.deposit ?? 0) 
+    : Number(variant?.deposit ?? 0) / 100;
+  const crateDeposit = isFrontendVariant
+    ? Number(variant?.createDeposit ?? variant?.crate_deposit ?? 0) 
+    : Number(variant?.crateDeposit ?? variant?.crate_deposit ?? 0) / 100;
+  const price = isFrontendVariant
+    ? Number(variant?.price ?? 0)
+    : Number(variant?.price ?? 0) / 100;
 
   return {
-    key: `${volume}x${packSize}`,
-    price: (variant?.price ?? 0) / 100,
+    key: variant?.key || `${volume}x${packSize}`,
+    price,
     volume,
     packSize,
     deposit,

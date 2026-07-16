@@ -63,10 +63,10 @@ func CreateOrder(c *gin.Context) {
 		if requestedItem.Volume == 0 || requestedItem.PackSize == 0 {
 			rollbackReservedStock(c, reservedItems)
 			c.JSON(http.StatusBadRequest, gin.H{
-				"error":     "Die gewählten Produktvariante ist unvollständig.",
+				"error":     "Die gewählte Produktvariante ist unvollständig.",
 				"productId": requestedItem.ProductID,
 				"volume":    requestedItem.Volume,
-				"packSize":  requestedItem,
+				"packSize":  requestedItem.PackSize,
 			})
 			return
 		}

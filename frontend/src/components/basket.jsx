@@ -7,8 +7,6 @@ import ProductPrice from './productPrice';
 import { getProductImagePath, normalizeProduct } from '../utils/productHelpers';
 
 
-
-
 function ShoppingCart() {
   
   const {
@@ -90,7 +88,7 @@ function ShoppingCart() {
                     {(item.selectedVariant?.volume ?? item.volume) > 0 && (
                       <p className="mb-1 text-muted">
                         {getVariantLabel(item.selectedVariant || {
-                          packsize: item.packSize, 
+                          packSize: item.packSize, 
                           volume: item.volume 
                           })}
                       </p>

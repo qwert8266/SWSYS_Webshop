@@ -71,8 +71,8 @@ function getCartVariant(item) {
     return item.selectedVariant;
   }
 
-  const volume = item?.volume;
-  const packSize = item?.packSize;
+  const volume = Number(item?.volume ?? 0);
+  const packSize = Number(item?.packSize ?? item?.pacl_size ?? 0);
 
   if (volume > 0 && packSize > 0) {
     return { volume, packSize };
@@ -97,7 +97,7 @@ function createCartKey(item, variant = getCartVariant(item)) {
     return String(productId); 
   }
 
-  return `${productId}-${Number(variant.volume)}-${Number(variant.packSize)}`;
+  return `${productId}-${Number(variant?.volume ?? 0)}-${Number(variant?.packSize ?? 0)}`;
 }
 
 /** 
