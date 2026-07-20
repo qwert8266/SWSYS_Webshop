@@ -213,7 +213,7 @@ function Product(){
                         <p>{product.description || "Keine Beschreibung zu diesem Produkt vorhanden."}</p>
                         <p>{"★".repeat(Math.round(product.rating))}{"☆".repeat(5 - Math.round(product.rating))}{`(${product.rating})`}</p>
                     
-
+                        {/* Variantenauswahl */}
                         {product.variants.length > 0 && (
                             <div className='variant-selection'>
                                 <p className='variant-selection-title'>Gebindegröße wählen:</p>
@@ -230,7 +230,8 @@ function Product(){
                                             onClick={() => setSelectedVariantKey(variant.key)}
                                         >
                                             <span className='variant-option-label'>{getVariantLabel(variant)}</span>
-                                            <span className='variant-option-price'>{formatEuro(variant.price)}</span>
+                                            <ProductPrice product={variant} showDiscount={false} className='variant-optional-price' />
+                                            {/*<span className='variant-option-price'>{formatEuro(variant.price)}</span> */}
                                             {variant.depositPerPack > 0 && (
                                                 <span className='variant-option-deposit'>
                                                     zzgl. {formatEuro(variant.depositPerPack)} Pfand
@@ -247,7 +248,7 @@ function Product(){
 
                         <div className="mb-2">
                             <ProductPrice
-                                product={selectedVariant ? {...product, price: selectedVariant.price} : product}
+                                product={selectedVariant || product}
                             />
                         </div>
                         {selectedVariant && (
@@ -256,7 +257,7 @@ function Product(){
                             </p>
                         )}
                         <StockIndicator 
-                            stockInfo={selectedVariantStock || {srock: availableStock, status: availableStock === 0 ? "out_of_stock": availableStock <= 5 ? "critical" : availableStock <= 15 ? "low" : "ok"}} showInStock
+                            stockInfo={selectedVariantStock || {stock: availableStock, status: availableStock === 0 ? "out_of_stock": availableStock <= 5 ? "critical" : availableStock <= 15 ? "low" : "ok"}} showInStock
                         />
 
 

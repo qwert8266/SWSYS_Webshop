@@ -15,7 +15,6 @@ type Product struct {
 	Description     string           `json:"description" bson:"description"`
 	Images          []string         `json:"images" bson:"images"`
 	ProductVariants []ProductVariant `json:"product_variants" bson:"product_variants"`
-	Discount        *int8            `json:"discount" bson:"discount,omitempty"`
 	Categories      []Category       `json:"categories" bson:"categories"`
 	CreatedAt       time.Time        `json:"created_at" bson:"created_at"`
 	UpdatedAt       time.Time        `json:"updated_at" bson:"updated_at"`
@@ -37,6 +36,7 @@ type ProductVariant struct {
 	Deposit      uint16 `json:"deposit" bson:"deposit"`             //price is stored in Cents
 	CrateDeposit uint16 `json:"crate_deposit" bson:"crate_deposit"` //price is stored in Cents
 	Stock        uint32 `json:"stock" bson:"stock"`
+	Discount     *int8  `json:"discount,omitempty" bson:"discount,omitempty"`
 	VariantLabel string `json:"variant_label,omitempty" bson:"-"`
 }
 

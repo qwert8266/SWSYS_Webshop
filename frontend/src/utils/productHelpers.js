@@ -46,11 +46,13 @@ export function normalizeVariant(variant) {
     ? Number(variant?.deposit ?? 0) 
     : Number(variant?.deposit ?? 0) / 100;
   const crateDeposit = isFrontendVariant
-    ? Number(variant?.createDeposit ?? variant?.crate_deposit ?? 0) 
+    ? Number(variant?.crateDeposit ?? variant?.crate_deposit ?? 0) 
     : Number(variant?.crateDeposit ?? variant?.crate_deposit ?? 0) / 100;
   const price = isFrontendVariant
     ? Number(variant?.price ?? 0)
     : Number(variant?.price ?? 0) / 100;
+
+  const discount = Number(variant?.discount ?? 0);
 
   return {
     key: variant?.key || `${volume}x${packSize}`,
@@ -62,6 +64,7 @@ export function normalizeVariant(variant) {
     depositPerPack: packSize * deposit + crateDeposit,
     stock: variant?.stock ?? 0,
     label: variant?.variant_label || null,
+    discount: Number.isFinite(discount) ? discount : 0,
   };
 }
 
@@ -102,7 +105,7 @@ export function getStockVariantLabel(stockInfo) {
 }
 
 export function normalizeProduct(product) {
-  const productId = product?.product_id;
+  const productId = product?.product_id ?? product?.productId;
   const name = product?.name || "Unbekanntes Produkt";
   
   const images = Array.isArray(product?.images)
@@ -110,10 +113,6 @@ export function normalizeProduct(product) {
     : product?.image
       ? [product.image]
       : [];
-  const image = images[0] ?? null;
-
-  const firstCategory = Array.isArray(product?.categories) ? product.categories[0] : null;
-  const category = product?.category || firstCategory?.slug || firstCategory?.name || "";
 
   const variants = (product?.product_variants ?? []).map(normalizeVariant);
 
@@ -136,7 +135,6 @@ export function normalizeProduct(product) {
     id: product?.product_id || productId,
     name,
     price: minPrice,
-    //image,
     images,
     categories: Array.isArray(product?.categories) ? product.categories : [],
     description: product?.description || "",
@@ -155,40 +153,74 @@ export function formatEuro(value) {
 }
 
 /**
+ * Liefert die für die Preisanzeige relevante Variante.
+ * Bei einer Warenkorbposition ist das die ausgewählte Variante.
+ * In einer Produktliste wird die günstigste rabattierte Variante verwendet 
+ */
+export function getOfferVariant(product) {
+  if (!product) { return null; }
+
+  if (product.selectedVariant) {
+    return product.selectedVariant;
+  }
+
+  if (product.packSize != null || product.pack_size != null) {
+    return product;
+  }
+
+  const variants = Array.isArray(product.variants) ? product.variants : [];
+  const discountedVariants = variants.filter((variant) => 
+    Number(variant?.discount) > 0
+  );
+
+  if (discountedVariants.length === 0) {
+    return null;
+  }
+
+  return discountedVariants.reduce((best, variant) => {
+    const bestPrice = Number(best.price) * (100 - Number(best.discount)) / 100;
+    const variantPrice = Number(variant.price) * (100 - Number(variant.discount)) / 100;
+    return variant.price < bestPrice ? variant : best;
+  })
+
+}
+
+/**
  * Ein Produkt gilt als "im Angebot", wenn das Backend einen
  * positiven Rabatt (in Prozent) am Produkt hinterlegt hat.
  */
 export function isOnOffer(product) {
-  const discount = Number(product?.discount);
-  return Number.isFinite(discount) && discount > 0;
+  //const discount = Number(product?.discount);
+  //return Number.isFinite(discount) && discount > 0;
+  return Boolean(getOfferVariant(product));
+
 }
 
 /**
- * Liefert alle Preisinformationen zu einem Produkt:
+ * Liefert die Preisinformationen einer Variante.
+ * Der Rabatt gilt ausschließlich für diese Varainte.
  * - originalPrice: regulärer Preis (in Euro)
  * - currentPrice: tatsächlich zu zahlender Preis (bei Angebot reduziert)
  * - discountPercent: Rabatt in Prozent (0, wenn kein Angebot)
  */
 export function getOfferPricing(product) {
-  const originalPrice = Number(product?.price) || 0;
-
-  if (!isOnOffer(product)) {
-    return {
-      isOnOffer: false,
-      originalPrice,
-      currentPrice: originalPrice,
-      discountPercent: 0,
-    };
-  }
-
-  const discountPercent = Math.min(100, Math.round(Number(product.discount)));
-  const currentPrice = Math.round(originalPrice * (100 - discountPercent)) / 100;
+  const offerVariant = getOfferVariant(product);
+  const fallbackVariant = product?.selectedVariant ||
+    (product?.packSize != null || 
+      product?.pack_size != null ? product : null);
+  const priceSource = offerVariant || fallbackVariant;
+  const originalPrice = Number(priceSource?.price ?? product?.price) || 0;
+  const discountPercent = Math.min(100, Math.max(0, Math.round(Number(offerVariant?.discount ?? 0))));
+  const currentPrice = discountPercent > 0 
+    ? Math.round(originalPrice * (100 - discountPercent)) / 100 
+    : originalPrice;
 
   return {
-    isOnOffer: true,
+    isOnOffer: discountPercent > 0,
     originalPrice,
     currentPrice,
     discountPercent,
+    variant: priceSource,
   };
 }
 

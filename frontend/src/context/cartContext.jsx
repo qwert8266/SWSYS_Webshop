@@ -72,7 +72,7 @@ function getCartVariant(item) {
   }
 
   const volume = Number(item?.volume ?? 0);
-  const packSize = Number(item?.packSize ?? item?.pacl_size ?? 0);
+  const packSize = Number(item?.packSize ?? item?.k_size ?? 0);
 
   if (volume > 0 && packSize > 0) {
     return { volume, packSize };

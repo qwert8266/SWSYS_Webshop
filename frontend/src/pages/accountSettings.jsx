@@ -771,6 +771,10 @@ function AccountSettings() {
                               Einzelpreis: {formatEuro(item.unitPrice / 100)}
                             </span>
 
+                            <span>
+                              Pfand: {formatEuro(item.depositPerUnit / 100)}
+                            </span>
+
                             <strong>
                               Gesamt: {formatEuro(item.lineTotalPrice / 100)}
                             </strong>

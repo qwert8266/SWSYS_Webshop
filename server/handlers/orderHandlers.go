@@ -174,8 +174,8 @@ func CreateOrder(c *gin.Context) {
 
 		// Ein Sale reduziert ausschließlich den Warenpreis. Nicht den Pfand
 		productPrice := variant.Price
-		if product.Discount != nil && *product.Discount > 0 {
-			discount := uint32(*product.Discount)
+		if variant.Discount != nil && *variant.Discount > 0 {
+			discount := uint32(*variant.Discount)
 			if discount > 100 {
 				discount = 100
 			}

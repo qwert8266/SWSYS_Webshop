@@ -268,6 +268,34 @@ func UpdateProduct(c *gin.Context) {
 		imagePaths = filteredImages
 	}
 
+	existingDiscounts := make(map[string]*int8)
+	for i := range existingProduct.ProductVariants {
+		variant := existingProduct.ProductVariants[i]
+		if variant.Discount != nil && *variant.Discount > 0 {
+			key := fmt.Sprintf("%d-%d", variant.Volume, variant.PackSize)
+			discount := *variant.Discount
+			existingDiscounts[key] = &discount
+		}
+	}
+
+	foundDiscountVariants := make(map[string]bool, len(existingDiscounts))
+	for i := range updatedProductData.ProductVariants {
+		variant := &updatedProductData.ProductVariants[i]
+		key := fmt.Sprintf("%d-%d", variant.Volume, variant.PackSize)
+		if discount, existing := existingDiscounts[key]; existing {
+			variant.Discount = discount
+			foundDiscountVariants[key] = true
+		} else {
+			variant.Discount = nil
+		}
+	}
+	for key := range existingDiscounts {
+		if !foundDiscountVariants[key] {
+			c.JSON(http.StatusConflict, gin.H{"error": "A variant with an active sale cannot be removed or modified. Delete the sale first."})
+			return
+		}
+	}
+
 	//trimming strings:
 	name := strings.TrimSpace(updatedProductData.Name)
 	description := strings.TrimSpace(updatedProductData.Description)
@@ -307,6 +335,19 @@ func DeleteProduct(c *gin.Context) {
 	}
 
 	productCollection := database.ProductCollection()
+
+	saleCount, countErr := database.SalesCollection().CountDocuments(
+		c.Request.Context(),
+		bson.M{"items.product_id": id},
+	)
+	if countErr != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": countErr.Error()})
+		return
+	}
+	if saleCount > 0 {
+		c.JSON(http.StatusConflict, gin.H{"error": "The product is part of an active sale. Delete the sale first"})
+		return
+	}
 
 	result, err := productCollection.DeleteOne(c.Request.Context(), bson.M{"product_id": id})
 	if err != nil {

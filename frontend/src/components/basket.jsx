@@ -6,7 +6,6 @@ import OfferBadge from './offerBadge';
 import ProductPrice from './productPrice';
 import { getProductImagePath, normalizeProduct } from '../utils/productHelpers';
 
-
 function ShoppingCart() {
   
   const {
