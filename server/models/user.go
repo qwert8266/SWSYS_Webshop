@@ -12,7 +12,7 @@ type RegisterRequest struct {
 	CustomerType string `json:"customerType"`
 	Salutation   string `json:"salutation"`
 	FirstName    string `json:"firstName"`
-	LastName     string `json:"lastname"`
+	LastName     string `json:"lastName"`
 	BirthDate    string `json:"birthDate"`
 	Phone        string `json:"phone"`
 	CompanyName  string `json:"companyName"`
@@ -62,7 +62,7 @@ type User struct {
 	CustomerType string `bson:"customer_type" json:"customerType"`
 	Salutation   string `bson:"salutation" json:"salutation"`
 	FirstName    string `bson:"first_name" json:"firstName"`
-	LastName     string `bson:"last__name" json:"lastname"`
+	LastName     string `bson:"last__name" json:"lastName"`
 	BirthDate    string `bson:"birth_date,omitempty" json:"birthDate,omitempty"`
 	Phone        string `bson:"phone,omitempty" json:"phone,omitempty"`
 
@@ -87,7 +87,7 @@ type PublicUser struct {
 	CustomerType       string      `json:"customerType"`
 	Salutation         string      `json:"salutation"`
 	FirstName          string      `json:"firstName"`
-	LastName           string      `json:"lastname"`
+	LastName           string      `json:"lastName"`
 	BirthDate          string      `json:"birthDate,omitempty"`
 	Phone              string      `json:"phone,omitempty"`
 	CompanyName        string      `json:"companyName,omitempty"`
