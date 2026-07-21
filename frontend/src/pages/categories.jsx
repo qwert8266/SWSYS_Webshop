@@ -8,7 +8,7 @@ import saleApi from "../api/saleApi";
 import ProductGrid from "../components/productGrid";
 import { useStockMap } from "../hooks/useStockMap";
 import { getCategoryPresentation } from "../utils/categoryConfig";
-import { normalizeProduct, isOnOffer, getSaleBannerPath } from '../utils/productHelpers';
+import { normalizeProduct, getSaleBannerPath } from '../utils/productHelpers';
 
 
 function Category({ category: fixedCategory }){
@@ -41,9 +41,7 @@ function Category({ category: fixedCategory }){
             setSales([]);
 
             try {
-                const productRequest = isOfferCategory
-                    ? productApi.getProducts()
-                    : productApi.getProductsByCategory(requestedCategorySlug);
+                const productRequest = productApi.getProductsByCategory(requestedCategorySlug);
 
                 const [categoriesFromDatabase, productsFromDatabase, salesFromDatabase] = await Promise.all([
                     categoryApi.getCategories(),
@@ -61,10 +59,7 @@ function Category({ category: fixedCategory }){
                         slug: requestedCategorySlug
                     });
 
-                    const normalizedProducts = (productsFromDatabase || []).map(normalizeProduct);
-                    setCategoryProducts(
-                        isOfferCategory ? normalizedProducts.filter(isOnOffer) : normalizedProducts
-                    );
+                    setCategoryProducts((productsFromDatabase || []).map(normalizeProduct));
                     setSales(Array.isArray(salesFromDatabase) ? salesFromDatabase : []);
                 }
             } catch (error) {

@@ -134,14 +134,23 @@ function ProductManagement(){
 
     /** Konvertiert die camelCase-Schreibweise in das API-Format */
     function variantsToApi(variants) {
-        return variants.map((variant) => ({
-            price: Number(variant.price),
-            volume: Number(variant.volume),
-            pack_size: Number(variant.packSize),
-            deposit: Number(variant.deposit || 0),
-            crate_deposit: Number(variant.crateDeposit || 0),
-            stock: Number(variant.stock),
-        }));
+        return variants.map((variant) => {
+            const discountValue = Number(variant.discount);
+            const apiVariant = {
+                price: Number(variant.price),
+                volume: Number(variant.volume),
+                pack_size: Number(variant.packSize),
+                deposit: Number(variant.deposit || 0),
+                crate_deposit: Number(variant.crateDeposit || 0),
+                stock: Number(variant.stock),
+            };
+
+            if (Number.isFinite(discountValue) && discountValue > 0) {
+                apiVariant.discount = discountValue;
+            }
+
+            return apiVariant;
+        });
     }
 
     /** Speichert die ausgewählten Bilddateien für den Upload */
@@ -486,6 +495,11 @@ function ProductManagement(){
             if (Number(variant.deposit || 0) < 0 || Number(variant.crateDeposit || 0) < 0) return "Pfandwerte dürfen nicht negativ sein";
             if (Number(variant.stock) < 0) return "Bitte gib einen gültigen Lagerbestand an";
 
+            const discount = Number(variant.discount || 0);
+            if (variant.discount !== null && variant.discount !== "" && (discount < 0 || discount > 100)) {
+                return "Rabatt muss zwischen 0 und 100 Prozent liegen";
+            }
+
             const key = `${Number(variant.volume)}-${Number(variant.packSize)}`;
             if (variantKey.has(key)) return "Volumen und Packungsgröße müssen je Variante eindeutig sein";
             variantKey.add(key);
@@ -505,6 +519,7 @@ function ProductManagement(){
                 ["deposit", "Flaschenpfand", "Pfand in Cent"],
                 ["crateDeposit", "Kistenpfand", "Pfand in Cent"],
                 ["stock", "Bestand", "Lagerbestand"],
+                ["discount", "Rabatt", "Rabatt in % (optional)"],
             ];
 
             return (
@@ -530,10 +545,11 @@ function ProductManagement(){
                             <input
                                 className='fs-6 border rounded'
                                 type="number"
-                                min="0"
+                                min={fieldName === "discount" ? "0" : "0"}
+                                max={fieldName === "discount" ? "100" : undefined}
                                 placeholder={placeholder}
                                 value={variant[fieldName] ?? ""}
-                                disabled={modify && hasActiveSale && (fieldName === "volume" || fieldName === "packSize" )}
+                                disabled={modify && hasActiveSale && (fieldName === "volume" || fieldName === "packSize")}
                                 onChange={(event) => handleVariantChange(variantIndex, fieldName, event.target.value, modify)}
                             />
                         </div>

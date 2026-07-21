@@ -13,6 +13,7 @@ function Register() {
   //const [customerType, setCustomerType] = useState("private");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   const [formData, setFormData] = useState({
     customerType: "private",
@@ -509,6 +510,33 @@ function Register() {
           </div>
           </>
         )}
+      </div>
+
+      <div className="px-3 mb-3">
+        <div className="form-check mb-2">
+          <input
+            className="form-check-input"
+            type="checkbox"
+            id="acceptTerms"
+            checked={acceptedTerms}
+            onChange={(event) => setAcceptedTerms(event.target.checked)}
+            required
+          />
+          <label className="form-check-label" htmlFor="acceptTerms">
+            Ich akzeptiere die{" "}
+            <Link to="/agb" target="_blank" rel="noreferrer">
+              Allgemeinen Geschäftsbedingungen (AGB)
+            </Link>
+          </label>
+        </div>
+        <p className="text-muted small mb-0">
+          Informationen zur Verarbeitung deiner personenbezogenen Daten findest
+          du in unserer{" "}
+          <Link to="/datenschutzerklärung" target="_blank" rel="noreferrer">
+            Datenschutzerklärung
+          </Link>
+          .
+        </p>
       </div>
 
       <button 

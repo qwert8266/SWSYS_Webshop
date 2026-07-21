@@ -154,8 +154,8 @@ func CreateProduct(c *gin.Context) {
 		Name:            name,
 		Description:     description,
 		Images:          imagePaths,
-		ProductVariants: incomingProduct.ProductVariants,
-		Categories:      incomingProduct.Categories,
+		ProductVariants: validProductData.ProductVariants,
+		Categories:      validProductData.Categories,
 		CreatedAt:       time.Now(),
 		UpdatedAt:       time.Now(),
 	}
@@ -268,29 +268,24 @@ func UpdateProduct(c *gin.Context) {
 		imagePaths = filteredImages
 	}
 
-	existingDiscounts := make(map[string]*int8)
+	existingDiscountVariants := make(map[string]bool)
 	for i := range existingProduct.ProductVariants {
 		variant := existingProduct.ProductVariants[i]
 		if variant.Discount != nil && *variant.Discount > 0 {
 			key := fmt.Sprintf("%d-%d", variant.Volume, variant.PackSize)
-			discount := *variant.Discount
-			existingDiscounts[key] = &discount
+			existingDiscountVariants[key] = true
 		}
 	}
 
-	foundDiscountVariants := make(map[string]bool, len(existingDiscounts))
+	incomingVariantKeys := make(map[string]bool, len(updatedProductData.ProductVariants))
 	for i := range updatedProductData.ProductVariants {
-		variant := &updatedProductData.ProductVariants[i]
+		variant := updatedProductData.ProductVariants[i]
 		key := fmt.Sprintf("%d-%d", variant.Volume, variant.PackSize)
-		if discount, existing := existingDiscounts[key]; existing {
-			variant.Discount = discount
-			foundDiscountVariants[key] = true
-		} else {
-			variant.Discount = nil
-		}
+		incomingVariantKeys[key] = true
 	}
-	for key := range existingDiscounts {
-		if !foundDiscountVariants[key] {
+
+	for key := range existingDiscountVariants {
+		if !incomingVariantKeys[key] {
 			c.JSON(http.StatusConflict, gin.H{"error": "A variant with an active sale cannot be removed or modified. Delete the sale first."})
 			return
 		}
@@ -376,7 +371,9 @@ func checkIncomingProductData(c *gin.Context, pd models.ProductData) (models.Pro
 		return pd, errors.New("variants invalid")
 	}
 
-	for _, variant := range pd.ProductVariants {
+	for i := range pd.ProductVariants {
+		variant := &pd.ProductVariants[i]
+
 		if variant.Price <= 0 {
 			c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Preis ungültig"})
 			return pd, errors.New("price invalid")
@@ -392,6 +389,14 @@ func checkIncomingProductData(c *gin.Context, pd models.ProductData) (models.Pro
 		if variant.Stock < 0 {
 			c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Bestand ungültig"})
 			return pd, errors.New("stock invalid")
+		}
+		if variant.Discount != nil {
+			if *variant.Discount <= 0 {
+				variant.Discount = nil
+			} else if *variant.Discount > 100 {
+				c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Rabatt muss zwischen 1 und 100 Prozent liegen"})
+				return pd, errors.New("discount invalid")
+			}
 		}
 	}
 
