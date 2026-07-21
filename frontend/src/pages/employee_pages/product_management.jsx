@@ -6,6 +6,7 @@ import { useAuth } from "../../context/authContext";
 import categoryApi from "../../api/categoryApi";
 import { useProd } from "../../context/productContext";
 import { normalizeProduct, getProductImagePath, formatEuro } from '../../utils/productHelpers';
+import CategoryManagementModal from '../../components/categoryManagementModal';
 
 function ProductManagement(){
     // Produktliste und Ladezustand der Produktverwaltung
@@ -15,6 +16,7 @@ function ProductManagement(){
     const [categories, setCategories] = useState([]);
     const [categoryLoadError, setCategoryLoadError] = useState("");
     const [modifyErrorMessage, setModifyErrorMessage] = useState("");
+    const [showCategoryManagement, setShowCategoryManagement] = useState(false);
 
     // Statusmeldungen für erfolgreiche oder fehlgeschlagene Aktionen
     const [showSuccessCreateLabel, setShowSuccessCreateLabel] = useState(false);
@@ -725,6 +727,7 @@ function ProductManagement(){
                 <div className="d-flex flex-column align-items-center" style={{width: "600px"}}>
                     <div className='pb-5'>
                         <button className="btn text-white fs-5 align-self-center" style={{ backgroundColor: "#15406e" }} onClick={() => setClickedAddProductButton(true)}>Produkt hinzufügen</button>
+                        <button className='btn btn-outline-primary fs-5' onClick={() => setShowCategoryManagement(true)}>Kategorien verwalten</button>
                     </div>
                     <div style={{height: "80px",width: "100%"}}>
                         {showSuccessCreateLabel &&
@@ -865,7 +868,12 @@ function ProductManagement(){
                                 )}
 
                                 {!categoryLoadError && categories.length === 0 && (
-                                    <span className='text-muted'>Keine Kategorien verfügbar</span>
+                                    <div className='list-group-item text-center'>
+                                        <div className='text-muted mb-2'>Keine Kategorien verfügbar</div>
+                                        <button type="button" className='btn btn-sm btn-outline-primary' onClick={() => setShowCategoryManagement(true)}>
+                                            Erste Kategorie anlegen
+                                        </button>
+                                    </div>
                                 )}
 
                                 {/* Kategorien werden als Mehrfachauswahl gespeichert */}
@@ -1236,6 +1244,17 @@ function ProductManagement(){
 
                 </div>
             </div>
+        )}
+        {showCategoryManagement && (
+            <CategoryManagementModal
+                categories={categories}
+                accessToken={accessToken}
+                onClose={() => setShowCategoryManagement(false)}
+                onCategoriesChange={(nextCategories) => {
+                    setCategories(Array.isArray(nextCategories) ? nextCategories : []);
+                    setCategoryLoadError("");
+                }}
+            />
         )}
         </div>
     );

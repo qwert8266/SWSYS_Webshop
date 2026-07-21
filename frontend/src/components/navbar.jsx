@@ -128,16 +128,16 @@ function Navbar() {
   }
 
   function handleSuggestionClick(product) {
-    //const category = categories.find(product.category);
-    
-    //const category = getCategoryConfig(product.category);
+    const productCategories = Array.isArray(product?.categories) ? product.categories : [];
+    const firstProductCategory = productCategories[0]; 
     const category = categories.find((category) => {
       return (
-        category.name === product.category ||
-        category.slug === product.category
+        category.slug === firstProductCategory?.slug ||
+        category.name === firstProductCategory?.name || 
+        ""
       );
     });
-    const categorySlug = category?.slug || product.category;
+    const categorySlug = category?.slug || firstProductCategory?.slug || "";
 
     setSearchQuery("");
     setSuggestions([]);
@@ -221,7 +221,7 @@ function Navbar() {
                         </span>
 
                         <span className="search-suggestion-meta">
-                          {product.category}
+                          {(product.categories || []).map((category) => category.name).join(", ")}
                         </span>
                       </div>
 

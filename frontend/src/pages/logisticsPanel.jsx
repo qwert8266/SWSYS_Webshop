@@ -4,7 +4,6 @@ import { NavLink } from "react-router-dom";
 import productApi from "../api/productApi";
 import StockIndicator from "../components/stockIndicator";
 import { useAuth } from "../context/authContext";
-import { getCategoryConfig } from "../utils/categoryConfig";
 import { getStockVariantLabel } from "../utils/productHelpers";
 
 import "./logisticsPanel.css";
@@ -100,7 +99,8 @@ function LogisticsPanel() {
           </thead>
           <tbody>
             {lowStockProducts.map((stockInfo) => {
-              const category = getCategoryConfig(stockInfo.category);
+              const productCategories = Array.isArray(stockInfo.categories) ? stockInfo.categories : [];
+              const category = productCategories[0] || {name: "Ohne Kategorie", slug: ""};
               const packSize = stockInfo.pack_size ?? stockInfo.packSize ?? 0;
               const volume = stockInfo.volume ?? 0;
               const variantKey = `${stockInfo.product_id}-${volume}-${packSize}`;

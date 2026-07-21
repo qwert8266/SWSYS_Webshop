@@ -1,5 +1,4 @@
 import { NavLink } from "react-router-dom";
-import { findCategoryConfig } from "../utils/categoryConfig";
 import { getProductImagePath } from "../utils/productHelpers";
 import FavoriteButton from "./favoriteButton";
 import "./favoriteButton.css";
