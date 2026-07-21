@@ -36,6 +36,85 @@
     font-size: 30px;
 }
 
+.variant-selection{
+    padding-bottom: 20px;
+}
+
+.variant-selection-title{
+    color: black;
+    font-size: 24px;
+    margin-bottom: 10px;
+}
+
+.variant-options{
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.variant-option{
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+
+    background-color: white;
+    border: 2px solid #ccc;
+    border-radius: 8px;
+    padding: 10px 16px;
+    cursor: pointer;
+    text-align: left;
+}
+
+.variant-option:hover{
+    border-color: #15406e;
+}
+
+.variant-option-selected{
+    border-color: #15406e;
+    background-color: #eaf1f8;
+}
+
+.variant-option-sold-out{
+    opacity: 0.6;
+}
+
+.variant-option-label{
+    font-size: 20px;
+    font-weight: bold;
+    color: #15406e;
+}
+
+.variant-option-price{
+    font-size: 18px;
+    color: black;
+}
+
+.variant-option-deposit{
+    font-size: 14px;
+    color: #555;
+}
+
+.variant-option-stock{
+    font-size: 14px;
+}
+
+.variant-price{
+    font-weight: bold;
+}
+
+.variant-deposit-hint{
+    font-size: 20px;
+    font-weight: normal;
+    color: #555;
+}
+
+.variant-deposit-details{
+    font-size: 18px;
+    color: #555;
+}
+
 .cart-input{
     display: flex;
     align-items: center;

@@ -32,9 +32,11 @@ func GetMyCart(c *gin.Context) {
 				Items:     []models.CartItem{},
 				UpdatedAt: time.Now(),
 			}) //gin.H{"message": "user has no cart yet"}
+			return
 		}
 
 		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
 	}
 
 	if cart.Items == nil {
@@ -85,19 +87,6 @@ func UpdateCart(c *gin.Context) {
 	}
 
 	c.IndentedJSON(http.StatusOK, cart)
-	/**
-
-	err := database.CartCollection().FindOneAndReplace(c.Request.Context(), bson.M{"owner_id": claims.UserID}, &cart)
-	if err != nil {
-		if errors.Is(err.Err(), mongo.ErrNoDocuments) {
-			c.IndentedJSON(http.StatusNotFound, gin.H{"message": "user has no cart yet"})
-		} else {
-			c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Err()})
-		}
-	} else {
-		c.IndentedJSON(http.StatusOK, cart)
-	}
-	*/
 }
 
 func DeleteCart(c *gin.Context) {

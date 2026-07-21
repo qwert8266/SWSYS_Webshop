@@ -12,8 +12,8 @@ export function ProductProvider({children}){
         }, []
     );
 
-    const updateProduct = useCallback(async (productData,accessToken) => {
-        return await productApi.updateProduct(productData,accessToken);
+    const updateProduct = useCallback(async (productId, productData,accessToken) => {
+        return await productApi.updateProduct(productId, productData,accessToken);
         }, []
     );
 

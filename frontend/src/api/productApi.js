@@ -29,8 +29,8 @@ class ProductApi extends BaseApi {
     });
   }
 
-  async updateProduct(productData,accessToken) {
-    return this.request(`/products/${productData.id}`, {
+  async updateProduct(productId,productData,accessToken) {
+    return this.request(`/products/${productId}`, {
       method: "PUT",
       body: productData,accessToken,
       errorMessage: "Produkt konnte nicht bearbeitet werden. Bitte versuche es erneut.",

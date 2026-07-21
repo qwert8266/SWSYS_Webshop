@@ -5,6 +5,7 @@ import productApi from "../api/productApi";
 import StockIndicator from "../components/stockIndicator";
 import { useAuth } from "../context/authContext";
 import { getCategoryConfig } from "../utils/categoryConfig";
+import { getStockVariantLabel } from "../utils/productHelpers";
 
 import "./logisticsPanel.css";
 
@@ -91,7 +92,7 @@ function LogisticsPanel() {
         <table className="table logistics-table">
           <thead>
             <tr>
-              <th scope="col">Produkt</th>
+              <th scope="col">Artikel</th>
               <th scope="col">Kategorie</th>
               <th scope="col">Bestand</th>
               <th scope="col">Status</th>
@@ -100,15 +101,23 @@ function LogisticsPanel() {
           <tbody>
             {lowStockProducts.map((stockInfo) => {
               const category = getCategoryConfig(stockInfo.category);
+              const packSize = stockInfo.pack_size ?? stockInfo.packSize ?? 0;
+              const volume = stockInfo.volume ?? 0;
+              const variantKey = `${stockInfo.product_id}-${volume}-${packSize}`;
+              const variantLabel = getStockVariantLabel(stockInfo);
 
               return (
-                <tr key={stockInfo.product_id}>
+                <tr key={variantKey}>
                   <td>
                     <NavLink
+                      className="logistics-product-link"
                       to={`/sortiment/${category.slug}/${encodeURIComponent(stockInfo.product_id)}`}
                     >
                       {stockInfo.name}
                     </NavLink>
+                    {variantLabel && (
+                      <div className="logistics-variant-label">{variantLabel}</div>
+                    )}
                   </td>
                   <td>{category.name}</td>
                   <td>{stockInfo.stock}</td>

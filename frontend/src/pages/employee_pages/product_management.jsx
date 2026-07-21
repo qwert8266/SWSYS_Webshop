@@ -44,8 +44,7 @@ function ProductManagement(){
         name: "",
         description: "",
         images: [],
-        price: null,
-        stock: null,
+        variants: [createEmptyVariant()],
         categorySlugs: [],
     });
 
@@ -62,32 +61,88 @@ function ProductManagement(){
         existingImages: [],
         newImages: [],
         removedImages: [],
-        price: null,
-        stock: null,
+        variants: [createEmptyVariant()],
         categorySlugs: [],
     });
 
+    /** Erstellt eine leere Variante */
+    function createEmptyVariant() {
+        return {
+            price: "",
+            volume: "",
+            packSize: "",
+            deposit: "",
+            crateDeposit: "",
+            stock: "",
+            discount: null,
+        };
+    }
+
     /** Aktualisiert Eingabefelder des Erstellen-Formulars */
     const handleChange = (event) => {
-    const { name, value } = event.target;
+        const { name, value } = event.target;
 
-        setProductData({
-            ...productData,
-            [name]: 
-            name === "price" || name === "stock" || name === "id" ? Number(value) : value,
-        });
+        setProductData((currentProductData) => ({
+            ...currentProductData,
+            [name]: value
+        }));
     };
 
     /** Aktualisiert Eingabefelder des Bearbeiten-Formulars */
     const handleChange2 = (event) => {
-    const { name, value } = event.target;
+        const { name, value } = event.target;
 
-        setProductDataModify({
-            ...productDataModify,
-            [name]: 
-            name === "price" || name === "stock" || name === "id" ? Number(value) : value,
+        setProductDataModify((currentProductData) => ({
+            ...currentProductData,
+            [name]: value
+        }));
+    };
+
+    /** Ändert ein Feld einer Produktvariante */
+    const handleVariantChange = (variantIndex, fieldName, value, modify = false) => {
+        const setter = modify ? setProductDataModify : setProductData;
+        setter((currentProductData) => ({
+            ...currentProductData,
+            variants: currentProductData.variants.map((variant, index) => 
+                index === variantIndex ? {...variant, [fieldName]: value } : variant
+            ),
+        }));
+    }
+
+    /** Fügt dem jeweiligen Formular eine weitere Variante hinzu */
+    const handleAddVariant = (modify = false) => {
+        const setter = modify ? setProductDataModify : setProductData;
+        setter((currentProductData) => ({
+            ...currentProductData,
+            variants: [...currentProductData.variants, createEmptyVariant()],
+        }));
+    };
+
+    /** Entfernt eine Variante. Eine muss bestehen bleiben */
+    const handleRemoveVariant = (variantIndex, modify = false) => {
+        const setter = modify ? setProductDataModify : setProductData;
+        setter((currentProductData) => {
+            if (currentProductData.variants.length <= 1) return currentProductData;
+            const variant = currentProductData.variants[variantIndex];
+            if (modify && Number(variant?.discount || 0) > 0) return currentProductData;
+            return {
+                ...currentProductData,
+                variants: currentProductData.variants.filter((_, index) => index !== variantIndex)
+            };
         });
     };
+
+    /** Konvertiert die camelCase-Schreibweise in das API-Format */
+    function variantsToApi(variants) {
+        return variants.map((variant) => ({
+            price: Number(variant.price),
+            volume: Number(variant.volume),
+            pack_size: Number(variant.packSize),
+            deposit: Number(variant.deposit || 0),
+            crate_deposit: Number(variant.crateDeposit || 0),
+            stock: Number(variant.stock),
+        }));
+    }
 
     /** Speichert die ausgewählten Bilddateien für den Upload */
     const handleImageChange = (event) => {
@@ -201,6 +256,13 @@ function ProductManagement(){
      * Produktdaten werden als JSON in FormData.data übertragen
      */
     const handleCreateProduct = async () => {
+        const variantError = validateProductVariants(productData.variants);
+        if (variantError) {
+            setShowNotSuccessfulLabel(true);
+            setTimeout(() => setShowNotSuccessfulLabel(false), 5000);
+            return;
+        }
+        
         const selectedCategories = categories.filter((category) => {
             return productData.categorySlugs.includes(category.slug);
         });
@@ -209,8 +271,7 @@ function ProductManagement(){
         const productPayload = {
             name: productData.name,
             description: productData.description,
-            price: productData.price,
-            stock: productData.stock,
+            product_variants: variantsToApi(productData.variants),
             categories: selectedCategories,
         };
 
@@ -237,8 +298,7 @@ function ProductManagement(){
                 name: "",
                 description: "",
                 images: [],
-                price: null,
-                stock: null,
+                variants: [createEmptyVariant()],
                 categorySlugs: [],
             });
 
@@ -284,8 +344,7 @@ function ProductManagement(){
             product_id: productDataModify.id,
             name: productDataModify.name,
             description: productDataModify.description,
-            price: productDataModify.price,
-            stock: productDataModify.stock,
+            product_variants: variantsToApi(productDataModify.variants),
             categories: selectedCategories,
 
             // Liste beschreibt, welche bereits gespeicherten Bilder erhalten bleiben soll
@@ -297,7 +356,7 @@ function ProductManagement(){
         const updateBody = buildProductUpdateFormData(productPayload, newImages);
 
         try{
-            const updatedProduct = await updateProduct(updateBody, accessToken);
+            const updatedProduct = await updateProduct(productDataModify.id, updateBody, accessToken);
 
             setModifyErrorMessage("");
             setShowModifyWindow(false);
@@ -308,7 +367,7 @@ function ProductManagement(){
             const updateProductForList = normalizeProduct({
                 ...productToModify,
                 ...productPayload,
-                ...(updatedProduct && updatedProduct.product_id ? updateProduct : {}),
+                ...(updatedProduct && updatedProduct.product_id ? updatedProduct : {}),
                 id: productPayload.product_id,
                 product_id: productPayload.product_id,
                 images: mergedImages,
@@ -403,12 +462,9 @@ function ProductManagement(){
             return "Das neue Produktbild muss eine gültige Dateiendung besitzen: .png, .jpg, .jpeg oder .webp";
         }
 
-        if (productDataModify.price === "" || productDataModify.price === null || productDataModify.price <= 0) {
-            return "Bitte gib einen gültigen Preis in Cent an";
-        }
-
-        if (productDataModify.stock < 0) {
-            return "Bitte gib einen gültigen Lagerbestand an";
+        const variantError = validateProductVariants(productDataModify.variants);
+        if (variantError) {
+            return variantError;
         }
 
         if ((productDataModify.categorySlugs || []).length === 0) {
@@ -416,6 +472,75 @@ function ProductManagement(){
         }
 
         return "";
+    }
+
+    /** Prüft alle Varianten sowie die eindeutige Kombination aus Volumen und Packungsgröße */
+    function validateProductVariants(variants) {
+        if (!Array.isArray(variants) || variants.length === 0) return "Bitte hinterlege mindestens eine Produktvariante";
+
+        const variantKey = new Set();
+        for (const variant of variants) {
+            if (Number(variant.price) <= 0) return "Bitte gib einen gültigen Preis is Cent an";
+            if (Number(variant.volume) <= 0) return "Bitte gib ein gültiges Volumen an";
+            if (Number(variant.packSize) <= 0) return "Bitte gib eine gültige Packungsgröße an";
+            if (Number(variant.deposit || 0) < 0 || Number(variant.crateDeposit || 0) < 0) return "Pfandwerte dürfen nicht negativ sein";
+            if (Number(variant.stock) < 0) return "Bitte gib einen gültigen Lagerbestand an";
+
+            const key = `${Number(variant.volume)}-${Number(variant.packSize)}`;
+            if (variantKey.has(key)) return "Volumen und Packungsgröße müssen je Variante eindeutig sein";
+            variantKey.add(key);
+        }
+        
+        return "";
+    }
+
+    /** Rendert Variantenfelder */
+    function renderVariantInputs(variants, modify = false) {
+        return (variants || []).map((variant, variantIndex) => {
+            const hasActiveSale = Number(variant.discount || 0) > 0;
+            const fields = [
+                ["price", "Preis", "Preis in Cent"],
+                ["volume", "Volumen", "Volumen in ml"],
+                ["packSize", "Packungsgröße", "z.B. 25"],
+                ["deposit", "Flaschenpfand", "Pfand in Cent"],
+                ["crateDeposit", "Kistenpfand", "Pfand in Cent"],
+                ["stock", "Bestand", "Lagerbestand"],
+            ];
+
+            return (
+                <div key={variantIndex} className='border rounded p-3 mb-3 w-100' style={{ maxWidth: "520px" }}>
+                    <div className='d-flex justify-content-between align-items-center mb-2'>
+                        <strong>Variante {variantIndex + 1}</strong>
+                        <div className='d-flex align-items-center gap-2'>
+                            {hasActiveSale && <span className='badge bg-danger'>{variant.discount} % Angebot</span>}
+                            {variants.length > 1 && !hasActiveSale && (
+                                <button 
+                                    type="button" 
+                                    className='btn btn-sm btn-outline-danger' 
+                                    onClick={() => handleRemoveVariant(variantIndex, modify)}
+                                >
+                                    Entfernen
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                    {fields.map(([fieldName, label, placeholder]) => (
+                        <div className='d-flex flex-row align-items-center pb-2' key={fieldName}>
+                            <label className='fs-6 me-3' style={{ width: "150px" }}>{label}</label>
+                            <input
+                                className='fs-6 border rounded'
+                                type="number"
+                                min="0"
+                                placeholder={placeholder}
+                                value={variant[fieldName] ?? ""}
+                                disabled={modify && hasActiveSale && (fieldName === "volume" || fieldName === "packSize" )}
+                                onChange={(event) => handleVariantChange(variantIndex, fieldName, event.target.value, modify)}
+                            />
+                        </div>
+                    ))}
+                </div>
+            );
+        });
     }
 
     /** Ermittelt den Kategorie-Slug für Produktlinks */
@@ -707,17 +832,25 @@ function ProductManagement(){
                                 )}
             
                             </div>
-
                         </div>
-
-                        <div className='d-flex flex-row align-items-center pb-2'>
-                            <label className='fs-5 me-3' style={{ width: "150px" }}>Preis</label>
-                            <input className='fs-5 border rounded ' type="text" placeholder='Preis(in Cent)' name='price' value={productData.price} onChange={handleChange}/>
+                        
+                        <div className='flex flex-column align-items-center start-50 px-3 pb-2'>
+                            <div className='d-flex align-items-center justify-content-between mb-2' style={{ maxWidth: "520px" }}>
+                                <label className='fs-5 mb-0'>Produktvarianten</label>
+                                
+                                <button 
+                                    type="button"
+                                    className='btn btn-link btn-sm'
+                                    onClick={() => handleAddVariant(false)}
+                                >
+                                    + Variante hinzufügen
+                                </button>
+                            </div>
+                            <div className='d-flex flex-column align-items-center pb-2'>
+                                {renderVariantInputs(productData.variants)}
+                            </div>
                         </div>
-                        <div className='d-flex flex-row align-items-center pb-2'>
-                            <label className='fs-5 me-3' style={{ width: "150px" }}>Stock</label>
-                            <input className='fs-5 border rounded ' type="text" placeholder='Stock' name='stock' value={productData.stock} onChange={handleChange}/>
-                        </div>
+                        
                         <div className='d-flex flex-row align-items-center pb-2'>
                             <label className='fs-5 me-3' style={{ width: "150px" }}>Kategorie</label>
                             
@@ -814,11 +947,17 @@ function ProductManagement(){
                                         <h3 className='w-75'>{product.name}</h3>
                                     </div>
                                     <p>{"★".repeat(Math.round(product.rating))}{"☆".repeat(5 - Math.round(product.rating))}</p>
-                                    <strong style={{width: "80px", textAlign: 'right'}}>{formatEuro(product.price)}</strong>
-                                    <div style={{width: "100px"}}>
-                                        {product.stock !== null && (product.stock <= 15 && product.stock !== 0) && <p className='text-danger'>Nur noch {product.stock} verfügbar</p>}
-                                        {product.stock !== null && product.stock > 15 && <p className=''>Noch {product.stock} verfügbar</p>}
-                                        {product.stock !== null && product.stock === 0 && <p className='text-danger'>Nicht mehr verfügbar</p>}
+
+                                    <div className='d-flex flex-column' style={{width: "290px"}}>
+                                        {(product.variants || []).map((variant, variantIndex) => (
+                                            <div key={`${variant.volume}-${variant.packSize}-${variantIndex}`} className='small border-bottom py-1'>
+                                                <strong>{variant.packSize} x {String(Number(variant.volume))}ml</strong>
+                                                {" - "}{formatEuro(variant.price)}
+                                                {" - Bestand: "}{variant.stock}
+                                                {" - Pfand: "}{formatEuro(Number(variant.depositPerPack ?? (Number(variant.packSize || 0) * Number(variant.deposit || 0) + Number(variant.crateDeposit || 0))))}
+                                                {Number(variant.discount || 0) > 0 && <span className='badge bg-danger ms-2'>-{variant.discount} %</span>}
+                                            </div>
+                                        ))}
                                     </div>
                                     <button 
                                         className="btn p-2 border-0 bg-transparent flex-shrink-0  cart-delete-button justify-content-end"
@@ -833,8 +972,15 @@ function ProductManagement(){
                                                 existingImages: getProductImages(product),
                                                 newImages: [],
                                                 removedImages: [],
-                                                price: Math.round(product.price * 100),
-                                                stock: product.stock,
+                                                variants: (product.variants || []).map((variant) => ({
+                                                    price: Math.round(Number(variant.price) * 100),
+                                                    volume: variant.volume,
+                                                    packSize: variant.packSize,
+                                                    deposit: Math.round(Number(variant.deposit || 0) * 100),
+                                                    crateDeposit: Math.round(Number(variant.crateDeposit || 0) * 100),
+                                                    stock: variant.stock,
+                                                    discount: variant.discount ?? null,
+                                                })),
                                                 categorySlugs: getCategorySlugsFromProduct(product),
                                             });
                                             setModifyImageInputKey((currentKey) => currentKey + 1);
@@ -1009,13 +1155,20 @@ function ProductManagement(){
                         </div>
 
                     </div>
-                    <div className='d-flex flex-row align-items-center pb-2'>
-                        <label className='fs-5 me-3' style={{ width: "150px" }}>Preis</label>
-                        <input className='fs-5 border rounded ' type="text" placeholder='Preis(in Cent)' name='price' value={productDataModify.price} onChange={handleChange2}/>
-                    </div>
-                    <div className='d-flex flex-row align-items-center pb-2'>
-                        <label className='fs-5 me-3' style={{ width: "150px" }}>Stock</label>
-                        <input className='fs-5 border rounded ' type="text" placeholder='Stock' name='stock' value={productDataModify.stock} onChange={handleChange2}/>
+                    <div className='flex flex-column align-items-center start-50 px-3 pb-2'>
+                        <div className='d-flex align-items-center justify-content-between mb-2' style={{ maxWidth: "520px" }}>
+                            <label className='fs-5 mb-0'>Produktvarianten</label>
+                            <button
+                                type="button"
+                                className='btn btn-link mb-2'
+                                onClick={() => handleAddVariant(true)}
+                            >
+                                + Variante hinzufügen
+                            </button>
+                        </div>
+                        <div className='d-flex flex-column align-items-center pb-2'>
+                                {renderVariantInputs(productDataModify.variants, true)}
+                            </div>
                     </div>
                     <div className='d-flex flex-row align-items-center pb-2'>
                         <label className='fs-5 me-3' style={{ width: "150px" }}>Kategorie</label>

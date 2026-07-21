@@ -7,10 +7,10 @@ import productApi from '../api/productApi';
 import StockIndicator from '../components/stockIndicator';
 import FavoriteButton from '../components/favoriteButton';
 import '../components/favoriteButton.css';
-import { getProductImagePath, normalizeProduct } from '../utils/productHelpers';
 import OfferBadge from '../components/offerBadge';
-import ProductPrice from '../components/productPrice';
 import FourOFour from './404';
+import ProductPrice from '../components/productPrice';
+import { formatEuro, formatVolume, getProductImagePath, getVariantLabel, normalizeProduct } from '../utils/productHelpers';
 
 const rezensionen = [
     {username: "Mathis Gronewold", profilePicture: "profile_picture.png", rating: 5, evaluation: "Da geht mir einer ab!"},
@@ -34,6 +34,7 @@ function Product(){
 
     const { addItem } = useCart();
     const [quantity, setQuantity] = useState(1);
+    const [selectedVariantKey, setSelectedVariantKey] = useState(null);
     const [product, setProduct] = useState(null);
     const [stockInfo, setStockInfo] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
@@ -62,8 +63,10 @@ function Product(){
                 ]);
 
                 if (!ignoreResult) {
-                    setProduct(normalizeProduct(loadedProduct));
+                    const normalizedProduct = normalizeProduct(loadedProduct);
+                    setProduct(normalizedProduct);
                     setStockInfo(loadedStock);
+                    setSelectedVariantKey(normalizedProduct.variants[0]?.key ?? null);
                 }
             } catch (error) {
                 if (!ignoreResult) {
@@ -97,41 +100,47 @@ function Product(){
     }) || productCategories[0] || null;
     
 
-    // Bei stock === 0 (Status "out_of_stock") ist kein Kauf möglich
-    const isOutOfStock = stockInfo?.status === "out_of_stock" || product?.stock === 0;
+    const selectedVariant = product?.variants?.find(
+        (variant) => variant.key === selectedVariantKey
+    ) ?? null;
 
+    const selectedVariantStock = stockInfo?.variants?.find((entry) => Number(entry.volume) === selectedVariant?.volume && Number(entry.packSize) === selectedVariant?.packSize);
+
+    const availableStock = selectedVariantStock?.stock ?? selectedVariant?.stock ?? 0;
+    const isOutOfStock = availableStock === 0;
+    /*const isOutOfStock = selectedVariant
+        ? selectedVariant.stock === 0
+        : stockInfo?.status === "out_of_stock" || product?.stock === 0;
+    */
     function handleAddToCart(){
         if (!product || isOutOfStock) { return; }
 
-        // Der Warenkorb deckelt die Menge am aktuellen Bestand,
-        // damit Überbestellungen gar nicht erst entstehen
-        const result = addItem(product, quantity, stockInfo?.stock);
+        const result = addItem(product, quantity, availableStock, selectedVariant);
+
+        const variantLabel = selectedVariant ? ` (${getVariantLabel(selectedVariant)})` : "";
 
         if (result.added === 0) {
             setCartMessage("");
-            setLoadError(`Keine weitere Menge verfügbar – es sind bereits ${stockInfo?.stock ?? 0} Stück in deinem Warenkorb.`);
+            setLoadError(`Keine weitere Menge verfügbar – es sind bereits ${availableStock ?? 0} Stück in deinem Warenkorb.`);
         } else if (result.capped) {
             setLoadError("");
-            setCartMessage(`Nur ${result.added} von ${result.requested} Stück konnten hinzugefügt werden (Bestand: ${stockInfo?.stock}).`);
+            setCartMessage(`Nur ${result.added} von ${result.requested} Stück konnten hinzugefügt werden (Bestand: ${availableStock}).`);
         } else {
             setLoadError("");
-            setCartMessage(`${product.name} wurde in den Warenkorb gelegt.`);
+            setCartMessage(`${product.name}${variantLabel} wurde in den Warenkorb gelegt.`);
         }
     }
 
     
-
     function changeSlide(direction) {
     setSlideIndex((currentIndex) =>
         (currentIndex + direction + product.images.length) % product.images.length
-    );
-}
-
-
+        );
+    }
 
     if (productNotFound || !selectedCategory) {
-    return <FourOFour />;
-}
+        return <FourOFour />;
+    }
 
     if (isLoading) {
         return <p>Produkt wird geladen...</p>
@@ -141,8 +150,6 @@ function Product(){
             <FourOFour/>
         );
     }
-
-
 
     return(
         <div className='product-page'>
@@ -205,15 +212,94 @@ function Product(){
                         <OfferBadge product={product} />
                         <p>{product.description || "Keine Beschreibung zu diesem Produkt vorhanden."}</p>
                         <p>{"★".repeat(Math.round(product.rating))}{"☆".repeat(5 - Math.round(product.rating))}{`(${product.rating})`}</p>
-                        <p><ProductPrice product={product} /></p>
-                        {/* Status kommt vom Backend -- kein hardcodierter Schwellwert mehr */}
-                        <StockIndicator stockInfo={stockInfo} showInStock />
+                    
+                        {/* Variantenauswahl */}
+                        {product.variants.length > 0 && (
+                            <div className='variant-selection'>
+                                <p className='variant-selection-title'>Gebindegröße wählen:</p>
+                                <div className='variant-options'>
+                                    {product.variants.map((variant) => (
+                                        <button
+                                            key={variant.key}
+                                            type='button'
+                                            className={
+                                                "variant-option" +
+                                                (variant.key === selectedVariantKey ? " variant-option-selected" : "") +
+                                                (variant.stock === 0 ? " variant-option-sold-out" : "")
+                                            }
+                                            onClick={() => setSelectedVariantKey(variant.key)}
+                                        >
+                                            <span className='variant-option-label'>{getVariantLabel(variant)}</span>
+                                            <ProductPrice product={variant} showDiscount={false} className='variant-optional-price' />
+                                            {/*<span className='variant-option-price'>{formatEuro(variant.price)}</span> */}
+                                            {variant.depositPerPack > 0 && (
+                                                <span className='variant-option-deposit'>
+                                                    zzgl. {formatEuro(variant.depositPerPack)} Pfand
+                                                </span>
+                                            )}
+                                            {variant.stock === 0 && (
+                                                <span className='variant-option-stock text-danger'>Ausverkauft</span>
+                                            )}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="mb-2">
+                            <ProductPrice
+                                product={selectedVariant || product}
+                            />
+                        </div>
+                        {selectedVariant && (
+                            <p className='text-muted mb-3'>
+                                zzgl. {formatEuro(selectedVariant.depositPerPack)} Pfand
+                            </p>
+                        )}
+                        <StockIndicator 
+                            stockInfo={selectedVariantStock || {stock: availableStock, status: availableStock === 0 ? "out_of_stock": availableStock <= 5 ? "critical" : availableStock <= 15 ? "low" : "ok"}} showInStock
+                        />
+
+
+                    {/*<div className='other-information'>
+                        {selectedVariant ? (
+                            <>
+                                <p className='variant-price'>
+                                    {formatEuro(selectedVariant.price)}
+                                    {selectedVariant.depositPerPack > 0 && (
+                                        <span className='variant-deposit-hint'>
+                                            {" "}zzgl. {formatEuro(selectedVariant.depositPerPack)} Pfand
+                                        </span>
+                                    )}
+                                </p>
+                                {selectedVariant.depositPerPack > 0 && (
+                                    <p className='variant-deposit-details'>
+                                        Pfand: {selectedVariant.packSize} × {formatEuro(selectedVariant.deposit)} Flaschenpfand
+                                        {selectedVariant.crateDeposit > 0 &&
+                                            ` + ${formatEuro(selectedVariant.crateDeposit)} Kistenpfand`}
+                                        {` (${formatVolume(selectedVariant.volume)} je Flasche)`}
+                                    </p>
+                                )}
+                                {selectedVariant.stock > 0 && selectedVariant.stock <= 15 && (
+                                    <p className='text-danger'>Nur noch {selectedVariant.stock} verfügbar</p>
+                                )}
+                                {selectedVariant.stock === 0 && (
+                                    <p className='text-danger'>Diese Variante ist derzeit ausverkauft.</p>
+                                )}
+                            </>
+                        ) : (
+                            <>
+                                <p>{formatEuro(product.price)}</p>
+                                <StockIndicator stockInfo={stockInfo} showInStock />
+                            </>
+                        )}
+                    */}
                     </div>
                     <div className='cart-input'>
                         <input 
                             type="number" 
                             min="1" 
-                            max={stockInfo?.stock}
+                            max={availableStock}
                             value={quantity} 
                             onChange={(e)=> {
                                 setQuantity(parseInt(e.target.value))

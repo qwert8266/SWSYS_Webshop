@@ -20,3 +20,14 @@
 .logistics-table th {
   vertical-align: middle;
 }
+
+.logistics-product-link {
+  font-weight: 600;
+}
+
+.logistics-variant-label {
+  color: #15406e;
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-top: 2px;
+}

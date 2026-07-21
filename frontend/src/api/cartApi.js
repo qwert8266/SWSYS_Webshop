@@ -29,8 +29,16 @@ class CartApi extends BaseApi {
       accessToken,
       body: {
         items: items.map((item) => ({
-          productID: item.product_id || item.productID || item.productId,
-          quantity: item.quantity,
+          product_id: item.product_id || item.productID || item.productId,
+          quantity: Number(item.quantity),
+          volume: Number(item.selectedVariant?.volume ?? item.volume ?? 0),
+          pack_size: Number(
+            item.selectedVariant?.packSize ?? 
+            item.selectedVariant?.pack_size ??
+            item.packSize ??
+            item.pack_size ??
+            0
+          ),
         })),
       },
       errorMessage: "Warenkorb konnte nicht gespeichert werden",

@@ -48,7 +48,6 @@ func CreateOrder(c *gin.Context) {
 
 		// checks if the productID is valid
 		if err != nil {
-			//rollbackReservedStock(c, reservedItems)
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Ungültige ProduktID im Warenkorb."})
 			return
 		}
@@ -60,16 +59,35 @@ func CreateOrder(c *gin.Context) {
 			return
 		}
 
+		// volume and pack size identify the exact variant
+		if requestedItem.Volume == 0 || requestedItem.PackSize == 0 {
+			rollbackReservedStock(c, reservedItems)
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error":     "Die gewählte Produktvariante ist unvollständig.",
+				"productId": requestedItem.ProductID,
+				"volume":    requestedItem.Volume,
+				"packSize":  requestedItem.PackSize,
+			})
+			return
+		}
+
 		var product models.Product
 		// selects product where stock value is >= quantity of the requested item
 		filter := bson.M{
 			"product_id": productID,
-			"stock": bson.M{
-				"$gte": requestedItem.Quantity,
+			"product_variants": bson.M{
+				"$elemMatch": bson.M{
+					"volume":    requestedItem.Volume,
+					"pack_size": requestedItem.PackSize,
+					"stock": bson.M{
+						"$gte": requestedItem.Quantity,
+					},
+				},
 			},
 		}
+		// writing update to reduce the stock by the ordered number of products
 		update := bson.M{
-			"$inc": bson.M{"stock": -int32(requestedItem.Quantity)},
+			"$inc": bson.M{"product_variants.$.stock": -int32(requestedItem.Quantity)},
 			"$set": bson.M{"updated_at": now},
 		}
 
@@ -88,7 +106,9 @@ func CreateOrder(c *gin.Context) {
 			// checks if no suitable product with enough stock was found
 			if errors.Is(err, mongo.ErrNoDocuments) {
 				var existingProduct models.Product
-				findErr := database.ProductCollection().FindOne(c.Request.Context(), bson.M{"product_id": productID}).Decode(&existingProduct)
+				findErr := database.ProductCollection().FindOne(
+					c.Request.Context(),
+					bson.M{"product_id": productID}).Decode(&existingProduct)
 
 				// checks if the product does not exist at all
 				if errors.Is(findErr, mongo.ErrNoDocuments) {
@@ -101,10 +121,33 @@ func CreateOrder(c *gin.Context) {
 					c.JSON(http.StatusInternalServerError, gin.H{"error": findErr.Error()})
 					return
 				}
+
+				var matchingVariant *models.ProductVariant
+				for i := range existingProduct.ProductVariants {
+					candidate := &existingProduct.ProductVariants[i]
+					if candidate.Volume == requestedItem.Volume && candidate.PackSize == requestedItem.PackSize {
+						matchingVariant = candidate
+						break
+					}
+				}
+
+				if matchingVariant == nil {
+					c.JSON(http.StatusBadRequest, gin.H{
+						"error":     fmt.Sprintf("Die gewählte Produktvariante von %s wurde nicht gefunden.", existingProduct.Name),
+						"productId": productID,
+						"volume":    requestedItem.Volume,
+						"packSize":  requestedItem.PackSize,
+					})
+					return
+				}
+
 				c.JSON(http.StatusBadRequest, gin.H{
-					"error":     fmt.Sprintf("Nicht genug Bestand für %s.", existingProduct.Name),
+					"error":     fmt.Sprintf("Nicht genug Bestand für die gewählte Produktvariante von %s.", existingProduct.Name),
 					"productId": productID,
-					"available": existingProduct.Stock,
+					"requested": requestedItem.Quantity,
+					"available": matchingVariant.Stock,
+					"volume":    matchingVariant.Volume,
+					"packSize":  matchingVariant.PackSize,
 				})
 				return
 			}
@@ -113,16 +156,48 @@ func CreateOrder(c *gin.Context) {
 			return
 		}
 
-		reservedItems = append(reservedItems, reservedStock{ProductID: productID, Quantity: requestedItem.Quantity})
+		var variant *models.ProductVariant
+		for i := range product.ProductVariants {
+			v := &product.ProductVariants[i]
+			if v.Volume == requestedItem.Volume && v.PackSize == requestedItem.PackSize {
+				variant = v
+				break
+			}
+		}
 
-		lineTotal := product.Price * requestedItem.Quantity
+		reservedItems = append(reservedItems, reservedStock{
+			ProductID: productID,
+			PackSize:  requestedItem.PackSize,
+			Volume:    requestedItem.Volume,
+			Quantity:  requestedItem.Quantity,
+		})
+
+		// Ein Sale reduziert ausschließlich den Warenpreis. Nicht den Pfand
+		productPrice := variant.Price
+		if variant.Discount != nil && *variant.Discount > 0 {
+			discount := uint32(*variant.Discount)
+			if discount > 100 {
+				discount = 100
+			}
+			productPrice = (variant.Price * (100 - discount)) / 100
+		}
+
+		// Berechnet Preis & Pfand eines Produktens und gesamtpreis einer Variante und alles Produkte
+		deposit := variant.PackSize*variant.Deposit + variant.CrateDeposit
+		unitPrice := productPrice + uint32(deposit)
+		lineTotal := unitPrice * requestedItem.Quantity
 		totalPrice += lineTotal
+
 		orderItems = append(orderItems, models.OrderItem{
 			ProductID:      product.ProductID,
 			Name:           product.Name,
 			Quantity:       requestedItem.Quantity,
-			UnitPrice:      product.Price,
+			UnitPrice:      unitPrice,
 			LineTotalPrice: lineTotal,
+			Volume:         requestedItem.Volume,
+			PackSize:       requestedItem.PackSize,
+			VariantLabel:   variant.VariantLabel,
+			DepositPerUnit: uint32(deposit),
 		})
 	}
 
@@ -256,9 +331,10 @@ func GetStatistics(c *gin.Context) {
 			return
 		}
 
-		totalStock += product.Stock
+		stock := product.TotalStock()
+		totalStock += stock
 
-		if product.Stock <= 10 {
+		if stock <= models.LowStockThreshold {
 			lowStockCount++
 		}
 	}
@@ -311,8 +387,8 @@ func GetOrders(c *gin.Context) {
 
 }
 
-// UpdateOrder allows modification of existing orders
-func UpdateOrder(c *gin.Context) {
+// UpdateOrderStatus UpdateProduct allows modification of existing products values
+func UpdateOrderStatus(c *gin.Context) {
 	orderID, err := uuid.Parse(c.Param("id"))
 	fmt.Println("OrderID aus URL:", orderID)
 	if err != nil {
@@ -365,17 +441,26 @@ func UpdateOrder(c *gin.Context) {
 
 type reservedStock struct {
 	ProductID uuid.UUID
+	PackSize  uint16
+	Volume    uint16
 	Quantity  uint32
 }
 
 func rollbackReservedStock(c *gin.Context, reservedItems []reservedStock) {
-	// restores all items that have already been reserved
 	for _, item := range reservedItems {
 		_, _ = database.ProductCollection().UpdateOne(
 			c.Request.Context(),
-			bson.M{"product_id": item.ProductID},
 			bson.M{
-				"$inc": bson.M{"stock": item.Quantity},
+				"product_id": item.ProductID,
+				"product_variants": bson.M{
+					"$elemMatch": bson.M{
+						"volume":    item.Volume,
+						"pack_size": item.PackSize,
+					},
+				},
+			},
+			bson.M{
+				"$inc": bson.M{"product_variants.$.stock": item.Quantity},
 				"$set": bson.M{"updated_at": time.Now().UTC()},
 			},
 		)
