@@ -47,12 +47,16 @@ type StockOperation struct {
 }
 
 type Category struct {
-	Name string `json:"name"`
-	Slug string `json:"slug"` //Für URL's und co.
+	Name      string    `json:"name" bson:"name"`
+	Slug      string    `json:"slug" bson:"slug"` //Für URL's und co.
+	Sentence  string    `json:"sentence" bson:"sentence"`
+	Banner    string    `json:"banner" bson:"banner"`
+	CreatedAt time.Time `json:"created_at,omitempty" bson:"created_at,omitempty"`
+	UpdatedAt time.Time `json:"updated_at,omitempty" bson:"updated_at,omitempty"`
 }
 
 func (c Category) IsValid() bool {
-	exists, err := database.CategoryCollection().CountDocuments(context.Background(), bson.M{"name": c.Name})
+	exists, err := database.CategoryCollection().CountDocuments(context.Background(), bson.M{"$or": bson.A{bson.M{"name": c.Name}, bson.M{"slug": c.Slug}}})
 	if err != nil || 0 == exists {
 		return false
 	}

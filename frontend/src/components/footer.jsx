@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -8,7 +9,7 @@ import {
   faBottleWater,
   faMugHot,
 } from '@fortawesome/free-solid-svg-icons';
-import { CATEGORY_CONFIGS } from '../utils/categoryConfig';
+import categoryApi from '../api/categoryApi';
 import './footer.css';
 
 const FOOTER_CATEGORY_ICONS = {
@@ -20,11 +21,36 @@ const FOOTER_CATEGORY_ICONS = {
   'kaffee-tee': faMugHot,
 };
 
-const SORTIMENT_CATEGORIES = CATEGORY_CONFIGS.filter(
-  (category) => category.slug !== 'angebote'
-);
-
 function Footer() {
+  const [categories, setCategories] = useState([]);
+
+  useEffect(() => {
+    let ignoreResult = false;
+
+    async function loadCategories() {
+      try {
+        const categoriesFromDatabase = await categoryApi.getCategories();
+
+        if (!ignoreResult) {
+          setCategories(
+            (Array.isArray(categoriesFromDatabase) ? categoriesFromDatabase : [])
+              .filter((category) => category.slug !== 'angebote')
+          );
+        }
+      } catch {
+        if (!ignoreResult) {
+          setCategories([]);
+        }
+      }
+    }
+
+    loadCategories();
+
+    return () => {
+      ignoreResult = true;
+    };
+  }, []);
+
   return (
     <footer className="footer">
       <div className="footer-content">
@@ -36,7 +62,7 @@ function Footer() {
 
         <div className="footer-column">
           <p className="title">Sortiment</p>
-          {SORTIMENT_CATEGORIES.map((category) => {
+          {categories.map((category) => {
             const icon = FOOTER_CATEGORY_ICONS[category.slug];
 
             return (

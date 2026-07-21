@@ -20,7 +20,14 @@ class CategoryApi extends BaseApi {
     });
   }
   
-  // async updateCategory() {}
+  async updateCategory(slug, categoryData, accessToken) {
+    return this.request(`/category/${encodeURIComponent(slug)}`, {
+      method: "PUT",
+      body: categoryData,
+      accessToken,
+      errorMessage: "Kategorie konnte nicht bearbeitet werden",
+    });
+  }
 
   async deleteCategory(slug, accessToken) {
     return this.request(`/category/${encodeURIComponent(slug)}`, {

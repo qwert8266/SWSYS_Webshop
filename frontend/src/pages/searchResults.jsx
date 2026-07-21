@@ -6,7 +6,6 @@ import OfferBadge from "../components/offerBadge";
 import ProductPrice from "../components/productPrice";
 import StockIndicator from "../components/stockIndicator";
 import { useStockMap } from "../hooks/useStockMap";
-import { getCategoryConfig } from "../utils/categoryConfig";
 import {
   getProductImagePath,
   normalizeProduct,
@@ -82,7 +81,7 @@ function SearchResults() {
       <div className="product_row">
         {products.map((product) => {
           const productCategories = Array.isArray(product?.categories) ? product.categories : [];
-          const categorySlug = productCategories[0];
+          const categorySlug = productCategories[0]?.slug || "";
 
           return (
             <article className="product" key={product.id}>
