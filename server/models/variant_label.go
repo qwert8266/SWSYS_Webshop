@@ -25,10 +25,20 @@ var namedPackSizes = map[uint16]string{
 // anhand Kistenpfand und Packungsgröße.
 func (v ProductVariant) DisplayLabel() string {
 	name := v.packName()
+	if v.Volume == 0 {
+		return name
+	}
 	return fmt.Sprintf("%s (%d × %s)", name, v.PackSize, formatVolumeDE(v.Volume))
 }
 
 func (v ProductVariant) packName() string {
+	if v.PackSize == 1 {
+		if v.Volume == 0 {
+			return "Einzelpackung"
+		}
+		return "Einzelgebinde"
+	}
+
 	if name, ok := namedPackSizes[v.PackSize]; ok {
 		return name
 	}

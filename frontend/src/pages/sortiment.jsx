@@ -4,7 +4,7 @@ import { NavLink } from "react-router-dom";
 import productApi from "../api/productApi";
 import categoryApi from "../api/categoryApi";
 import ProductGrid from "../components/productGrid";
-import { normalizeProduct, isOnOffer, productHasCategory } from "../utils/productHelpers";
+import { normalizeProduct, productHasCategory } from "../utils/productHelpers";
 
 import "./categories.css";
 import "./sortiment.css";
@@ -52,14 +52,14 @@ function Sortiment() {
   }, []);
 
   const featuredProducts = useMemo(
-    () => products.filter(isOnOffer),
+    () => products.filter((product) => productHasCategory(product, "angebote")),
     [products]
   );
 
   const productsByCategory = useMemo(
     () =>
       categories
-        .filter((category) => category.slug !== "angebot")
+        .filter((category) => category.slug !== "angebote")
         .map((category) => ({
           category,
           products: products.filter((product) => productHasCategory(product, category.slug)),

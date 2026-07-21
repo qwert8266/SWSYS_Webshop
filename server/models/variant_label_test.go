@@ -44,6 +44,22 @@ func TestProductVariantDisplayLabel(t *testing.T) {
 			},
 			want: "4er Träger (4 × 0,33 l)",
 		},
+		{
+			name: "Einzelgebinde",
+			variant: ProductVariant{
+				PackSize: 1,
+				Volume:   1000,
+			},
+			want: "Einzelgebinde (1 × 1 l)",
+		},
+		{
+			name: "Einzelpackung ohne Volumen",
+			variant: ProductVariant{
+				PackSize: 1,
+				Volume:   0,
+			},
+			want: "Einzelpackung",
+		},
 	}
 
 	for _, tt := range tests {

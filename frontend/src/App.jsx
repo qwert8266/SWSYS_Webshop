@@ -27,6 +27,10 @@ import Sortiment from "./pages/sortiment";
 import Product from "./pages/product";
 import LogisticsPanel from "./pages/logisticsPanel";
 import Home from './pages/home';
+import Agb from "./pages/agb";
+import Datenschutz from "./pages/datenschutz";
+import Nutzungsbedingungen from "./pages/nutzungsbedingungen";
+import Impressum from "./pages/impressum";
 
 function App() {
   return (
@@ -46,6 +50,10 @@ function App() {
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/cart" element={<ShoppingCart />} />
           <Route path="/contact" element={<Contact/>}/>
+          <Route path="/agb" element={<Agb />} />
+          <Route path="/impressum" element={<Impressum />} />
+          <Route path="/datenschutzerklärung" element={<Datenschutz />} />
+          <Route path="/nutzungsbedingungen" element={<Nutzungsbedingungen />} />
           <Route path="/cart/checkout" element={
             <ProtectedRoutes>
               <Checkout/>
