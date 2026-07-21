@@ -2,22 +2,19 @@ import { useState, useEffect, useMemo } from 'react';
 import { NavLink } from "react-router-dom"
 import { contactApi } from "../api/contactApi";
 import { useAuth } from "../context/authContext";
+import { normalizeProduct, getProductImagePath, formatEuro } from '../utils/productHelpers';
+import productApi from '../api/productApi';
+
 import './contact.css';
 
-export const produkte = [
-    { name: "Becks", id: "001", price: "14.99", rating: 3.8, image: "becks.png", category: "bier", quantity: 0},
-    { name: "Corona", id: "002", price: "19.99", rating: 3.4, image: "corona.png", category: "bier"  },
-    { name: "Desperados", id: "003", price: "34.99", rating: 4.5, image: "desperados.png", category: "bier" },
-    { name: "Merlot", id: "004", price: "9.99", rating: 2.8, image: "merlot.png", category: "wein" },
-    { name: "Riesling", id: "005", price: "12.99", rating: 3.6, image: "riesling.png", category: "wein" },
-    { name: "Jägermeister", id: "006", price: "14.99", rating: 1.1, image: "jägermeister.png", category: "schnaps" },
-    { name: "Havana", id: "007", price: "12.99", rating: 3.8, image: "havana.png", category: "schnaps" },
-    { name: "Veterano", id: "008", price: "5.99", rating: 4.9, image: "veterano.png", category: "schnaps" },
-];
-
 function Contact(){
-    const addedProducts = []
+    const [addedProducts, setAddedProducts] = useState(new Map());
+    const [currentAmount, setCurrentAmount] = useState(0);
     const [search, setSearch] = useState(""); 
+    const [suggestions, setSuggestions] = useState([]);
+    const [showSuggestions, setShowSuggestions] = useState(false);
+    const [isSuggestionsLoading, setIsSuggestionsLoading] = useState(false);
+    
 
     const [reasonForContact, setReasonForContact] = useState("");
     const [description, setDescription] = useState("");
@@ -38,10 +35,6 @@ function Contact(){
         const fullName = `${user.firstName || ""} ${user.lastName || ""}`.trim();
         return fullName;
     }, [isAuthenticated, user]);
-
-    const suggestions = produkte.filter(product =>
-        product.name.toLowerCase().includes(search.toLowerCase())
-    );
 
     useEffect(() => {
         if (!user) { return; }
@@ -70,6 +63,80 @@ function Contact(){
             setErrorMessage(error.message || "Kontaktanfrage konnte nicht abgesendet werden.");
         } finally {
             setIsSubmitting(false);
+        }
+    }
+
+    useEffect(() => {
+        const query = search.trim();
+
+        if (query.length < 2) {
+        setSuggestions([]);
+        setShowSuggestions(false);
+        return;
+        }
+
+        let ignoreResult = false;
+
+        const timeoutId = setTimeout(async () => {
+        setIsSuggestionsLoading(true);
+
+        try {
+            const foundProducts = await productApi.searchProducts(query);
+
+            if (!ignoreResult) {
+            setSuggestions(foundProducts.map(normalizeProduct).slice(0, 5));
+            setShowSuggestions(true);
+            }
+        } catch (error) {
+            if (!ignoreResult) {
+            setSuggestions([]);
+            setShowSuggestions(false);
+            }
+        } finally {
+            if (!ignoreResult) {
+            setIsSuggestionsLoading(false);
+            }
+        }
+        }, 300);
+
+        return () => {
+        ignoreResult = true;
+        clearTimeout(timeoutId);
+        };
+    }, [search]);
+
+    async function handleAddProduct() {
+        const query = search.trim();
+
+        if (!query) {
+            return;
+        }
+
+        try {
+            const foundProducts = await productApi.searchProducts(query);
+
+            const product = foundProducts.find(
+                p => p.name.toLowerCase() === query.toLowerCase()
+            );
+
+            if (!product) {
+                return;
+            }
+
+            setAddedProducts(prev => {
+                const map = new Map(prev);
+
+                const oldAmount = map.get(product) ?? 0;
+                map.set(product, oldAmount + currentAmount);
+
+                return map;
+            });
+
+            setSearch("");
+            setCurrentAmount(0);
+
+        } catch (err) {
+            console.error(err);
         }
     }
 
@@ -129,11 +196,16 @@ function Contact(){
                             <div className='großbestellung_container'>
                                 <label className='blue_text_long'>Ausgewählte Produkte</label>
                                 <div className='added_product_container'>
-                                    <div className='added_product'>
-                                        <label> 6x Becks</label>
-                                        <label> 6x19.99E</label>
-                                        <label> 120.00E</label>
-                                    </div>
+                                    {
+                                        Array.from(addedProducts.entries()).map(([product, quantity]) => (
+                                        <div className="added_product" key={product.id}>
+                                            <label className='added_product_name'>{quantity}x {product.name}</label>
+                                            <label className='added_product_single'>{quantity} x {formatEuro(product.price/100)}</label>
+                                            <label className='added_product_total'>{formatEuro(quantity * Number(product.price/100))}</label>
+                                        </div>
+                                    ))
+                                    }
+                                    
                                 </div>
                                 <div className='search_container'>
                                     <div className='search_wrapper'>
@@ -152,8 +224,8 @@ function Contact(){
                                             </div>
                                         )}
                                     </div>
-                                    <input className="search_input_count" type="text" placeholder='Anzahl'/>
-                                    <button className='addButton'>+</button>
+                                    <input className="search_input_count" type="text" placeholder='Anzahl' value={currentAmount} onChange={(e)=> setCurrentAmount(Number(e.target.value))}/>
+                                    <button className='addButton' type='button' onClick={()=>(handleAddProduct())}>+</button>
                                 </div>
                             </div>
                             }

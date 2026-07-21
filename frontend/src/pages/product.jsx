@@ -109,6 +109,12 @@ function Product(){
     const availableStock = selectedVariantStock?.stock ?? selectedVariant?.stock ?? 0;
     const isOutOfStock = availableStock === 0;
 
+    const availableStock = selectedVariantStock?.stock ?? selectedVariant?.stock ?? 0;
+    const isOutOfStock = availableStock === 0;
+    /*const isOutOfStock = selectedVariant
+        ? selectedVariant.stock === 0
+        : stockInfo?.status === "out_of_stock" || product?.stock === 0;
+    */
     function handleAddToCart(){
         if (!product || isOutOfStock) { return; }
 

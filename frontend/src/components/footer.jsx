@@ -15,15 +15,15 @@ function Footer(){
           
           <div className="footer-column">
             <p className="title">Sortiment</p>
-            <NavLink className="footer-link" to="/bier">
+            <NavLink className="footer-link" to="/sortiment/bier">
               <FontAwesomeIcon icon={faBeerMugEmpty} className="me-2"></FontAwesomeIcon>
               Bier
             </NavLink>
-            <NavLink className="footer-link" to="/spirituosen">
+            <NavLink className="footer-link" to="/sortiment/spirituosen">
               <FontAwesomeIcon icon={faWhiskeyGlass} className="me-2"></FontAwesomeIcon>
               Spirituosen
             </NavLink>
-            <NavLink className="footer-link" to="/wein-sekt">
+            <NavLink className="footer-link" to="/sortiment/wein-sekt">
               <FontAwesomeIcon icon={faWineGlass} className="me-2"></FontAwesomeIcon>
               Wein & Sekt
             </NavLink>

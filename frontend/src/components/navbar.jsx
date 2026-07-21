@@ -309,18 +309,6 @@ function Navbar() {
                   <a>Kontakt</a>
                 </NavLink>
               </li>
-              
-              
-              {/* Nur für Mitarbeiter sichtbar */}
-              {/*
-              {isEmployee && (
-                <li className='nav-item'>
-                  <NavLink className="nav-link" to="/logistik">
-                    <a>Logistik</a>
-                  </NavLink>
-                </li>
-              )}
-              */}
             </ul>
           </div>
 
