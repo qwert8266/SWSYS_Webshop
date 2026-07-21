@@ -13,5 +13,6 @@ func RegisterCategoryRoutes(categoryRoutes *gin.RouterGroup) {
 	protectedGroup.Use(middleware.Authenticate())
 	protectedGroup.Use(middleware.RoleAuth("admin", "worker", "owner"))
 	protectedGroup.POST("/", handlers.AddCategory)
-	protectedGroup.DELETE("/", handlers.DeleteCategory)
+	protectedGroup.PUT("/:slug", handlers.UpdateCategory)
+	protectedGroup.DELETE("/:slug", handlers.DeleteCategory)
 }

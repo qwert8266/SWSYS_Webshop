@@ -3,8 +3,9 @@ const FALLBACK_PRODUCT_IMAGE = "no_picture.png";
 
 
 export function productHasCategory(product, categorySlugOrName) {
-  
-  return (product?.categories).some((category) => {
+  const categories = Array.isArray(product?.categories) ? product.categories : [];
+
+  return categories.some((category) => {
     return (
       category.slug === categorySlugOrName || category.name === categorySlugOrName
     );
@@ -17,6 +18,21 @@ export function getProductImagePath(product) {
   return String(image).startsWith("/")
     ? image
     : `/img/product_images/${image}`;
+}
+
+/** Convertes a stored category banner path into its public frontend URL */
+export function getCategoryBannerPath(category) {
+  const banner = category?.banner;
+
+  if(!banner) {
+    return "/img/product_images/no_picture.png";
+  }
+
+  const normalizedBanner = String(banner).replace(/\\/g, "/");
+  return normalizedBanner.startsWith("/")
+    ? normalizedBanner
+    : `/img/product_images/${normalizedBanner}`;
+
 }
 
 /** Banner-Pfad eines Sales (Datei liegt unter /images/sale/ im Shared Volume). */

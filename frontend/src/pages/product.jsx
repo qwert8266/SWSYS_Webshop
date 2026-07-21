@@ -108,6 +108,9 @@ function Product(){
 
     const availableStock = selectedVariantStock?.stock ?? selectedVariant?.stock ?? 0;
     const isOutOfStock = availableStock === 0;
+
+    const availableStock = selectedVariantStock?.stock ?? selectedVariant?.stock ?? 0;
+    const isOutOfStock = availableStock === 0;
     /*const isOutOfStock = selectedVariant
         ? selectedVariant.stock === 0
         : stockInfo?.status === "out_of_stock" || product?.stock === 0;
@@ -260,40 +263,6 @@ function Product(){
                             stockInfo={selectedVariantStock || {stock: availableStock, status: availableStock === 0 ? "out_of_stock": availableStock <= 5 ? "critical" : availableStock <= 15 ? "low" : "ok"}} showInStock
                         />
 
-
-                    {/*<div className='other-information'>
-                        {selectedVariant ? (
-                            <>
-                                <p className='variant-price'>
-                                    {formatEuro(selectedVariant.price)}
-                                    {selectedVariant.depositPerPack > 0 && (
-                                        <span className='variant-deposit-hint'>
-                                            {" "}zzgl. {formatEuro(selectedVariant.depositPerPack)} Pfand
-                                        </span>
-                                    )}
-                                </p>
-                                {selectedVariant.depositPerPack > 0 && (
-                                    <p className='variant-deposit-details'>
-                                        Pfand: {selectedVariant.packSize} × {formatEuro(selectedVariant.deposit)} Flaschenpfand
-                                        {selectedVariant.crateDeposit > 0 &&
-                                            ` + ${formatEuro(selectedVariant.crateDeposit)} Kistenpfand`}
-                                        {` (${formatVolume(selectedVariant.volume)} je Flasche)`}
-                                    </p>
-                                )}
-                                {selectedVariant.stock > 0 && selectedVariant.stock <= 15 && (
-                                    <p className='text-danger'>Nur noch {selectedVariant.stock} verfügbar</p>
-                                )}
-                                {selectedVariant.stock === 0 && (
-                                    <p className='text-danger'>Diese Variante ist derzeit ausverkauft.</p>
-                                )}
-                            </>
-                        ) : (
-                            <>
-                                <p>{formatEuro(product.price)}</p>
-                                <StockIndicator stockInfo={stockInfo} showInStock />
-                            </>
-                        )}
-                    */}
                     </div>
                     <div className='cart-input'>
                         <input 

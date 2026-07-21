@@ -7,10 +7,9 @@ import categoryApi from "../api/categoryApi";
 import saleApi from "../api/saleApi";
 import ProductGrid from "../components/productGrid";
 import { useStockMap } from "../hooks/useStockMap";
-import { getCategoryPresentation } from "../utils/categoryConfig";
-import { normalizeProduct, isOnOffer, getSaleBannerPath } from '../utils/productHelpers';
+import { getCategoryBannerPath, normalizeProduct, isOnOffer, getSaleBannerPath } from '../utils/productHelpers';
 
-
+/** Loads one dynamic category and displays its banner, sentence and assigned products */
 function Category({ category: fixedCategory }){
     const { categorySlug } = useParams();
     const requestedCategorySlug = fixedCategory || categorySlug;
@@ -21,8 +20,6 @@ function Category({ category: fixedCategory }){
     const [isLoading, setIsLoading] = useState(false);
     const [loadError, setLoadError] = useState("");
     const stockMap = useStockMap();
-
-    const categoryPresentation = getCategoryPresentation(requestedCategorySlug);
     const isOfferCategory = requestedCategorySlug === "angebote";
 
     useEffect(() => {
@@ -31,7 +28,6 @@ function Category({ category: fixedCategory }){
         async function loadProducts() {
             if (!requestedCategorySlug) {
                 setLoadError("Kategorien konnte nicht geladen werden");
-                
                 return;
             }
 
@@ -41,31 +37,33 @@ function Category({ category: fixedCategory }){
             setSales([]);
 
             try {
-                const productRequest = isOfferCategory
-                    ? productApi.getProducts()
-                    : productApi.getProductsByCategory(requestedCategorySlug);
-
-                const [categoriesFromDatabase, productsFromDatabase, salesFromDatabase] = await Promise.all([
+                const [categoriesResponse, productResponse, salesResponse] = await Promise.all([
                     categoryApi.getCategories(),
-                    productRequest,
+                    isOfferCategory ? productApi.getProducts() : productApi.getProductsByCategory(requestedCategorySlug),
                     isOfferCategory ? saleApi.getSales() : Promise.resolve([]),
-                ]);
+                ]); 
+                
+                const categoryList = Array.isArray(categoriesResponse) ? categoriesResponse : [];
+                const selectedCategory = categoryList.find((item) => item.slug === requestedCategorySlug);
 
-                const selectedCategory = categoriesFromDatabase.find((databaseCategory) => {
-                    return databaseCategory.slug === requestedCategorySlug;
-                });
+                if (!isOfferCategory && !selectedCategory) {
+                    if (!ignoreResult) {
+                        setCategory(null);
+                        setLoadError("Diese Kategorie existiert nicht oder wurde entfernt");
+                    }
+                    return;
+                }
 
                 if (!ignoreResult) {
                     setCategory(selectedCategory || {
-                        name: fixedCategory || categorySlug,
-                        slug: requestedCategorySlug
+                        name: "Angebot",
+                        slug: "angebot",
+                        sentence: "Unsere aktuellen Angebote"
                     });
 
-                    const normalizedProducts = (productsFromDatabase || []).map(normalizeProduct);
-                    setCategoryProducts(
-                        isOfferCategory ? normalizedProducts.filter(isOnOffer) : normalizedProducts
-                    );
-                    setSales(Array.isArray(salesFromDatabase) ? salesFromDatabase : []);
+                    const normalizedProducts = (Array.isArray(productResponse) ? productResponse : []).map(normalizeProduct);
+                    setCategoryProducts(isOfferCategory ? normalizedProducts.filter(isOnOffer) : normalizedProducts);
+                    setSales(Array.isArray(salesResponse) ? salesResponse : []);
                 }
             } catch (error) {
                 if (!ignoreResult) {
@@ -79,14 +77,15 @@ function Category({ category: fixedCategory }){
         }
 
         loadProducts();
+        return () => { ignoreResult = true;};
+    }, [requestedCategorySlug, isOfferCategory]);
 
-        return () => {
-            ignoreResult = true;
-        };
-    }, [categorySlug, fixedCategory, requestedCategorySlug, isOfferCategory]);
+    const categoryBanner = getCategoryBannerPath(category);
 
     return(
         <div className='category-page'>
+            {category && (
+
             <div>
                 <div>
                     {isOfferCategory && sales.length > 0 ? (
@@ -107,18 +106,15 @@ function Category({ category: fixedCategory }){
                             );
                         })
                     ) : (
-                        <img 
-                            className='picture_top' 
-                            src={`/img/product_images/${categoryPresentation.banner.png}`} 
-                            alt={category?.name || requestedCategorySlug}
-                        />
+                        <img className='picture_top' src={categoryBanner} alt={category.name} />
                     )}
                 </div>
-                <div className='sentence_top'>{categoryPresentation.banner.sentence}</div>
+                <div className='sentence_top'>{category.sentence || category.name}</div>
                 <div className='sentence_below_top'>
                     Entdecken Sie neue Sorten oder genießen Sie ihre Favoriten.
                 </div>
             </div>
+            )}
 
             {isLoading && <p className="category-info">Produkte werden geladen...</p>}
             {loadError && <p className='category-info text-danger'>{loadError}</p>}
