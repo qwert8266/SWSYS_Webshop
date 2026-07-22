@@ -206,8 +206,6 @@ export function getOfferVariant(product) {
  * positiven Rabatt (in Prozent) am Produkt hinterlegt hat.
  */
 export function isOnOffer(product) {
-  //const discount = Number(product?.discount);
-  //return Number.isFinite(discount) && discount > 0;
   return Boolean(getOfferVariant(product));
 
 }

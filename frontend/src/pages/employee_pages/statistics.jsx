@@ -7,7 +7,7 @@ import statisticsApi from "../../api/statisticsApi";
 
 function Statistics(){
 
-    const { user, accessToken, logout } = useAuth();
+    const { accessToken } = useAuth();
 
     const [statistics, setStatistics] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -53,6 +53,19 @@ function Statistics(){
             <label className='fs-1' style={{color: "#15406e"}}>Analyse-Dashboard</label>
             <label className='fs-3 pb-3'>Statistiken und andere Informationen</label>
         </div>
+
+        {isLoading && (
+            <p className='text-muted'>
+                Bestellungen und Nutzerdaten werden geladen...
+            </p>
+        )}
+
+        {loadError && (
+            <p className='text-danger' role='art'>
+                {loadError}
+            </p>
+        )}
+
         <div className='d-flex flex-row gap-3 pb-3'>
             <div className="card shadow-sm border-0 " style={{ width: "400px" }}>
                 <div className="card-body d-flex flex-column justify-content-center text-center">

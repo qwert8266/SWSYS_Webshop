@@ -1,4 +1,4 @@
-import { Link, NavLink, useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import './product.css';
 import { useCart } from '../context/cartContext';
 import { useEffect, useState } from 'react';
@@ -10,21 +10,21 @@ import '../components/favoriteButton.css';
 import OfferBadge from '../components/offerBadge';
 import FourOFour from './404';
 import ProductPrice from '../components/productPrice';
-import { formatEuro, formatVolume, getProductImagePath, getVariantLabel, normalizeProduct } from '../utils/productHelpers';
+import { formatEuro, getProductImagePath, getVariantLabel, normalizeProduct } from '../utils/productHelpers';
 
 const rezensionen = [
-    {username: "Mathis Gronewold", profilePicture: "profile_picture.png", rating: 5, evaluation: "Da geht mir einer ab!"},
-    {username: "Lucas Mauermann", profilePicture: "profile_picture.png", rating: 1, evaluation: "Könnte kotzen."},
-    {username: "Wesley Pabst", profilePicture: "profile_picture.png", rating: 3, evaluation: "Naja, weiss ja nicht..."},
-    {username: "Mathis Gronewold", profilePicture: "profile_picture.png", rating: 5, evaluation: "Da geht mir einer ab!"},
-    {username: "Lucas Mauermann", profilePicture: "profile_picture.png", rating: 1, evaluation: "Könnte kotzen."},
-    {username: "Wesley Pabst", profilePicture: "profile_picture.png", rating: 3, evaluation: "Naja, weiss ja nicht..."},
-    {username: "Mathis Gronewold", profilePicture: "profile_picture.png", rating: 5, evaluation: "Da geht mir einer ab!"},
-    {username: "Lucas Mauermann", profilePicture: "profile_picture.png", rating: 1, evaluation: "Könnte kotzen."},
-    {username: "Wesley Pabst", profilePicture: "profile_picture.png", rating: 3, evaluation: "Naja, weiss ja nicht..."},
-    {username: "Mathis Gronewold", profilePicture: "profile_picture.png", rating: 5, evaluation: "Da geht mir einer ab!"},
-    {username: "Lucas Mauermann", profilePicture: "profile_picture.png", rating: 1, evaluation: "Könnte kotzen."},
-    {username: "Wesley Pabst", profilePicture: "profile_picture.png", rating: 3, evaluation: "Naja, weiss ja nicht..."},
+    {id: "review-1", username: "Mathis Gronewold", profilePicture: "profile_picture.png", rating: 5, evaluation: "Da geht mir einer ab!"},
+    {id: "review-2", username: "Lucas Mauermann", profilePicture: "profile_picture.png", rating: 1, evaluation: "Könnte kotzen."},
+    {id: "review-3", username: "Wesley Pabst", profilePicture: "profile_picture.png", rating: 3, evaluation: "Naja, weiss ja nicht..."},
+    {id: "review-4", username: "Mathis Gronewold", profilePicture: "profile_picture.png", rating: 5, evaluation: "Da geht mir einer ab!"},
+    {id: "review-5", username: "Lucas Mauermann", profilePicture: "profile_picture.png", rating: 1, evaluation: "Könnte kotzen."},
+    {id: "review-6", username: "Wesley Pabst", profilePicture: "profile_picture.png", rating: 3, evaluation: "Naja, weiss ja nicht..."},
+    {id: "review-7", username: "Mathis Gronewold", profilePicture: "profile_picture.png", rating: 5, evaluation: "Da geht mir einer ab!"},
+    {id: "review-8", username: "Lucas Mauermann", profilePicture: "profile_picture.png", rating: 1, evaluation: "Könnte kotzen."},
+    {id: "review-9", username: "Wesley Pabst", profilePicture: "profile_picture.png", rating: 3, evaluation: "Naja, weiss ja nicht..."},
+    {id: "review-10", username: "Mathis Gronewold", profilePicture: "profile_picture.png", rating: 5, evaluation: "Da geht mir einer ab!"},
+    {id: "review-11", username: "Lucas Mauermann", profilePicture: "profile_picture.png", rating: 1, evaluation: "Könnte kotzen."},
+    {id: "review-12", username: "Wesley Pabst", profilePicture: "profile_picture.png", rating: 3, evaluation: "Naja, weiss ja nicht..."},
 ]
 
 function Product(){
@@ -39,7 +39,6 @@ function Product(){
     const [stockInfo, setStockInfo] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
     const [loadError, setLoadError] = useState("");
-    const [cartMessage, setCartMessage] = useState("");
     const [productNotFound, setProductNotFound] = useState(false);
     const [slideIndex, setSlideIndex] = useState(0);
 
@@ -50,7 +49,6 @@ function Product(){
         async function loadProduct() {
             setIsLoading(true);
             setLoadError("");
-            setCartMessage("");
             setProductNotFound(false);
 
             try {
@@ -117,14 +115,7 @@ function Product(){
         const variantLabel = selectedVariant ? ` (${getVariantLabel(selectedVariant)})` : "";
 
         if (result.added === 0) {
-            setCartMessage("");
             setLoadError(`Keine weitere Menge verfügbar – es sind bereits ${availableStock ?? 0} Stück in deinem Warenkorb.`);
-        } else if (result.capped) {
-            setLoadError("");
-            setCartMessage(`Nur ${result.added} von ${result.requested} Stück konnten hinzugefügt werden (Bestand: ${availableStock}).`);
-        } else {
-            setLoadError("");
-            setCartMessage(`${product.name}${variantLabel} wurde in den Warenkorb gelegt.`);
         }
     }
 
@@ -163,7 +154,7 @@ function Product(){
                         ) : (
                         product.images?.map((image, index) => (
                             <div
-                                key={index}
+                                key={image}
                                 className={`mySlides slide-fade ${
                                     index === slideIndex ? "active-slide" : ""
                                 }`}
@@ -180,9 +171,9 @@ function Product(){
                     <div style={{ textAlign: "center"}}>
                         {(product.images && product.images?.length > 0) &&
                         <span className="arrow left" onClick={() => changeSlide(-1)}> ❮ </span>}
-                        {product.images?.map((_, index) => (
+                        {product.images?.map((image, index) => (
                             <span
-                                key={index}
+                                key={image}
                                 className={`dotProductPage ${
                                     index === slideIndex ? "active-dot" : ""
                                 }`}
@@ -228,7 +219,7 @@ function Product(){
                                         >
                                             <span className='variant-option-label'>{getVariantLabel(variant)}</span>
                                             <ProductPrice product={variant} showDiscount={false} className='variant-optional-price' />
-                                            {/*<span className='variant-option-price'>{formatEuro(variant.price)}</span> */}
+                                            
                                             {variant.depositPerPack > 0 && (
                                                 <span className='variant-option-deposit'>
                                                     zzgl. {formatEuro(variant.depositPerPack)} Pfand
@@ -302,7 +293,7 @@ function Product(){
 
                 <div className='review-section'>
                     {rezensionen.map((rezension) => (
-                        <div className='review-card'>
+                        <div className='review-card' key={rezension.id}>
                             <div className='picture_and_name'>
                                 <img className='profile-picture' src={`/img/${rezension.profilePicture}`} alt={rezension.username}></img>
                                 <p>{rezension.username}</p>

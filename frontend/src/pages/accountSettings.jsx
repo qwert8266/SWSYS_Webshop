@@ -13,9 +13,6 @@ import { formatEuro, normalizeProduct } from '../utils/productHelpers';
 
 import "./accountSettings.css";
 
-
-
-
 function normalizeOrderResponse(response) {
   if (Array.isArray(response)) {
     return response;
@@ -41,10 +38,6 @@ function formatOrderDate(dateString) {
       month: "2-digit",
       year: "numeric",
     });
-}
-
-function getOrderItemCount(order) {
-
 }
 
 function getOrderAddress(order) {
@@ -158,6 +151,9 @@ function AccountSettings() {
     };
   }, [accessToken]);
 
+  const favoriteIdsKey = favoriteIds.join(",");
+  const wishlistIdsKey = wishlistIds.join(",");
+
   useEffect(() => {
     if (!accessToken) {
       setFavoriteProducts([]);
@@ -213,7 +209,7 @@ function AccountSettings() {
     return () => {
       ignoreResult = true;
     };
-  }, [accessToken, activeSection, favoriteIds.join(","), wishlistIds.join(",")]);
+  }, [accessToken, activeSection, favoriteIdsKey, wishlistIdsKey]);
 
   useEffect(() => {
     if (!accessToken || activeSection !== "account" || ordersLoading) {
@@ -324,16 +320,21 @@ function AccountSettings() {
 
   }
 
-  function getItemId(item, index) {
-    return item.product_id || item.productId || `${item.name}-${index}`;
+  /** Erstellt einen stabilen Schlüssel für eine Bestellposition */
+  function getOrderItemKey(item) {
+    const productId = item.product_id ?? item.productId;
+    const volume = Number(item.volume ?? 0);
+    const packSize = Number(item.packSize ?? item.pack_size ?? 0);
+    
+    return `${productId}-${volume}-${packSize}`;
   }
 
   function openReturnForm(order) {
     const initialReturnItems = {};
 
     const orderItems = Array.isArray(order.items) ? order.items : [];
-    orderItems.forEach((item, index) => {
-      const itemId = getItemId(item, index);
+    orderItems.forEach((item) => {
+      const itemId = getOrderItemKey(item);
 
       initialReturnItems[itemId] = {
         selected: true,
@@ -468,6 +469,8 @@ function AccountSettings() {
       </section>
 
       <section className="account-layout" aria-label='Kontobereich'>
+        
+        {/* Navigationsleiste Links */}
         <aside className="account-sidebar">
           <div className="accounte-sidebar-main">
             <button
@@ -517,6 +520,7 @@ function AccountSettings() {
         </aside>
 
         <div className="account-content">
+          {/* Kontoinformationen */}
           {activeSection === "account" && (
             <section className="account-card">
               <div className="account-card-header">
@@ -618,6 +622,7 @@ function AccountSettings() {
 
           )}
 
+          {/* Lieblingsprodukte */}
           {activeSection === "favorites" && (
             <section className="account-card">
               <div className="account-card-header">
@@ -639,6 +644,7 @@ function AccountSettings() {
             </section>
           )}
 
+          {/* Wunschzettel */}
           {activeSection === "wishlist" && (
             <section className="account-card">
               <div className="account-card-header">
@@ -660,6 +666,7 @@ function AccountSettings() {
             </section>
           )}
 
+          {/* Bestellungen */}
           {activeSection === "orders" && (
             <section className="account-card">
               <div className="account-card-header">
@@ -711,12 +718,11 @@ function AccountSettings() {
                       <article className="order-item" key={order.id}>
                         <div>
                           <b>Bestellung {orderId}</b>
-                          {/*<p>{getOrderItemCount(order)}</p>*/}
                           <p>{order?.items.reduce((sum, item) => sum + Number(item.quantity || 0),0)} Artikel</p>
                           {items.length > 0 && (
                             <ul className='order-products'>
-                              {items.map((item, index) => (
-                                <li key={`${item.product_id || item.productId}-${index}`}>
+                              {items.map((item) => (
+                                <li key={getOrderItemKey(item)}>
                                   {item.quantity}x {item.name || "Produkt"}
                                 </li>
                               ))}
@@ -758,9 +764,9 @@ function AccountSettings() {
 
                         <h5>Produkte</h5>
 
-                        {items.map((item, index) => (
+                        {items.map((item) => (
                           <div
-                            key={`${item.product_id || item.productId || index}`}
+                            key={getOrderItemKey}
                             className="order-detail-product"
                           >
                             <span>
@@ -811,8 +817,8 @@ function AccountSettings() {
                             </p>
 
                             <div className="return-items">
-                              {items.map((item, index) => {
-                                const itemId = getItemId(item, index);
+                              {items.map((item) => {
+                                const itemId = getOrderItemKey(item);
                                 const returnItem = returnItems[itemId];
 
                                 if (!returnItem) {
@@ -916,6 +922,7 @@ function AccountSettings() {
             </section>
           )}
 
+          {/* Kontoeinstellungen */}
           {activeSection === "settings" && (
             <section className="account-card">
               <div className="account-card-header">
@@ -1050,7 +1057,7 @@ function AccountSettings() {
                           name="twoFactorMethod"
                           value="authenticator"
                           checked={twoFactorMethod === "authenticator"}
-                          onChanged={() => setTwoFactorMethod("authenticator")}
+                          onChange={() => setTwoFactorMethod("authenticator")}
                         />
                         <span>
                           <b>Authenticator-App</b>
@@ -1067,7 +1074,7 @@ function AccountSettings() {
                           name="twoFactorMethod"
                           value="sms"
                           checked={twoFactorMethod === "sms"}
-                          onChanged={() => setTwoFactorMethod("sms")}
+                          onChange={() => setTwoFactorMethod("sms")}
                         />
                         <span>
                           <b>SMS</b>

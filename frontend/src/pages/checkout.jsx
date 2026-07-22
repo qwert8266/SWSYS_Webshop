@@ -421,6 +421,11 @@ function Checkout(){
         <div className='successful_order'>
           <label className='success_label'>Der Durst hat bald ein Ende!</label>
           <label className='success_label_minor'>Ihre Bestellung wird schon bald verschickt.</label>
+          
+          {createdOrder?.orderId && (
+            <label className='success_label_minor'>Bestellnummer: {createdOrder.orderId}</label>
+          )}
+          
           <NavLink to="/home">
             <button className='success_button' >Zurück zu den Produkten</button>
           </NavLink>

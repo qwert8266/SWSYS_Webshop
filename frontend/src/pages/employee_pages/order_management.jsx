@@ -15,8 +15,6 @@ function OrderManagement(){
 
     const [openOrderID, setOpenOrderID] = useState("");
 
-    const { isAuthenticated, isAuthLoading, user } = useAuth();
-
     const [allOrders, setAllOrders] = useState([]);
     const [users, setUsers] = useState({});
     const [isLoading, setIsLoading] = useState(false);
@@ -24,20 +22,35 @@ function OrderManagement(){
 
     const [isSearchBarEmpty, setIsSearchBarEmpty] = useState(false);
     const [activeSearch, setActiveSearch] = useState("");
-    
+    const normalizedSearch = activeSearch.trim().toLowerCase();
 
     const [selectedOrder, setSelectedOrder] = useState({
         orderId: null,
         status: "",
     });
 
-    const handleStatusChange = async (orderID,status) => {
+    const handleStatusChange = async (orderId,status) => {
         const updatedOrder = {
-            orderId: orderID,
-            status: status
+            orderId,
+            status,
         }
-        setSelectedOrder(updatedOrder);
-        await orderApi.updateOrder(updatedOrder, accessToken);
+        
+        try {
+            setLoadError("");
+
+            await orderApi.updateOrder(updatedOrder, accessToken);
+
+            setAllOrders((currentOrders) =>
+                currentOrders.map((order) =>
+                    order.orderId === orderId
+                        ? {...order, status }
+                        : order
+                )
+            );
+        } catch(error) {
+            setLoadError(error.message || "Der Bestellstatus konnte nicht geändert werden");
+        }
+        
     }
 
     function handleSearch() {
@@ -142,8 +155,19 @@ function OrderManagement(){
                 </form>
             </div>
 
+            {isLoading && (
+                <p className='text-muted'>
+                    Bestellungen und Nutzerdaten werden geladen...
+                </p>
+            )}
+
+            {loadError && (
+                <p className='text-danger' role='art'>
+                    {loadError}
+                </p>
+            )}
+
             <div className='pb-5'>
-                
                 <div className='d-flex flex-column border rounded align-items-center w-auto '>
                     <div className='d-flex flex-row gap-4 align-items-center px-3 py-3 fw-semibold border-bottom bg-light'>
                         <div style={{width: "40px", height: "40px"}}></div>
@@ -154,127 +178,135 @@ function OrderManagement(){
                         <label className='fs-5 text-center' style={{width: "100px"}}>Bestellt am</label>
                         <label className='fs-5 text-center' style={{width: "230px"}}>Status</label>
                     </div>
-                    {allOrders.filter(order =>
-                                        isSearchBarEmpty ||
-                                        order.orderId.includes(activeSearch) ||
-                                        users[order.userId]?.firstName?.toLowerCase().includes(activeSearch.toLowerCase()) ||
-                                        users[order.userId]?.lastName?.toLowerCase().includes(activeSearch.toLowerCase()) ||
-                                        order.createdAt.includes(activeSearch)
-                                    ).map((order) => (
-                    
-                    <div className='d-flex flex-column' key={order.orderId}>
-                        <div className={`rounded-3 bg-white shadow-sm mb-3 overflow-hidden ${openOrderID === order.orderId ? "shadow" : ""}`}>
-                        <div className='d-flex flex-row gap-4 align-items-center px-3 py-3'  >
-                            <div className='' style={{width: "40px", height: "40px",borderCollapse: "collapse"}}>
-                                {openOrderID === order.orderId &&
-                                <button className='border rounded fs-5' style={{color: 'white', backgroundColor: "#ffffff"}} onClick={()=>setOpenOrderID("")}>
-                                    <img style={{width: "40px", height: "40px"}} src="/img/dreieck_auf.png" alt="png" />
-                                </button>
-                                }
-                                {openOrderID !== order.orderId &&
-                                <button className='border rounded fs-5' style={{color: 'white', backgroundColor: "#ffffff"}} onClick={()=>setOpenOrderID(order.orderId)}>
-                                    <img style={{width: "40px", height: "40px"}} src="/img/dreieck_zu.png" alt="png" />
-                                </button>
-                                }
-                            </div>
-                            <label className='fs-5' style={{width: "380px"}}>{order.orderId}</label>
-                        
-                            <label className='fs-5' style={{width: "150px"}}>
-                                {users[order.userId]?.firstName}
-                                {" "}
-                                {users[order.userId]?.lastName}
-                            </label>
-                            <label className='fs-5 text-center' style={{width: "100px"}}>{totalItems(order.items)}</label>
-                            <label className='fs-5 text-center' style={{width: "120px"}}>{formatEuro(order.totalPrice)}</label>
-                            <label className='fs-5' style={{width: "100px"}}>{new Date(order.createdAt).toLocaleString("de-DE")}</label>
-                            <div style={{ width: "230px" }}>
-                                <select className='form-select fs-5 text-center' value={order.status} defaultValue={order.status} onChange={(e) => handleStatusChange(order.orderId, e.target.value)}>
-                                    <option>Übermittelt</option>
-                                    <option>Registiert</option>
-                                    <option>In Bearbeitung</option>
-                                    <option>Unterwegs</option>
-                                    <option>Zugestellt</option>
-                                    <option>Storniert</option>
-                                </select>
-                            </div>
-                        </div>
+
+                    {allOrders.map((order => {
+                        const orderUser = users[order.userId];
+
+                        const matchesSearch =
+                            isSearchBarEmpty ||
+                            String(order.orderId ?? "").toLowerCase().includes(normalizedSearch) ||
+                            String(orderUser?.firstName ?? "").toLowerCase().includes(normalizedSearch) ||
+                            String(orderUser?.lastName ?? "").toLowerCase().includes(normalizedSearch) ||
+                            String(order.createdAt ?? "").toLowerCase().includes(normalizedSearch);
                             
-                            {openOrderID === order.orderId &&
-                                <div className="border-top bg-light">
+                        if (!matchesSearch) {
+                            return null;
+                        }
 
-                                    <div className="row g-0">
+                        return (
+                            <div className='d-flex flex-column' key={order.orderId}>
+                                <div className={`rounded-3 bg-white shadow-sm mb-3 overflow-hidden ${openOrderID === order.orderId ? "shadow" : ""}`}>
+                                <div className='d-flex flex-row gap-4 align-items-center px-3 py-3'  >
+                                    <div className='' style={{width: "40px", height: "40px",borderCollapse: "collapse"}}>
+                                        {openOrderID === order.orderId &&
+                                        <button className='border rounded fs-5' style={{color: 'white', backgroundColor: "#ffffff"}} onClick={()=>setOpenOrderID("")}>
+                                            <img style={{width: "40px", height: "40px"}} src="/img/dreieck_auf.png" alt="png" />
+                                        </button>
+                                        }
+                                        {openOrderID !== order.orderId &&
+                                        <button className='border rounded fs-5' style={{color: 'white', backgroundColor: "#ffffff"}} onClick={()=>setOpenOrderID(order.orderId)}>
+                                            <img style={{width: "40px", height: "40px"}} src="/img/dreieck_zu.png" alt="png" />
+                                        </button>
+                                        }
+                                    </div>
+                                    <label className='fs-5' style={{width: "380px"}}>{order.orderId}</label>
+                                
+                                    <label className='fs-5' style={{width: "150px"}}>
+                                        {users[order.userId]?.firstName}
+                                        {" "}
+                                        {users[order.userId]?.lastName}
+                                    </label>
+                                    <label className='fs-5 text-center' style={{width: "100px"}}>{totalItems(order.items)}</label>
+                                    <label className='fs-5 text-center' style={{width: "120px"}}>{formatEuro(order.totalPrice)}</label>
+                                    <label className='fs-5' style={{width: "100px"}}>{new Date(order.createdAt).toLocaleString("de-DE")}</label>
+                                    <div style={{ width: "230px" }}>
+                                        <select className='form-select fs-5 text-center' value={order.status} onChange={(e) => handleStatusChange(order.orderId, e.target.value)}>
+                                            <option>Übermittelt</option>
+                                            <option>Registiert</option>
+                                            <option>In Bearbeitung</option>
+                                            <option>Unterwegs</option>
+                                            <option>Zugestellt</option>
+                                            <option>Storniert</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                    
+                                    {openOrderID === order.orderId &&
+                                        <div className="border-top bg-light">
 
-                                        {/* Artikelliste */}
-                                        <div className="col-lg-8 border-end">
+                                            <div className="row g-0">
 
-                                            <div className="d-flex align-items-center px-4 py-3 bg-white border-bottom fw-bold">
-                                                <div className="flex-grow-1">Artikelname</div>
-                                                <div style={{width: "90px"}} className="text-center">Anzahl</div>
-                                                <div style={{width: "120px"}} className="text-center">Einzelpreis</div>
-                                                <div style={{width: "120px"}} className="text-center">Gesamtpreis</div>
+                                                {/* Artikelliste */}
+                                                <div className="col-lg-8 border-end">
+
+                                                    <div className="d-flex align-items-center px-4 py-3 bg-white border-bottom fw-bold">
+                                                        <div className="flex-grow-1">Artikelname</div>
+                                                        <div style={{width: "90px"}} className="text-center">Anzahl</div>
+                                                        <div style={{width: "120px"}} className="text-center">Einzelpreis</div>
+                                                        <div style={{width: "120px"}} className="text-center">Gesamtpreis</div>
+                                                    </div>
+
+                                                    {order.items.map((item) => (
+                                                        <div
+                                                            key={item.productId}
+                                                            className="d-flex align-items-center px-4 py-3 bg-white border-bottom"
+                                                        >
+                                                            <div className="flex-grow-1 fs-5">
+                                                                {item.name}
+                                                            </div>
+
+                                                            <div style={{width: "90px"}} className="text-center fs-5">
+                                                                {item.quantity}x
+                                                            </div>
+
+                                                            <div style={{width: "120px"}} className="text-center fs-5">
+                                                                {formatEuro(item.unitPrice)}
+                                                            </div>
+
+                                                            <div style={{width: "120px"}} className="text-center fs-5 fw-semibold">
+                                                                {formatEuro(item.lineTotalPrice)}
+                                                            </div>
+                                                        </div>
+                                                    ))}
+
+                                                </div>
+
+                                                {/* Aktionen */}
+                                                <div className="col-lg-4 d-flex flex-column justify-content-center align-items-center gap-3 p-4 bg-white">
+
+                                                    <button
+                                                        className="btn text-white fw-semibold"
+                                                        style={{
+                                                            backgroundColor: "#15406e",
+                                                            width: "240px",
+                                                            height: "52px"
+                                                        }}
+                                                    >
+                                                        Rückerstattung genehmigen
+                                                    </button>
+
+                                                    <button
+                                                        className="btn text-white fw-semibold"
+                                                        style={{
+                                                            backgroundColor: "#932009",
+                                                            width: "240px",
+                                                            height: "52px"
+                                                        }}
+                                                    >
+                                                        Rückerstattung ablehnen
+                                                    </button>
+
+                                                </div>
+
                                             </div>
 
-                                            {order.items.map((item) => (
-                                                <div
-                                                    key={item.productId}
-                                                    className="d-flex align-items-center px-4 py-3 bg-white border-bottom"
-                                                >
-                                                    <div className="flex-grow-1 fs-5">
-                                                        {item.name}
-                                                    </div>
-
-                                                    <div style={{width: "90px"}} className="text-center fs-5">
-                                                        {item.quantity}x
-                                                    </div>
-
-                                                    <div style={{width: "120px"}} className="text-center fs-5">
-                                                        {formatEuro(item.unitPrice)}
-                                                    </div>
-
-                                                    <div style={{width: "120px"}} className="text-center fs-5 fw-semibold">
-                                                        {formatEuro(item.lineTotalPrice)}
-                                                    </div>
-                                                </div>
-                                            ))}
-
                                         </div>
-
-                                        {/* Aktionen */}
-                                        <div className="col-lg-4 d-flex flex-column justify-content-center align-items-center gap-3 p-4 bg-white">
-
-                                            <button
-                                                className="btn text-white fw-semibold"
-                                                style={{
-                                                    backgroundColor: "#15406e",
-                                                    width: "240px",
-                                                    height: "52px"
-                                                }}
-                                            >
-                                                Rückerstattung genehmigen
-                                            </button>
-
-                                            <button
-                                                className="btn text-white fw-semibold"
-                                                style={{
-                                                    backgroundColor: "#932009",
-                                                    width: "240px",
-                                                    height: "52px"
-                                                }}
-                                            >
-                                                Rückerstattung ablehnen
-                                            </button>
-
-                                        </div>
-
-                                    </div>
-
+                                    }
+                                        
                                 </div>
-                                }
-                            
-                        
-                    </div>
-                    </div>
-                    ))}
+                            </div>
+                        );
+                    }))}
                 </div>
                 
             </div>

@@ -15,14 +15,10 @@ import "../custom.scss";
 
 import './navbar.css';
 
-// Mitarbeiterrollen, für die der Logistik-Link angezeigt wird
-const EMPLOYEE_ROLES = ["worker", "admin", "owner"];
-
 function Navbar() {
   const navigate = useNavigate();
-  const { user, isAuthenticated, isAuthLoading } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const { totalQuantity, items, isCartPreviewOpen, showCartPreview, hideCartPreview } = useCart();
-  const isEmployee = EMPLOYEE_ROLES.includes(user?.role);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [suggestions, setSuggestions] = useState([]);

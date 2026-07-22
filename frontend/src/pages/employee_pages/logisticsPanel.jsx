@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
 
-import productApi from "../api/productApi";
-import StockIndicator from "../components/stockIndicator";
-import { useAuth } from "../context/authContext";
-import { getStockVariantLabel } from "../utils/productHelpers";
+import productApi from "../../api/productApi";
+import StockIndicator from "../../components/stockIndicator";
+import { useAuth } from "../../context/authContext";
+import { getStockVariantLabel } from "../../utils/productHelpers";
 
 import "./logisticsPanel.css";
 

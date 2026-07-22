@@ -75,33 +75,35 @@ function Contact(){
         return;
         }
 
+        setShowSuggestions(true);
+
         let ignoreResult = false;
 
         const timeoutId = setTimeout(async () => {
-        setIsSuggestionsLoading(true);
+            setIsSuggestionsLoading(true);
 
-        try {
-            const foundProducts = await productApi.searchProducts(query);
+            try {
+                const foundProducts = await productApi.searchProducts(query);
 
-            if (!ignoreResult) {
-            setSuggestions(foundProducts.map(normalizeProduct).slice(0, 5));
-            setShowSuggestions(true);
+                if (!ignoreResult) {
+                setSuggestions(foundProducts.map(normalizeProduct).slice(0, 5));
+                setShowSuggestions(true);
+                }
+            } catch (error) {
+                if (!ignoreResult) {
+                setSuggestions([]);
+                setShowSuggestions(false);
+                }
+            } finally {
+                if (!ignoreResult) {
+                setIsSuggestionsLoading(false);
+                }
             }
-        } catch (error) {
-            if (!ignoreResult) {
-            setSuggestions([]);
-            setShowSuggestions(false);
-            }
-        } finally {
-            if (!ignoreResult) {
-            setIsSuggestionsLoading(false);
-            }
-        }
         }, 300);
 
         return () => {
-        ignoreResult = true;
-        clearTimeout(timeoutId);
+            ignoreResult = true;
+            clearTimeout(timeoutId);
         };
     }, [search]);
 
@@ -140,27 +142,6 @@ function Contact(){
         }
     }
 
-    function getSuccessHeadline() {
-        if (reasonForContact === "Karriere") {
-            return "Vielen Dank für Ihre Bewerbung!";
-        }
-        if (reasonForContact === "Großbestellung") {
-            return "Vielen Dank für Ihre Bestellung!";
-        }
-
-        return "Vielen Dank für Ihr Feedback!";
-    }
-
-    function getSuccessText() {
-        if (reasonForContact === "Karriere") {
-            return "Ihre Anfrage ist eingegangen und wird bearbeitet.";
-        }
-        if (reasonForContact === "Großbestellung") {
-            return "Ihre Anfrage ist eingegangen. Bei Rückfragen werden wir uns bei Ihnen melden.";
-        }
-
-        return "Ihre Kontaktanfrage ist eingegamgen und wird in kürze von einem Mitarbeiter bearbeitet";
-    }
 
     return(
         <div>
@@ -214,13 +195,31 @@ function Contact(){
                                                 placeholder='Produkte suchen...'
                                                 value={search}
                                                 onChange={(e)=>setSearch(e.target.value)}/>
-                                        {search && (
+                                        
+                                        {showSuggestions && (
                                             <div className="suggestions">
-                                                {suggestions.map(product => (
-                                                    <div key={product.id} onClick={()=>setSearch(product.name)}>
-                                                        {product.name}
+                                                {isSuggestionsLoading ? (
+                                                    <div className='sugesstions-info'>
+                                                        Produkte werden gesucht...
                                                     </div>
-                                                ))}
+                                                ) : suggestions.length > 0 ? (
+                                                    suggestions.map(product => (
+                                                    <button 
+                                                        type="button"
+                                                        key={product.id} 
+                                                        onClick={()=> {
+                                                            setSearch(product.name);
+                                                            setShowSuggestions(false);
+                                                        }}
+                                                    >
+                                                        {product.name}
+                                                    </button>
+                                                ))
+                                            ) : (
+                                               <div className='sugesstions-info'>
+                                                    Kein Produkt gefunden
+                                                </div>   
+                                                )}
                                             </div>
                                         )}
                                     </div>

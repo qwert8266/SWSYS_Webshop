@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import cartApi from "../api/cartApi";
 import productApi from "../api/productApi";
 import { useAuth } from "./authContext";
@@ -264,12 +264,12 @@ export function CartProvider({ children }) {
           }
         }
 
-        const backendItems = await hydrateBackendCartItems(backendCartItems);
-        const mergedItems = mergeCartItems(backendItems, guestItems);
-
         if (ignoreResult) {
           return;
         }
+
+        const backendItems = await hydrateBackendCartItems(backendCartItems);
+        const mergedItems = mergeCartItems(backendItems, guestItems);
 
         setItems(mergedItems);
         setIsBackendCartReady(true);
@@ -487,12 +487,17 @@ export function CartProvider({ children }) {
   /** Verringert die Menge einer Produktvariante */
   function decreaseQuantity(cartKey) {
     setItems((currentItems) => 
-      currentItems.map((item) =>
-        item.cartKey === cartKey 
-          ? { ... item, quantity: item.quantity - 1} 
-          : item
-      )
-      .filter((item) => item.quantity > 0)
+      currentItems.flatMap((item) => {
+        if (item.cartKey !== cartKey) {
+          return [item];
+        }
+        
+        const nextQuantity = item.quantity - 1;
+
+        return nextQuantity > 0 
+          ? [{ ...item, quantity: nextQuantity }]
+          : [];
+      })
     );
   }
 
@@ -510,6 +515,7 @@ export function CartProvider({ children }) {
   // Angebotspreise fließen in die Gesamtsumme ein
   const totalPrice = totalProductPrice + totalDeposit;
 
+  {/*
   const value = useMemo(
     () => ({
       items,
@@ -531,6 +537,26 @@ export function CartProvider({ children }) {
     }),
     [items, totalQuantity, totalProductPrice, totalDeposit, totalPrice, isCartPreviewOpen, isCartLoading]
   );
+  */}
+
+  const value = {
+    items,
+    totalQuantity,
+    totalProductPrice,
+    totalDeposit,
+    totalPrice,
+    isCartLoading,
+    cartError,
+    addItem,
+    removeItem,
+    increaseQuantity,
+    decreaseQuantity,
+    clearCart,
+    isCartPreviewOpen,
+    showCartPreview,
+    hideCartPreview,
+    openCartPreviewTemporarily,
+  };
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }

@@ -1,10 +1,11 @@
 import React from "react";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route} from "react-router-dom";
 import SearchResults from "./pages/searchResults";
 import './App.css';
 
 import ProtectedRoutes from "./routes/protectedRoutes";
 
+import LogisticsPanel from "./pages/employee_pages/logisticsPanel";
 import ProductManagement from "./pages/employee_pages/product_management";
 import OrderManagement from "./pages/employee_pages/order_management";
 import Statistics from "./pages/employee_pages/statistics";
@@ -25,7 +26,6 @@ import Contact from "./pages/contact";
 import Category from "./pages/categories";
 import Sortiment from "./pages/sortiment";
 import Product from "./pages/product";
-import LogisticsPanel from "./pages/logisticsPanel";
 import Home from './pages/home';
 import Agb from "./pages/agb";
 import Datenschutz from "./pages/datenschutz";

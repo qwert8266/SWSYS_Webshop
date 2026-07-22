@@ -58,13 +58,18 @@ function Sortiment() {
 
   const productsByCategory = useMemo(
     () =>
-      categories
-        .filter((category) => category.slug !== "angebote")
-        .map((category) => ({
-          category,
-          products: products.filter((product) => productHasCategory(product, category.slug)),
-        })),
+      categories.flatMap((category) => {
+        if (category.slug === "angebote") {
+          return [];
+        }
 
+        return [{
+          category,
+          products: products.filter((product) =>
+            productHasCategory(product, category.slug)
+          ),
+        }];
+      }),
     [categories, products]
   );
 

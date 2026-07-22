@@ -28,11 +28,6 @@ function SearchResults() {
     let ignoreResult = false;
 
     async function loadSearchResults() {
-      if (query.length < 2) {
-        setProducts([]);
-        setLoadError("Bitte gib mindestens zwei Zeichen ein.");
-        return;
-      }
 
       setIsLoading(true);
       setLoadError("");

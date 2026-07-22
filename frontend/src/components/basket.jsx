@@ -1,10 +1,10 @@
 import { Link, NavLink } from 'react-router-dom';
 import { useCart } from "../context/cartContext";
 import { useStockMap } from "../hooks/useStockMap";
-import { formatEuro, getCartItemPricing, getOfferPricing, getVariantLabel } from '../utils/productHelpers';
+import { formatEuro, getCartItemPricing, getVariantLabel } from '../utils/productHelpers';
 import OfferBadge from './offerBadge';
 import ProductPrice from './productPrice';
-import { getProductImagePath, normalizeProduct } from '../utils/productHelpers';
+import { getProductImagePath } from '../utils/productHelpers';
 
 function ShoppingCart() {
   
@@ -25,7 +25,7 @@ function ShoppingCart() {
   if (items.length === 0) {
     return (
       <section className="container-xl my-4">
-        <div class="row g-4">
+        <div className="row g-4">
           <div className="col-12 col-lg-8">
             <div className="card border rounded-4 shadow-sm p-4 bg-white">
               <div className="d-flex justify-content-between align-items-start mb-4">
@@ -48,7 +48,7 @@ function ShoppingCart() {
   return (
 
     <section className="container-xl my-4">
-      <div class="row g-4">
+      <div className="row g-4">
         <div className="col-12 col-lg-8">
           <div 
             className="card border rounded-4 shadow-sm p-4 bg-white"
@@ -153,6 +153,7 @@ function ShoppingCart() {
                     <img
                       src="/img/trash.svg"
                       className='cart-delete-icon'
+                      alt="delete"
                     />
                   </button>
                 </article>

@@ -2,15 +2,12 @@
 import { useState } from 'react';
 import { Link, NavLink, useNavigate } from "react-router-dom"
 
-import { EMAIL_REGEX } from "../constants/validation";
-import { ERROR_INVALID_EMAIL } from "../constants/errorMessages";
 import { useAuth } from "../context/authContext";
 import "../App.css";
 
 function Register() {
   const navigate = useNavigate();
   const { register } = useAuth();
-  //const [customerType, setCustomerType] = useState("private");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [acceptedTerms, setAcceptedTerms] = useState(false);

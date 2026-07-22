@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
 
 function Home(){
-    const categories = [
+    const categorieTiles = [
         {
             title: "Bier",
             image: "/img/Bier.png",
@@ -124,7 +124,7 @@ function Home(){
             <h2 className="categoryHeader"> Unsere Getränkevielfalt </h2>
             <div className="container">
                 <div className="category-grid">
-                    {categories.map((category) => (
+                    {categorieTiles.map((category) => (
                             <NavLink
                                 key={category.title}
                                 className="hover-container"

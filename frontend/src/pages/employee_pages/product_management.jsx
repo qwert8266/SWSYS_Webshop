@@ -1,6 +1,6 @@
 import { NavLink } from 'react-router-dom';
 import '../categories.css';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from "../../context/authContext";
 
 import categoryApi from "../../api/categoryApi";
@@ -67,6 +67,18 @@ function ProductManagement(){
         categorySlugs: [],
     });
 
+    /** Ermöglicht schnellere Prüfung, ob eine Kategorie im Erstellen-Formular ausgewählt ist */
+    const selectedCreateCategorySlugs = useMemo(
+        () => new Set (productData.categorySlugs ?? []),
+        [productData.categorySlugs]
+    );
+
+    /** Ermöglicht schnellere Prüfung, ob eine Kategorie im Bearbeiten-Formular ausgewählt ist */
+    const selectedModifyCategorySlugs = useMemo(
+        () => new Set (productData.categorySlugs ?? []),
+        [productData.categorySlugs]
+    );
+    
     /** Erstellt eine leere Variante */
     function createEmptyVariant() {
         return {
@@ -227,7 +239,7 @@ function ProductManagement(){
     const handleCategoryToggle = (categorySlug) => {
         setProductData((currentProductData) => {
             const categoryIsSelected = currentProductData.categorySlugs.includes(categorySlug);
-
+            
             if (categoryIsSelected) {
                 return {
                     ...currentProductData,
@@ -274,9 +286,16 @@ function ProductManagement(){
             return;
         }
         
-        const selectedCategories = categories.filter((category) => {
-            return productData.categorySlugs.includes(category.slug);
-        });
+        const selectedCategorieSlugs = new Set(
+            productData.categorySlugs ?? []
+        );
+
+        const selectedCategories = categories.filter((category) =>
+            selectedCategorieSlugs.has(category.slug)
+        );
+        //categories.filter((category) => {
+        //    return productData.categorySlugs.includes(category.slug);
+        //});
 
         // Payload enthält nur fachliche Produktdaten
         const productPayload = {
@@ -334,9 +353,13 @@ function ProductManagement(){
             return;
         }
         
-        const selectedCategories = categories.filter((category) => {
-            return (productDataModify.categorySlugs || []).includes(category.slug);
-        });
+        const selectedCategorieSlugs = new Set(
+            productDataModify.categorySlugs ?? []
+        );
+
+        const selectedCategories = categories.filter((category) =>
+            selectedCategorieSlugs.has(category.slug)
+        );
         
         // retainedImages bleibt erhalten
         // newImages werden neu hochgeladen
@@ -901,7 +924,7 @@ function ProductManagement(){
                                         <input
                                             type="checkbox"
                                             className="form-check-input m-0"
-                                            checked={(productData.categorySlugs || []).includes(category.slug)}
+                                            checked={selectedCreateCategorySlugs.has(category.slug)}
                                             onChange={() => handleCategoryToggle(category.slug)}
                                         />
                                         {category.name}
@@ -1221,7 +1244,7 @@ function ProductManagement(){
                                     <input
                                         type="checkbox"
                                         className="form-check-input m-0"
-                                        checked={(productDataModify.categorySlugs || []).includes(category.slug)}
+                                        checked={selectedModifyCategorySlugs.has(category.slug)}
                                         onChange={() => handleModifyCategoryToggle(category.slug)}
                                     />
                                     {category.name}
@@ -1261,6 +1284,8 @@ function ProductManagement(){
                 </div>
             </div>
         )}
+
+        {/* Fenster zum Bearbeiten / Hinzufügen einer Kategorie */}
         {showCategoryManagement && (
             <CategoryManagementModal
                 categories={categories}

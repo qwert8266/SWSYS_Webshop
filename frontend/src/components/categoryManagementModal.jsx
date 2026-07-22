@@ -204,6 +204,7 @@ function CategoryManagementModal({ categories, accessToken, onClose, onCategorie
 
               <div className="d-flex gap-2 mt-4">
                 <button 
+                  type="button"
                   className="btn btn-primary"
                   disabled={isSaving}
                 >
