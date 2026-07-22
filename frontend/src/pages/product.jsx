@@ -16,15 +16,10 @@ const rezensionen = [
     {username: "Mathis Gronewold", profilePicture: "profile_picture.png", rating: 5, evaluation: "Da geht mir einer ab!"},
     {username: "Lucas Mauermann", profilePicture: "profile_picture.png", rating: 1, evaluation: "Könnte kotzen."},
     {username: "Wesley Pabst", profilePicture: "profile_picture.png", rating: 3, evaluation: "Naja, weiss ja nicht..."},
-    {username: "Mathis Gronewold", profilePicture: "profile_picture.png", rating: 5, evaluation: "Da geht mir einer ab!"},
-    {username: "Lucas Mauermann", profilePicture: "profile_picture.png", rating: 1, evaluation: "Könnte kotzen."},
-    {username: "Wesley Pabst", profilePicture: "profile_picture.png", rating: 3, evaluation: "Naja, weiss ja nicht..."},
-    {username: "Mathis Gronewold", profilePicture: "profile_picture.png", rating: 5, evaluation: "Da geht mir einer ab!"},
-    {username: "Lucas Mauermann", profilePicture: "profile_picture.png", rating: 1, evaluation: "Könnte kotzen."},
-    {username: "Wesley Pabst", profilePicture: "profile_picture.png", rating: 3, evaluation: "Naja, weiss ja nicht..."},
-    {username: "Mathis Gronewold", profilePicture: "profile_picture.png", rating: 5, evaluation: "Da geht mir einer ab!"},
-    {username: "Lucas Mauermann", profilePicture: "profile_picture.png", rating: 1, evaluation: "Könnte kotzen."},
-    {username: "Wesley Pabst", profilePicture: "profile_picture.png", rating: 3, evaluation: "Naja, weiss ja nicht..."},
+    {username: "Linus Gill", profilePicture: "profile_picture.png", rating: 4, evaluation: "Wein mag ich immer noch am liebsten."},
+    {username: "Nico Mestrup", profilePicture: "profile_picture.png", rating: 4, evaluation: "Die Website hat ja ein super Design. Das Produkt war auch ok."},
+    {username: "Klaus Mustermann", profilePicture: "profile_picture.png", rating: 3, evaluation: "Viel besser als erwartet!"},
+    {username: "Miriam Musterfrau", profilePicture: "profile_picture.png", rating: 5, evaluation: "Da kriege ich ja direkt Durst!"},
 ]
 
 function Product(){
