@@ -29,9 +29,13 @@
 }
 
 .picture_top{
-    width: 100%;
+    display: block;
+    max-height: 450px;
+    width: auto;
+    max-width: 100%;
     height: auto;
-    object-fit: cover;
+    margin: 0 auto;
+    object-fit: contain;
 }
 
 .sentence_top{
