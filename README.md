@@ -5,11 +5,19 @@ Entwickelt von Ctrl+Alt+Deluxe✨.
 
 
 ## structure
-    SWSYS_Webshop
+
+	SWSYS_Webshop
     ├── frontend                # Web Frontend 
     ├── server                  # Go Backend
-    │   ├── config              # initial configuration
-    │   │   └── connectToDB.go 
+    │   ├── database
+	│   │   └── database.go     # database configuration 
+    │   ├── handlers            # central logic
+    │   ├── helpers             # token generation and password validation
+    │   ├── middleware          # authentication and role based access
+    │   ├── models              # data structures
+    │   ├── routes              # api routing 
+    │   ├── services            # mailing
+    │   ├── .env                # enviroment variables
     │   ├── Dockerfile          # Dockerfile for Backend 
     │   ├── go.mod              # go modules 
     │   └── main.go             # Main server file
@@ -30,7 +38,78 @@ Entwickelt von Ctrl+Alt+Deluxe✨.
 
 - MongoDB 
 
-## API: Bestand (Stock)
+
+## API: 
+
+Die API hat folgende Endpunkte:
+
+	baseurl
+	├── /health [GET]                                   public
+	│
+	├── /user
+	│   ├── /register [POST]                            public
+	│   ├── /login [POST]                               public
+	│   ├── /password-reset
+	│   │   ├── /request [POST]                         public
+	│   │   └── /confirm [POST]                         public
+	│   ├── /logout [POST]                              user
+	│   ├── /me [GET]                                   user
+	│   │   ├── /lists [GET]                            user
+	│   │   ├── /favorites [GET]                        user
+	│   │   │   └── /:productId [POST]                  user
+	│   │   ├── /wishlist [GET]                         user
+	│   │   │   └── /:productId [POST]                  user
+	│   │   └── /password [PATCH]                       user
+	│   ├── / [GET]                                     worker,admin,owner
+	│   └── /:id
+	│       ├── [GET]                                   admin,owner
+	│       ├── [PATCH]                                 admin,owner
+	│       ├── [DELETE]                                admin,owner
+	│       └── /role [PUT]                             admin,owner
+	│
+	├── /products
+	│   ├── / [GET]                                     public
+	│   ├── /search [GET]                               public
+	│   ├── /category
+	│   │   └── /:category [GET]                        public
+	│   ├── /:id [GET]                                  public
+	│   ├── /:id [PUT]                                  admin,owner
+	│   ├── /:id [PATCH]                                admin,owner
+	│   ├── /:id [DELETE]                               admin,owner
+	│   │   └── /stock [GET]                            worker,admin,owner
+	│   ├── /product_management [POST]                  admin,owner
+	│   └── /stock [GET]                                worker,admin,owner
+	│       └── /low [GET]                              worker,admin,owner
+	│
+	├── /order
+	│   ├── / [POST]                                    user
+	│   ├── /me [GET]                                   user
+	│   ├── /:id [PUT]                                  worker,admin,owner
+	│   │   └── /return-request [POST]                  user
+	│   ├── / [GET]                                     worker,admin,owner
+	│   └── /statistics [GET]                           worker,admin,owner
+	│
+	├── /sales
+	│   ├── / [GET]                                     public
+	│   ├── / [POST]                                    worker,admin,owner
+	│   └── /:id [DELETE]                               worker,admin,owner
+	│
+	├── /category
+	│   ├── / [GET]                                     public
+	│   ├── / [POST]                                    worker,admin,owner
+	│   ├── /:slug [PUT]                                worker,admin,owner
+	│   └── /:slug [DELETE]                             worker,admin,owner
+	│
+	├── /cart
+	│   ├── / [PUT]                                     user
+	│   ├── / [DELETE]                                  user
+	│   └── /me [GET]                                   user
+	│
+	└── /contact
+	    ├── [POST]                                      user
+	    └── [GET]                                       worker,admin,owner
+
+#### Bestand (Stock)
 
 Dedizierte Endpunkte für Bestandsabfragen. Die Schwellwerte sind zentral im Backend
 definiert (`server/models/product.go`: `LowStockThreshold = 15`, `CriticalStockThreshold = 5`)
