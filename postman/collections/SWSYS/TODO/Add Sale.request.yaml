@@ -1,0 +1,34 @@
+$kind: http-request
+url: "{{baseUrl}}/sales/"
+method: POST
+body:
+  type: formdata
+  content:
+    - type: text
+      key: data
+      value: "{{jsonData}}"
+    - type: file
+      key: image
+      src:
+        - /C:/Users/linus/Documents/Hochschule/Sem_4/SWSYS/Projekt/SWSYS_Webshop/frontend/public/img/product_images/merlot.png
+auth:
+  type: bearer
+  credentials:
+    token: "{{accessToken}}"
+scripts:
+  - type: beforeRequest
+    code: "var jsonData = {\r
+
+      \    \"discount\": -10,\r
+
+      \    \"product_ids\": [\r
+
+      \            \"c4bb335e-085b-4795-af2f-5365503991a3\"\r
+
+      \    ],\r
+
+      }\r
+
+      pm.collectionVariables.set(\"jsonData\", JSON.stringify(jsonData));"
+    language: text/javascript
+order: 2000

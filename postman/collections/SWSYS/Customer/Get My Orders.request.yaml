@@ -1,0 +1,11 @@
+$kind: http-request
+url: "{{baseUrl}}/order/me"
+method: GET
+body:
+  type: text
+  content: ""
+auth:
+  type: bearer
+  credentials:
+    token: "{{accessToken}}"
+order: 9635

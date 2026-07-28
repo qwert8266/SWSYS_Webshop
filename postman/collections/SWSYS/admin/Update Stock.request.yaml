@@ -1,0 +1,19 @@
+$kind: http-request
+url: "{{baseUrl}}/products/846a6dc4-cbe9-46d3-99f1-965c58c695ab"
+method: PATCH
+body:
+  type: json
+  content: "{\r
+
+    \    \"pack_size\": 20,\r
+
+    \    \"volume\": 500,\r
+
+    \    \"value\": 10\r
+
+    }"
+auth:
+  type: bearer
+  credentials:
+    token: "{{accessToken}}"
+order: 4503583484054735

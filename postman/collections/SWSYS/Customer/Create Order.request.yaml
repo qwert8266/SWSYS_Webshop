@@ -1,0 +1,45 @@
+$kind: http-request
+url: "{{baseUrl}}/order/"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \    \"items\": [\r
+
+    \        {\r
+
+    \            \"product_id\": \"8b8870aa-d25a-4087-b846-6760b9c98ff8\",\r
+
+    \            \"pack_size\": 5,\r
+
+    \            \"volume\": 500,\r
+
+    \            \"quantity\": 10\r
+
+    \        }\r
+
+    \    ],\r
+
+    \    \"address\": {\r
+
+    \        \"street\": \"Main Street\",\r
+
+    \        \"houseNumber\": \"1\",\r
+
+    \        \"zipCode\": \"12345\",\r
+
+    \        \"city\": \"Springfield\",\r
+
+    \        \"country\": \"US\"\r
+
+    \    },\r
+
+    \    \"paymentMethod\": \"PayPal\"\r
+
+    }"
+auth:
+  type: bearer
+  credentials:
+    token: "{{accessToken}}"
+order: 14000
