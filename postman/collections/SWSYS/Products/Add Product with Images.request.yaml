@@ -1,0 +1,36 @@
+$kind: http-request
+url: "{{baseUrl}}/products/product_management"
+method: POST
+body:
+  type: formdata
+  content:
+    - type: text
+      key: data
+      value: "{{jsonData}}"
+    - type: file
+      key: image
+      src:
+        - /C:/Users/linus/Documents/Hochschule/Sem_4/SWSYS/Projekt/SWSYS_Webshop/frontend/public/img/product_images/jägermeister.png
+auth:
+  type: bearer
+  credentials:
+    token: "{{accessToken}}"
+scripts:
+  - type: beforeRequest
+    code: "var jsonData = {\r
+
+      \    \"name\": \"Franziskaner Weissbier\",\r
+
+      \    \"description\": \"Ein klassisches Bier aus Bayern.\",\r
+
+      \    \"price\": 125,\r
+
+      \    \"stock\": 100,\r
+
+      \    \"category\": \"Bier\"\r
+
+      }\r
+
+      pm.collectionVariables.set(\"jsonData\", JSON.stringify(jsonData));"
+    language: text/javascript
+order: 4000

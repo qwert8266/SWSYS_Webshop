@@ -1,0 +1,14 @@
+$kind: http-request
+name: Health Check
+description: "Generated from cURL: curl -X GET {{baseUrl}}/health"
+url: "{{baseUrl}}/health"
+method: GET
+scripts:
+  - type: afterResponse
+    code: "pm.test(\"Status code is 200\", function () {\r
+
+      \    pm.response.to.have.status(200);\r
+
+      \    });"
+    language: text/javascript
+order: 1785156767620

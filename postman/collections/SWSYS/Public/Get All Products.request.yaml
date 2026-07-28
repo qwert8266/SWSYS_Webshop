@@ -1,0 +1,22 @@
+$kind: http-request
+name: Get All Products
+description: 'Generated from cURL: curl -X GET "{{baseUrl}}/products/"'
+url: "{{baseUrl}}/products/"
+method: GET
+scripts:
+  - type: afterResponse
+    code: "const json = pm.response.json();\r
+
+      if (json.product_id) {\r
+
+      \    pm.collectionVariables.set(\"productID\", json.product_id);\r
+
+      \    console.log(\"ProductId saved:\", json.product_id);\r
+
+      } else {\r
+
+      \    console.warn(\"No productId found in response\");\r
+
+      }"
+    language: text/javascript
+order: 1785153703062

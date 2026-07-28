@@ -1,0 +1,11 @@
+$kind: http-request
+description: 'Generated from cURL: curl -X GET "{{baseUrl}}/products/:id"'
+url: "{{baseUrl}}/products/:id"
+method: DELETE
+pathVariables:
+  id: ""
+auth:
+  type: bearer
+  credentials:
+    token: "{{accessToken}}"
+order: 2000

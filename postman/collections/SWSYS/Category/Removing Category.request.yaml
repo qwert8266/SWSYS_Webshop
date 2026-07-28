@@ -1,0 +1,11 @@
+$kind: http-request
+url: "{{baseUrl}}/category/"
+method: DELETE
+body:
+  type: json
+  content: "{\r\n    \"name\" : \"Wein\"\r\n}"
+auth:
+  type: bearer
+  credentials:
+    token: "{{accessToken}}"
+order: 3000

@@ -1,0 +1,5 @@
+$kind: http-request
+description: 'Generated from cURL: curl -X POST "{{baseUrl}}/user/logout"'
+url: "{{baseUrl}}/user/logout"
+method: POST
+order: 4000
