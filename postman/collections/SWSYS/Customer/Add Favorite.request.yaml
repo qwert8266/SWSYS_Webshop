@@ -1,13 +1,11 @@
 $kind: http-request
 name: Add Favorite
-url: "{{baseUrl}}/user/me/favorites/:productId"
+url: "{{baseUrl}}/user/me/favorites/{{productId}}"
 method: POST
 auth:
   type: bearer
   credentials:
     token: "{{accessToken}}"
-pathVariables:
-  productId: ""
 scripts:
   - type: afterResponse
     code: |-
@@ -21,4 +19,4 @@ scripts:
           pm.expect(pm.response.json()).to.be.an("object");
       });
     language: text/javascript
-order: 7000
+order: 4000

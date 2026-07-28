@@ -1,4 +1,4 @@
 $kind: http-request
 url: "{{baseUrl}}/category/"
 method: GET
-order: 4501225273271467
+order: 5000

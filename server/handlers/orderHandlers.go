@@ -182,7 +182,7 @@ func CreateOrder(c *gin.Context) {
 			productPrice = (variant.Price * (100 - discount)) / 100
 		}
 
-		// Berechnet Preis & Pfand eines Produktens und gesamtpreis einer Variante und alles Produkte
+		// Berechnet Preis & Pfand eines Produktes und Gesamtpreis einer Variante und alle Produkte
 		deposit := variant.PackSize*variant.Deposit + variant.CrateDeposit
 		unitPrice := productPrice + uint32(deposit)
 		lineTotal := unitPrice * requestedItem.Quantity

@@ -25,4 +25,4 @@ scripts:
           pm.expect(pm.response.json().active).to.be.false;
       });
     language: text/javascript
-order: 9085
+order: 8000

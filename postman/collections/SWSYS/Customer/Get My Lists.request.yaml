@@ -19,4 +19,4 @@ scripts:
           pm.expect(pm.response.json()).to.not.be.undefined;
       });
     language: text/javascript
-order: 4000
+order: 2000

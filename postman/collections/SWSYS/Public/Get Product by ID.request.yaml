@@ -1,7 +1,26 @@
 $kind: http-request
+name: Get Product by ID
 description: 'Generated from cURL: curl -X GET "{{baseUrl}}/products/:id"'
-url: "{{baseUrl}}/products/:id"
+url: "{{baseUrl}}/products/{{productId}}"
 method: GET
-pathVariables:
-  id: ""
-order: 1386082419912189
+scripts:
+  - type: afterResponse
+    code: "pm.test(\"Status code is 200\", function () {\r
+
+      \    pm.response.to.have.status(200);\r
+
+      \    });\r
+
+      \r
+
+      pm.test(\"Product ID matches the request parameter\", function () {\r
+
+      \    const productId = pm.collectionVariables.get(\"productId\");\r
+
+      \    const responseProductId = pm.response.json().product_id;\r
+
+      \    pm.expect(responseProductId).to.equal(productId);\r
+
+      \    });\r\n"
+    language: text/javascript
+order: 2000

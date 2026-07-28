@@ -1,7 +1,0 @@
-$kind: http-request
-url: "{{baseUrl}}/sales/"
-method: GET
-body:
-  type: json
-  content: ""
-order: 1000

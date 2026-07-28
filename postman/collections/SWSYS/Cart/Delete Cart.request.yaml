@@ -1,8 +1,0 @@
-$kind: http-request
-url: "{{baseUrl}}/cart/me"
-method: GET
-auth:
-  type: bearer
-  credentials:
-    token: "{{accessToken}}"
-order: 3000

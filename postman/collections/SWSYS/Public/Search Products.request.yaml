@@ -1,7 +1,12 @@
 $kind: http-request
 name: Search Products
-url: "{{baseUrl}}/products/search"
+url: "{{baseUrl}}/products/search?q=be"
 method: GET
+queryParams:
+  - key: q
+    value: be
+    disabled: false
+    description: ""
 scripts:
   - type: afterResponse
     code: |-
@@ -15,4 +20,4 @@ scripts:
           pm.expect(pm.response.json()).to.not.be.undefined;
       });
     language: text/javascript
-order: 4499402321417503
+order: 3408

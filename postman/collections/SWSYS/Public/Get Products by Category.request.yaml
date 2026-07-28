@@ -1,9 +1,7 @@
 $kind: http-request
 name: Get Products by Category
-url: "{{baseUrl}}/products/category/:category"
+url: "{{baseUrl}}/products/category/{{category}}"
 method: GET
-pathVariables:
-  category: ""
 scripts:
   - type: afterResponse
     code: |-
@@ -17,4 +15,4 @@ scripts:
           pm.expect(pm.response.json()).to.not.be.undefined;
       });
     language: text/javascript
-order: 4501370768162477
+order: 6000

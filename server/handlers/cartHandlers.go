@@ -31,7 +31,7 @@ func GetMyCart(c *gin.Context) {
 				OwnerID:   claims.UserID,
 				Items:     []models.CartItem{},
 				UpdatedAt: time.Now(),
-			}) //gin.H{"message": "user has no cart yet"}
+			})
 			return
 		}
 

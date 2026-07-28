@@ -8,7 +8,7 @@ import (
 
 func RegisterUserRoutes(userRoutes *gin.RouterGroup) {
 
-	// public routes which do not need authentication
+	// public routes that do not need authentication
 	public := userRoutes.Group("")
 	{
 		// Authentication endpoints

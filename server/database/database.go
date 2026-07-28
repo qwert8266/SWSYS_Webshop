@@ -96,7 +96,7 @@ func CategoryCollection() *mongo.Collection {
 	return collection("categories")
 }
 
-// ContactRequestCollection return the contact-requests collection ot the webshop database
+// ContactRequestCollection return the contact-requests collection of the webshop database
 func ContactRequestCollection() *mongo.Collection {
 	return collection("contact_requests")
 }

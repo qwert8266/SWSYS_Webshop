@@ -70,7 +70,7 @@ Die API hat folgende Endpunkte:
 	├── /products
 	│   ├── / [GET]                                     public
 	│   ├── /search [GET]                               public
-	│   ├── /category
+	│   ├── /category [GET]                             public
 	│   │   └── /:category [GET]                        public
 	│   ├── /:id [GET]                                  public
 	│   ├── /:id [PUT]                                  admin,owner

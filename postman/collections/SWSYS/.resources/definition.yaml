@@ -19,3 +19,7 @@ variables:
   jsonData: ""
   productId: ""
   category: ""
+  adminAccessToken: ""
+  userId: ""
+  saleId: ""
+  OwnerAccessToken: ""

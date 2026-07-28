@@ -1,8 +1,7 @@
 $kind: http-request
-url: "{{baseUrl}}/user/me/favorites/:productId"
+name: Remove Favorite
+url: "{{baseUrl}}/user/me/favorites/{{productId}}"
 method: POST
-pathVariables:
-  productId: ""
 auth:
   type: bearer
   credentials:
@@ -20,4 +19,4 @@ scripts:
           pm.expect(pm.response.json()).to.be.an("object");
       });
     language: text/javascript
-order: 6000
+order: 5000
