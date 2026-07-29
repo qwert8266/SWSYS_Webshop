@@ -5,7 +5,7 @@ method: GET
 auth:
   type: bearer
   credentials:
-    token: "{{accessToken}}"
+    token: "{{AdminAccessToken}}"
 scripts:
   - type: afterResponse
     code: |-
@@ -19,4 +19,4 @@ scripts:
           pm.expect(pm.response.json()).to.not.be.undefined;
       });
     language: text/javascript
-order: 4503538743445210
+order: 4427725641930288

@@ -14,12 +14,11 @@ description: |-
   [Learn more about Postman Collections.](https://learning.postman.com/docs/collections/collections-overview/)
 variables:
   baseUrl: ""
-  accessToken: ""
-  id: ""
+  UserAccessToken: ""
   jsonData: ""
   productId: ""
   category: ""
-  adminAccessToken: ""
   userId: ""
   saleId: ""
   OwnerAccessToken: ""
+  AdminAccessToken: ""

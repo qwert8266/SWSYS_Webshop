@@ -17,7 +17,7 @@ scripts:
     code: |-
       const json = pm.response.json();
       if (json.accessToken) {
-          pm.collectionVariables.set("OwnerAccessToken", json.accessToken);
+          pm.collectionVariables.set("AdminAccessToken", json.accessToken);
           console.log("Access token saved:", json.accessToken);
       } else {
           console.warn("No accessToken found in response");

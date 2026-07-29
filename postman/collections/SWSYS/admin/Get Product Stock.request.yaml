@@ -1,9 +1,7 @@
 $kind: http-request
 name: Get Product Stock
-url: "{{baseUrl}}/products/:id/stock"
+url: "{{baseUrl}}/products/{{productId}}/stock"
 method: GET
-pathVariables:
-  id: ""
 scripts:
   - type: afterResponse
     code: |-
@@ -17,4 +15,4 @@ scripts:
           pm.expect(pm.response.json()).to.not.be.undefined;
       });
     language: text/javascript
-order: 4503181903879717
+order: 4382417961541442

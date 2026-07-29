@@ -6,7 +6,7 @@ method: DELETE
 auth:
   type: bearer
   credentials:
-    token: "{{adminAccessToken}}"
+    token: "{{AdminAccessToken}}"
 scripts:
   - type: afterResponse
     code: |-
@@ -17,4 +17,4 @@ scripts:
           pm.expect(pm.response.responseTime).to.be.below(2000);
       });
     language: text/javascript
-order: 2855327430433415
+order: 2882736203278580

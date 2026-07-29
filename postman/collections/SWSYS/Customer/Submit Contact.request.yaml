@@ -8,10 +8,16 @@ body:
   type: json
   content: |-
     {
-      "name": "",
-      "email": "",
-      "message": ""
+      "reason": "Alles Kaputt",
+      "description": "Dies ist eine Beschreibung, die mindestens zehn Zeichen lang ist.",
+      "name": "Ich",
+      "email": "testnutzer@webshop.de",
+      "phone": "+12345678"
     }
+auth:
+  type: bearer
+  credentials:
+    token: "{{UserAccessToken}}"
 scripts:
   - type: afterResponse
     code: |-

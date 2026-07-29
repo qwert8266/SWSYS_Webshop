@@ -1,9 +1,12 @@
 $kind: http-request
+name: Get User by ID
 description: 'Generated from cURL: curl -X GET "{{baseUrl}}/user/users/:id"'
-url: "{{baseUrl}}/user/users/:id"
+url: "{{baseUrl}}/user/{{userId}}"
 method: GET
-pathVariables:
-  id: "1"
+auth:
+  type: bearer
+  credentials:
+    token: "{{AdminAccessToken}}"
 scripts:
   - type: afterResponse
     code: |-

@@ -1,23 +1,27 @@
 $kind: http-request
-name: Replace Product
-url: "{{baseUrl}}/products/:id"
+name: Update Cart Items
+url: "{{baseUrl}}/cart/"
 method: PUT
 auth:
   type: bearer
   credentials:
-    token: "{{accessToken}}"
+    token: "{{UserAccessToken}}"
 headers:
   Content-Type: application/json
 body:
   type: json
   content: |-
     {
-      "name": "",
-      "price": 0,
-      "description": ""
+      "owner_id": "{{userId}}",
+      "items": [
+        {
+          "product_id": "{{productId}}",
+          "quantity": 1,
+          "volume": 500,
+          "pack_size": 1
+        }
+      ]
     }
-pathVariables:
-  id: ""
 scripts:
   - type: afterResponse
     code: |-
@@ -31,4 +35,4 @@ scripts:
           pm.expect(pm.response.json()).to.be.an("object");
       });
     language: text/javascript
-order: 4502627601172740
+order: 9939

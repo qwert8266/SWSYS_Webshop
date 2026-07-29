@@ -5,7 +5,7 @@ method: POST
 auth:
   type: bearer
   credentials:
-    token: "{{accessToken}}"
+    token: "{{UserAccessToken}}"
 scripts:
   - type: afterResponse
     code: |-

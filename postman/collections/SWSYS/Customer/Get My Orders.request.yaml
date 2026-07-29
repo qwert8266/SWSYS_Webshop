@@ -1,4 +1,5 @@
 $kind: http-request
+name: Get My Orders
 url: "{{baseUrl}}/order/me"
 method: GET
 body:
@@ -7,5 +8,19 @@ body:
 auth:
   type: bearer
   credentials:
-    token: "{{accessToken}}"
+    token: "{{UserAccessToken}}"
+scripts:
+  - type: afterResponse
+    code: "pm.test(\"Status code is 2xx\", function () {\r
+
+      \    pm.expect(pm.response.code).to.be.within(200, 299);\r
+
+      });\r
+
+      pm.test(\"Response time is less than 2000ms\", function () {\r
+
+      \    pm.expect(pm.response.responseTime).to.be.below(2000);\r
+
+      });"
+    language: text/javascript
 order: 9635

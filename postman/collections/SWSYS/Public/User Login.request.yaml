@@ -9,18 +9,22 @@ body:
   type: json
   content: |-
     {
-      "email": "admin@webshop.de",
-      "password": "adminadmin"
+      "email": "testnutzer@webshop.de",
+      "password": "password123"
     }
 scripts:
   - type: afterResponse
-    code: |
+    code: |-
       const json = pm.response.json();
       if (json.accessToken) {
-          pm.collectionVariables.set("accessToken", json.accessToken);
+          pm.collectionVariables.set("UserAccessToken", json.accessToken);
           console.log("Access token saved:", json.accessToken);
       } else {
           console.warn("No accessToken found in response");
+      }
+
+      if (json.user) {
+      pm.collectionVariables.set("userId", json.user.id);
       }
 
       pm.test("Status code is 200", function () {
