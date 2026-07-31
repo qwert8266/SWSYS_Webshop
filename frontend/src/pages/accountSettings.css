@@ -12,7 +12,7 @@
     margin-bottom: 24px;
     border-radius: 24px;
     background: linear-gradient(135deg, #d2d1d1, #d5d5d5c5);
-    border: 1px soid #dbeafe;
+    border: 1px solid #dbeafe;
 }
 
 .account-avatar {
@@ -183,10 +183,6 @@ div {
 
 }
 
-.section-notice-main {
-
-}
-
 .primary-Message {
     font-weight: bold;
     line-height: 24px;
@@ -200,29 +196,12 @@ div {
     align-items: flex-start;
 }
 
-.item-wrapper {
-
-}
-
-.item-text-label {
-
-}
-
-.item-text {
-
-}
-
-
-
 .order-item {
     display: grid;
     grid-template-columns: 1fr auto auto;
     align-items: center;
     gap: 18px;
     padding: 16px;
-    /*border: 1px solid #e2e8f0;
-    border-radius: 16px;
-    background: #f8fafc;*/
 }
 
 .order-details {
@@ -291,4 +270,211 @@ div {
 
 .small-padding{
     padding-right: 10px;
+}
+
+.account-preview-section {
+    margin-top: 28px;
+    padding-top: 24px;
+    border-top: 1px solid #e2e8f0;
+}
+
+.account-section-info {
+    margin: 0;
+    padding: 0 4px;
+    color: #475569;
+}
+
+.account-link-button {
+    padding: 0;
+    text-decoration: none;
+    color: #15406e;
+    font-weight: 600;
+}
+
+.account-link-button:hover {
+    color: #ab8d51;
+}
+
+.account-card .product_row {
+    padding-left: 0;
+    padding-right: 0;
+}
+
+.account-card-header.compact {
+    padding-bottom: 14px;
+    margin-bottom: 14px;
+}
+
+.account-info-text {
+    margin: 8px 0 0;
+    color: #64748b;
+    line-height: 1.5;
+}
+
+.settings-grid label {
+    display: grid;
+    gap: 8px;
+    font-weight: 700;
+}
+
+.settings-grid input {
+    width: 100%;
+    border: 1px solid #cbd5e1;
+    border-radius: 12px;
+    padding: 11px 12px;
+}
+
+.order-expanded-details {
+  display: block;
+  margin-top: 16px;
+  padding: 20px;
+  border: 2px solid #198754;
+  background-color: #f8fafc;
+  color: black;
+  width: 100%;
+}
+
+.order-expanded-details h4 {
+  color: #15406e;
+  margin-bottom: 14px;
+}
+
+.order-expanded-details h5 {
+  color: #15406e;
+  margin-top: 18px;
+  margin-bottom: 10px;
+}
+
+.order-detail-product {
+  display: grid;
+  grid-template-columns: 2fr 0.9fr 0.7fr 1fr;
+  gap: 14px;
+  align-items: center;
+
+  background-color: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+}
+
+.return-form {
+  margin-top: 18px;
+  padding: 18px;
+  border: 1px solid rgba(220, 53, 69, 0.25);
+  border-radius: 14px;
+  background-color: #fff7f7;
+}
+
+.return-form h5 {
+  color: #15406e;
+  margin-bottom: 6px;
+}
+
+.return-form-hint {
+  color: #64748b;
+  margin-bottom: 14px;
+}
+
+.return-items {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.return-item {
+  display: grid;
+  grid-template-columns: 1fr 110px;
+  gap: 14px;
+  align-items: center;
+
+  padding: 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background-color: white;
+}
+
+.return-item-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+}
+
+.return-item-main span {
+  display: flex;
+  flex-direction: column;
+}
+
+.return-item-main small {
+  color: #64748b;
+}
+
+.return-quantity {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.return-quantity select,
+.return-form-label select,
+.return-form-label textarea {
+  width: 100%;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 9px 10px;
+  background-color: white;
+}
+
+.return-form-label {
+  display: block;
+  margin-bottom: 14px;
+  color: #15406e;
+  font-weight: 600;
+}
+
+.return-form-label select,
+.return-form-label textarea {
+  margin-top: 6px;
+  font-weight: 400;
+  color: #0f172a;
+}
+
+.return-message {
+  padding: 10px 12px;
+  border-radius: 10px;
+  margin-bottom: 14px;
+}
+
+.return-message.error {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.return-message.success {
+  background-color: #dcfce7;
+  color: #166534;
+}
+
+.return-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+@media (max-width: 700px) {
+  .return-item {
+    grid-template-columns: 1fr;
+  }
+
+  .return-form-actions {
+    flex-direction: column;
+  }
+
+  .return-form-actions button {
+    width: 100%;
+  }
 }

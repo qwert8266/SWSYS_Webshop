@@ -1,0 +1,7 @@
+$kind: collection
+name: Public
+description: |-
+  Testet alle Öffentlichen Endpunkte, die keine Authentifizierung benötigen.
+
+  Geschützte Endpunkte sollten ein 401 - Unauthorized zurückgeben.
+order: 617

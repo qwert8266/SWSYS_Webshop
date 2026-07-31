@@ -21,7 +21,7 @@
  * Login- & Registerform *
  *************************/
 .auth-page {
-  min-height: 950px;
+  min-height: 650px;
 }
 
  .auth-page img {
@@ -45,7 +45,7 @@
 .registerform .customer-type-tabs{
   display: flex;
   justify-content: space-between;
-  padding: 6px; /*0px für keine Abstand Außen*/
+  padding: 6px;
 }
 
 .customer-type-tab {
@@ -84,9 +84,8 @@
   box-shadow: 0 0 0 3px rgba(21, 64, 110, 0.18);
 }
 
-/********************/
 .registerform .registerform-body {
-  min-height: 600px;
+  min-height: 360px;
   text-align: left;
 }
 

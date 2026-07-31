@@ -1,32 +1,160 @@
 package models
 
 import (
+	"context"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/qwert8266/SWSYS_Webshop/server/database"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 type Product struct {
-	ProductID   uuid.UUID `json:"product_id" bson:"product_id"`
-	Name        string    `json:"name" bson:"name"`
-	Description string    `json:"description" bson:"description"`
-	Image       string    `json:"image" bson:"image"`
-	Price       uint32    `json:"price" bson:"price"` //price is stored in Cents
-	Stock       uint32    `json:"stock" bson:"stock"`
-	Category    string    `json:"category" bson:"category"`
-	CreatedAt   time.Time `json:"created_at" bson:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at" bson:"updated_at"`
+	ProductID       uuid.UUID        `json:"product_id" bson:"product_id"`
+	Name            string           `json:"name" bson:"name"`
+	Description     string           `json:"description" bson:"description"`
+	Images          []string         `json:"images" bson:"images"`
+	ProductVariants []ProductVariant `json:"product_variants" bson:"product_variants"`
+	Categories      []Category       `json:"categories" bson:"categories"`
+	CreatedAt       time.Time        `json:"created_at" bson:"created_at"`
+	UpdatedAt       time.Time        `json:"updated_at" bson:"updated_at"`
 }
 
 type ProductData struct {
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	Image       string `json:"image"`
-	Price       uint32 `json:"price"` //price is stored in Cents
-	Stock       uint32 `json:"stock"`
-	Category    string `json:"category"`
+	Name            string           `json:"name"`
+	Description     string           `json:"description"`
+	ProductVariants []ProductVariant `json:"product_variants"`
+	Images          []string         `json:"image"`
+	RemovedImages   []string         `json:"removed_images"`
+	Categories      []Category       `json:"categories" bson:"categories"`
+}
+
+type ProductVariant struct {
+	Price        uint32 `json:"price" bson:"price"` //price is stored in Cents
+	Volume       uint16 `json:"volume" bson:"volume"`
+	PackSize     uint16 `json:"pack_size" bson:"pack_size"`
+	Deposit      uint16 `json:"deposit" bson:"deposit"`             //price is stored in Cents
+	CrateDeposit uint16 `json:"crate_deposit" bson:"crate_deposit"` //price is stored in Cents
+	Stock        uint32 `json:"stock" bson:"stock"`
+	Discount     *int8  `json:"discount,omitempty" bson:"discount,omitempty"`
+	VariantLabel string `json:"variant_label,omitempty" bson:"-"`
 }
 
 type StockOperation struct {
-	Value int32 `json:"value"`
+	PackSize uint16 `json:"pack_size"`
+	Volume   uint16 `json:"volume"`
+	Value    int32  `json:"value"`
+}
+
+type Category struct {
+	Name      string    `json:"name" bson:"name"`
+	Slug      string    `json:"slug" bson:"slug"` //Für URL's und co.
+	Sentence  string    `json:"sentence" bson:"sentence"`
+	Banner    string    `json:"banner" bson:"banner"`
+	CreatedAt time.Time `json:"created_at,omitempty" bson:"created_at,omitempty"`
+	UpdatedAt time.Time `json:"updated_at,omitempty" bson:"updated_at,omitempty"`
+}
+
+func (c Category) IsValid() bool {
+	exists, err := database.CategoryCollection().CountDocuments(context.Background(), bson.M{"$or": bson.A{bson.M{"name": c.Name}, bson.M{"slug": c.Slug}}})
+	if err != nil || 0 == exists {
+		return false
+	}
+
+	return true
+}
+
+func (c Category) AddToDB() bool {
+	if _, err := database.CategoryCollection().InsertOne(context.Background(), c); err != nil {
+		return false
+	}
+	return true
+}
+
+func NormalizeProductIDs(ids []uuid.UUID) []uuid.UUID {
+	if ids == nil {
+		return []uuid.UUID{}
+	}
+	return ids
+}
+
+// Central stock thresholds. These are the single source of truth --
+// the frontend receives the resulting status via the stock endpoints
+// instead of hardcoding its own thresholds.
+const (
+	// LowStockThreshold marks products that should be reordered soon.
+	LowStockThreshold uint32 = 15
+	// CriticalStockThreshold marks products that are about to sell out.
+	CriticalStockThreshold uint32 = 5
+)
+
+// Possible values of StockInfo.Status, ordered from best to worst.
+const (
+	StockStatusOK       = "ok"
+	StockStatusLow      = "low"
+	StockStatusCritical = "critical"
+	StockStatusOut      = "out_of_stock"
+)
+
+// StockInfo is the response model of the dedicated stock endpoints.
+// It intentionally contains no price/description so stock checks stay cheap.
+// Volume and PackSize are set when the entry refers to a specific variant.
+type StockInfo struct {
+	ProductID    uuid.UUID  `json:"product_id"`
+	Name         string     `json:"name"`
+	Categories   []Category `json:"categories"`
+	Volume       uint16     `json:"volume"`
+	PackSize     uint16     `json:"pack_size"`
+	VariantLabel string     `json:"variant_label"`
+	Stock        uint32     `json:"stock"`
+	Status       string     `json:"status"`
+}
+
+// TotalStock sums the stock of all variants.
+func (p Product) TotalStock() uint32 {
+	var total uint32
+	for _, variant := range p.ProductVariants {
+		total += variant.Stock
+	}
+	return total
+}
+
+// StockStatus maps a raw stock value onto one of the StockStatus* levels.
+func StockStatus(stock uint32) string {
+	switch {
+	case stock == 0:
+		return StockStatusOut
+	case stock <= CriticalStockThreshold:
+		return StockStatusCritical
+	case stock <= LowStockThreshold:
+		return StockStatusLow
+	default:
+		return StockStatusOK
+	}
+}
+
+// NewStockInfo builds the stock response for a single product (total across variants).
+func NewStockInfo(product Product) StockInfo {
+	stock := product.TotalStock()
+	return StockInfo{
+		ProductID:  product.ProductID,
+		Name:       product.Name,
+		Categories: product.Categories,
+		Stock:      stock,
+		Status:     StockStatus(stock),
+	}
+}
+
+// NewVariantStockInfo builds the stock response for one product variant.
+func NewVariantStockInfo(product Product, variant ProductVariant) StockInfo {
+	return StockInfo{
+		ProductID:    product.ProductID,
+		Name:         product.Name,
+		Categories:   product.Categories,
+		Volume:       variant.Volume,
+		PackSize:     variant.PackSize,
+		VariantLabel: variant.DisplayLabel(),
+		Stock:        variant.Stock,
+		Status:       StockStatus(variant.Stock),
+	}
 }
