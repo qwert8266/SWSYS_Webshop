@@ -81,13 +81,11 @@ services:
 volumes:
   mongo-data:
     external: true
-    name: swsys_webshop_mongo-data
   mongo-config:
     external: true
   mailpit-data:
   product-images:
     external: true
-    name: swsys_webshop_product-images
 
 networks:
   internal:
