@@ -27,7 +27,7 @@ Die Backups enthalten bereits Beispielprodukte, Produktbilder und MongoDB-Testda
 #### Produktbilder-Volume erstellen
 
 ```powershell
-docker volume create swsys_webshop_product-images | Out-Null; docker run --rm -v swsys_webshop_product-images:/volume -v ${PWD}:/backup alpine sh -c 'cd /volume && tar xzf /backup/product-images-backup.tar.gz'
+docker volume create product-images | Out-Null; docker run --rm -v product-images:/volume -v ${PWD}:/backup alpine sh -c 'cd /volume && tar xzf /backup/product-images-backup.tar.gz'
 ```
 
 ---
@@ -35,7 +35,7 @@ docker volume create swsys_webshop_product-images | Out-Null; docker run --rm -v
 #### MongoDB-Daten-Volume erstellen
 
 ```powershell
-docker volume create swsys_webshop_mongo-data | Out-Null; docker run --rm -v swsys_webshop_mongo-data:/volume -v ${PWD}:/backup alpine sh -c 'cd /volume && tar xzf /backup/mongo-data-backup.tar.gz'
+docker volume create mongo-data | Out-Null; docker run --rm -v mongo-data:/volume -v ${PWD}:/backup alpine sh -c 'cd /volume && tar xzf /backup/mongo-data-backup.tar.gz'
 ```
 
 ---
@@ -43,7 +43,7 @@ docker volume create swsys_webshop_mongo-data | Out-Null; docker run --rm -v sws
 #### MongoDB-Konfigurations-Volume erstellen
 
 ```powershell
-docker volume create swsys_webshop_mongo-config | Out-Null; docker run --rm -v swsys_webshop_mongo-config:/volume -v ${PWD}:/backup alpine sh -c 'cd /volume && tar xzf /backup/mongo-config-backup.tar.gz'
+docker volume create mongo-config | Out-Null; docker run --rm -v mongo-config:/volume -v ${PWD}:/backup alpine sh -c 'cd /volume && tar xzf /backup/mongo-config-backup.tar.gz'
 ```
 
 ---
