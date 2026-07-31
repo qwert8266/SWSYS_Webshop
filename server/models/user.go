@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // RegisterRequest matches the form fields sent by frontend/src/pages/register.jsx
