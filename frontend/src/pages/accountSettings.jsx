@@ -272,7 +272,6 @@ function AccountSettings() {
     }));
 
     setPasswordError("");
-    //setPasswordSuccess("");
   }
 
   async function handlePasswordSubmit(event) {

@@ -137,7 +137,6 @@ func CreateProduct(c *gin.Context) {
 		return
 	}
 
-	//normalizedCategory := strings.ToLower(strings.TrimSpace(validProductData.Category))
 
 	name := strings.TrimSpace(validProductData.Name)
 	description := strings.TrimSpace(validProductData.Description)

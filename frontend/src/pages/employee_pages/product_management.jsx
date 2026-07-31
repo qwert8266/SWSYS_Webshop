@@ -75,8 +75,8 @@ function ProductManagement(){
 
     /** Ermöglicht schnellere Prüfung, ob eine Kategorie im Bearbeiten-Formular ausgewählt ist */
     const selectedModifyCategorySlugs = useMemo(
-        () => new Set (productData.categorySlugs ?? []),
-        [productData.categorySlugs]
+        () => new Set (productDataModify.categorySlugs ?? []),
+        [productDataModify.categorySlugs]
     );
     
     /** Erstellt eine leere Variante */
@@ -293,9 +293,6 @@ function ProductManagement(){
         const selectedCategories = categories.filter((category) =>
             selectedCategorieSlugs.has(category.slug)
         );
-        //categories.filter((category) => {
-        //    return productData.categorySlugs.includes(category.slug);
-        //});
 
         // Payload enthält nur fachliche Produktdaten
         const productPayload = {
@@ -657,7 +654,6 @@ function ProductManagement(){
         // productApi.updateProduct liest die id für die URL aus productData.id
         // FormData selbst transportiert die ID zusätzlich im JSON-Teil
         formData.id = productPayload.product_id;
-        //formData.append("id", productPayload.product_id);
         formData.append("data", JSON.stringify(productPayload));
 
         newImages.forEach((imageFile) => {
@@ -1114,7 +1110,6 @@ function ProductManagement(){
                     </div>
                     <div className='d-flex flex-row align-items-center pb-2'>
                         <label className='fs-5 me-3' style={{ width: "150px" }}>Bild</label>
-                        {/*<input className='fs-5 border rounded ' type="text" placeholder='Bild(Dateiname)' name='image' value={productDataModify.image} onChange={handleChange2}/>*/}
 
                         <div className="d-flex flex-column gap-2">
                             {/* Bereits gespeicherte Bilder liegen als PFad im Produkt und werden als Vorschau angezeigt */}

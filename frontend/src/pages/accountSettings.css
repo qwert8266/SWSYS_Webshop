@@ -183,10 +183,6 @@ div {
 
 }
 
-.section-notice-main {
-
-}
-
 .primary-Message {
     font-weight: bold;
     line-height: 24px;
@@ -200,29 +196,12 @@ div {
     align-items: flex-start;
 }
 
-.item-wrapper {
-
-}
-
-.item-text-label {
-
-}
-
-.item-text {
-
-}
-
-
-
 .order-item {
     display: grid;
     grid-template-columns: 1fr auto auto;
     align-items: center;
     gap: 18px;
     padding: 16px;
-    /*border: 1px solid #e2e8f0;
-    border-radius: 16px;
-    background: #f8fafc;*/
 }
 
 .order-details {

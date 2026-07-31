@@ -109,7 +109,7 @@
 
 * {box-sizing:border-box}
 
-/* Slideshow container */
+
 .slideshow-container {
   max-width: 1500px;
   position: relative;
@@ -147,7 +147,7 @@
   border-radius: 3px 0 0 3px;
 }
 
-/* On hover, add a black background color with a little bit see-through */
+/* On hover, add a black background color with a little bit opacity */
 .prev:hover, .next:hover {
   background-color: rgba(0,0,0,0.8);
 }

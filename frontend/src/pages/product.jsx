@@ -142,7 +142,6 @@ function Product(){
     return(
         <div className='product-page'>
             {loadError && <p className='text-danger'>{loadError}</p>}
-            {/*{cartMessage && <p className='text-success'>{cartMessage}</p>} */}
             
             <div className='product-page-top'>
                 <div className='d-flex flex-column'>

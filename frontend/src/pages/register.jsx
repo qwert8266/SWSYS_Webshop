@@ -94,7 +94,6 @@ function Register() {
 
       <div className="registerform-body">
         
-        {/*<div className={`priv ${customerType === "private" ? "active" : ""}`}>*/}
         {customerType === "private" && (
           <>
           <div className="registerform-input row g-2">
@@ -302,7 +301,6 @@ function Register() {
           </>
         )}
       
-        {/*<div className={`company ${customerType === "business" ? "active" : ""}`}>*/}
         {customerType === "business" && (
           <>         
           <div className="registerform-input row g-2">

@@ -81,20 +81,4 @@ type Statistics struct {
 	LowStockProducts   uint32 `bson:"low_stock_products" json:"lowStockProducts"`
 	CanceledOrders     uint32 `bson:"canceled_orders" json:"canceledOrders"`
 	AverageUserRevenue uint32 `bson:"average_user_revenue" json:"averageUserRevenue"`
-	//CategoryStatistics map[string]CategoryStatistics `json:"categoryStatistics"`
-}
-
-type CategoryStatistics struct {
-	Revenue      float64 `json:"revenue"`
-	Orders       uint32  `json:"orders"`
-	ProductsSold uint32  `json:"productsSold"`
-}
-
-type ProductStatistics struct {
-	Name         string  `json:"name"`
-	Revenue      float64 `json:"revenue"`
-	ProductsSold uint32  `json:"productsSold"`
-}
-
-type UserStatistics struct {
 }
