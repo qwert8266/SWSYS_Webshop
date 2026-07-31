@@ -88,7 +88,7 @@ export function AuthProvider({ children }) {
       }
     }
 
-    loadCurrentUser().then()
+    loadCurrentUser()
   }, [accessToken, user, clearAuthState]);
 
   const value = useMemo(

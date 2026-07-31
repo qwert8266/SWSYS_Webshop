@@ -5,10 +5,6 @@ services:
       dockerfile: Dockerfile
     ports:
       - "3000:3000"
-    volumes:
-      - product-images:/SWSYS_Webshop/frontend/public/img/product_images
-    networks:
-      - internal
     restart: unless-stopped
     depends_on:
       server:
@@ -20,10 +16,6 @@ services:
       dockerfile: Dockerfile
     ports:
       - "3001:3001"
-    volumes:
-      - product-images:/images/
-    networks:
-      - internal
     env_file:
       - ./server/.env
     restart: unless-stopped
@@ -32,15 +24,7 @@ services:
         condition: service_healthy
     healthcheck:
       # CMD format for health check command
-      test:
-        [
-          "CMD",
-          "wget",
-          "--no-verbose",
-          "--tries=1",
-          "--spider",
-          "http://0.0.0.0:3001/health",
-        ]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://0.0.0.0:3001/health"]
       interval: 10s
       timeout: 10s
       retries: 3
@@ -53,8 +37,6 @@ services:
       - mongo-config:/data/configdb
     ports:
       - "27017:27017"
-    networks:
-      - internal
     restart: unless-stopped
     healthcheck:
       test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
@@ -63,26 +45,6 @@ services:
       retries: 3
       start_period: 10s
 
-  mailpit:
-    image: axllent/mailpit
-    restart: unless-stopped
-    volumes:
-        - mailpit-data:/data
-    ports:
-      - "8025:8025" # Web-Oberfläche
-      - "1025:1025" # SMTP-Port
-    networks:
-      - internal
-    environment:
-        TZ: Europe/Berlin
-        MP_MAX_MESSAGES: 5000
-        MP_DATABASE: /data/mailpit.db
-
 volumes:
   mongo-data:
   mongo-config:
-  mailpit-data:
-  product-images:
-
-networks:
-  internal:

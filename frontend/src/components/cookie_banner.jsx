@@ -1,3 +1,4 @@
+import { faL } from "@fortawesome/free-solid-svg-icons";
 import { useEffect, useState } from "react";
 import './cookie_banner.css';
 
@@ -36,7 +37,7 @@ useEffect(() => {
                 <div className="popup">
                     <div className="popup-content">
                         <div>
-                            <img className="cookie-picture" src={`/img/cookie_monster.png`} alt={"cookie monster"}></img>
+                            <img className="cookie-picture" src={`/img/cookie_monster.png`}></img>
                         </div>
 
                         <div className="basic-row">
@@ -51,6 +52,7 @@ useEffect(() => {
                     </div>
                 </div>
             )}
+            <div>Homeseite</div>
         </>
     )
 }

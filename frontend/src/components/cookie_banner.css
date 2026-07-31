@@ -6,7 +6,6 @@
     display: flex;
     justify-content: center;
     align-items: flex-start;
-    z-index: 10000;
 }
 
 .popup-content{
@@ -17,7 +16,6 @@
     display: flex ;
     flex-direction: row;
     gap: 30px;
-    z-index: 10000;
 }
 
 .cookie-picture{

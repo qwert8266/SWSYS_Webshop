@@ -4,14 +4,10 @@ import './checkout.css';
 import { useAuth } from "../context/authContext";
 import { useCart } from "../context/cartContext";
 import orderApi from '../api/orderApi';
-import { formatEuro, getProductImagePath, getVariantLabel, getCartItemPricing } from "../utils/productHelpers";
-import OfferBadge from '../components/offerBadge';
-import ProductPrice from '../components/productPrice';
+import { formatEuro } from "../utils/productHelpers";
 
 
-/**
- * Erstellt die vorausgefüllten Checkout-Daten aus dem angemeldeten Benutzerkonto  
- */
+
 function buildPersonalData(user) {
   const address = user?.address || {};
 
@@ -31,20 +27,30 @@ function buildPersonalData(user) {
 }
 
 function Checkout(){
+    /*const [personalData, setPersonalData] = useState({
+        salutation: "Herr",
+        firstName: "Weyles",
+        lastName: "Papst",
+        
+        street: "Geile Straße",
+        houseNumber: "420",
+        zipCode: "28282",
+        city: "Bremen",
+        country: "Deutschland",
+
+        email: "weyles.papst@gmail.com",
+        phone: "0173 93643783",
+    
+        paymentMethod: "PayPal",
+        delivery: "Premium"
+    });
+    */
+    
   const { user, accessToken } = useAuth();
-  const { 
-    items, 
-    totalQuantity, 
-    totalPrice, 
-    totalProductPrice, 
-    totalDeposit, 
-    clearCart, 
-    isCartLoading, 
-    cartError 
-  } = useCart();
+  const { items,totalQuantity, totalPrice, clearCart, } = useCart();
 
   const [personalData, setPersonalData] = useState(() => buildPersonalData(user));
-  const [editData, setEditData] = useState(() => buildPersonalData(user));
+  const [editData, setEditData] =useState(() => buildPersonalData(user));
   const [showPlaintextBox, setShowPlaintextBox] = useState(true);
   const [showInputBoxes, setShowInputBoxes] = useState(false);
   const [showSuccessfulOrderScreen, setShowSuccessfulOrderScreen] = useState(false);
@@ -65,11 +71,8 @@ function Checkout(){
     setRechnung(nextPersonalData.paymentMethod === "Rechnung");
   }, [user]);
 
-  /**
-   * Sendet die Bestellung mit den aktuellen Warenkorbposition an das Backend
-   * Nach erfolgreicher Bestellug wird der Warenkorb über den CartContext geleert
-   */
-  async function handlePlaceOrder(selectedPaymentMethod) {
+
+  async function handlePlaceOrder() {
     setSubmitError("");
 
     if (!accessToken) {
@@ -82,34 +85,11 @@ function Checkout(){
       return;
     }
 
-    const paymentMethod = selectedPaymentMethod || personalData.paymentMethod || "Rechnung";
-
-    // Für die Bestellung werden nur Produkt-ID und Menge übertragen
-    // Preise, Bestand und weitere Produktdaten werden serverseitig geprüft
     const orderData = {
-      items: items.map((item) => {
-        
-        /* Identifiziert die gewählte Produktvariante (Gebindegröße) */
-        const packSize = Number(
-          item.selectedVariant?.packSize ?? 
-          item.selectedVariant?.pack_size ?? 
-          item.packSize ?? 
-          item.pack_size ?? 
-          0
-        );
-        const volume = Number(
-          item.selectedVariant?.volume ?? 
-          item.volume ?? 
-          0
-        );
-
-        return {
-          product_id:  item.product_id || item.productId || item.productID || item.id,
-          pack_size: packSize,
-          volume,
-          quantity: Number(item.quantity),
-        }
-      }),
+      items: items.map((item) => ({
+        product_id:  item.product_id,
+        quantity: item.quantity,
+      })),
       address: {
         street: personalData.street,
         houseNumber: personalData.houseNumber,
@@ -117,7 +97,7 @@ function Checkout(){
         city: personalData.city,
         country: personalData.country,
       },
-      paymentMethod,
+      paymentMethod: personalData.paymentMethod,
     };
 
     try {
@@ -127,7 +107,6 @@ function Checkout(){
       setShowInputBoxes(false);
       setShowPlaintextBox(false);
       setShowSuccessfulOrderScreen(true);
-      // Nach Erfolgreicher Bestellung wird auch der backendgespeicherte Warenkorb geleert
       clearCart();
 
     } catch (error) {
@@ -135,14 +114,6 @@ function Checkout(){
     } finally {
       setIsSubmitting(false);
     }
-  }
-
-  if (isCartLoading && items.length === 0) {
-    return (
-      <div className='successful_order'>
-        <label className='success_label'>Warenkorb wird geladen...</label>
-      </div>
-    );
   }
 
   // Beim Bezahlen, aber der Warenkorb war leer
@@ -174,8 +145,6 @@ function Checkout(){
                 </div>
 
                 {submitError && <p className="text-danger align-items-center">{submitError}</p>}
-
-                {cartError && <p className='text-danger align-items-center'>{cartError}</p>}
 
                 {/* Lieferdaten */}
                 {showPlaintextBox &&
@@ -209,7 +178,7 @@ function Checkout(){
                         className='blue_button' 
                         type="button"
                         disabled={isSubmitting}
-                        onClick={(e) => {setCard(false); setPayPal(false); setRechnung(true); handlePlaceOrder("Rechnung"); }}
+                        onClick={(e) => {setCard(false); setPayPal(false); setRechnung(true); }, handlePlaceOrder}
                       >
                         {isSubmitting ? "Bestellung wird gesendet..." : "Jetzt bestellen"}
                       </button>
@@ -218,7 +187,7 @@ function Checkout(){
                         className='btn btn-payment btn-paypal'
                         type="button"
                         disabled={isSubmitting}
-                        onClick={(e) => {setCard(false); setPayPal(true); setRechnung(false); handlePlaceOrder("PayPal"); }}
+                        onClick={(e) => {setCard(false); setPayPal(true); setRechnung(false); }, handlePlaceOrder}
                       >
                         <img src="/img/PayPal.svg" alt="PayPal" />
                       </button>
@@ -227,10 +196,13 @@ function Checkout(){
                         className='btn btn-payment btn-sepa'
                         type="button"
                         disabled={isSubmitting}
-                        onClick={(e) => {setCard(true); setPayPal(false); setRechnung(false); handlePlaceOrder("SEPA") }}
+                        onClick={(e) => {setCard(true); setPayPal(false); setRechnung(false); }, handlePlaceOrder}
                       >
                         <img src="/img/sepa-lastschrift-logo.svg" alt="SEPA Lastschrift" />
                       </button>
+
+                      
+                      
                     </div>
                   </div>
                 }
@@ -347,66 +319,41 @@ function Checkout(){
                   {items.map((item) => (
                     <article 
                       className="d-flex flex-column flex-md-row align-items-md-center gap-3 p-3 rounded-4 bg-light" 
-                      key={item.cartKey}
+                      key={item.id}
                     >
                       <img
                         className="rounded-3 object-fit-contain flex-shrink-0" 
-                        src={getProductImagePath(item)} //{"/img/product_images/" + item.image} 
+                        src={"/img/product_images/" + item.image}
                         style={{ width: "95px", height: "95px"}}
                         alt={item.name}
                       />
 
                       <div className="flex-grow-1">
                         <h5>{item.name}</h5>
-                        {(item.selectedVariant?.volume ?? item.volume) > 0 && (
-                          <p className="mb-1 text-muted">
-                            {getVariantLabel(item.selectedVariant || { 
-                              packSize: item.packSize, 
-                              volume: item.volume 
-                            })}
-                          </p>
-                        )}
-
-                        <OfferBadge product={item} />
-                        <span className="d-block">
-                          <ProductPrice product={item} showDiscount={false} />
-                          {getCartItemPricing(item).depositUnitPrice > 0 && (
-                            <span className="text-muted">
-                              {" "}zzgl. {formatEuro(getCartItemPricing(item).depositUnitPrice)} Pfand
-                            </span>
-                          )}
+                        <span>
+                          {formatEuro(item.price)}
                         </span>
                       </div>
                       
                       <div
                         className="d-flex align-items-center gap-2 justify-content-center flex-shrink-0"
                         style={{ width: "115px" }}
-                        aria-label={`Menge für ${item.name}`}    
+                        aria-label={`Menge für ${items.name}`}    
                       >
                         <strong>{item.quantity}x</strong>
                       </div>
 
                       <strong  
                         className="text-nowrap text-end flex-shrink-0" 
-                        style={{ width: "85px"}}
+                        style={{ width: "55px"}} /* 90 px*/
                       >
-                        {formatEuro(getCartItemPricing(item).totalPrice)}
+                        {formatEuro(item.price * item.quantity)}
                       </strong>
                     </article>
                   ))}   
                 </div>
 
-                <div className="d-flex justify-content-between gap-3 py-2 border-top mt-3">
-                  <span>Zwischensumme</span>
-                  <strong>{formatEuro(totalProductPrice)}</strong>
-                </div>
-
-                <div className="d-flex justify-content-between gap-3 py-2">
-                  <span>Pfand</span>
-                  <strong>{formatEuro(totalDeposit)}</strong>
-                </div>
-
-                <div className="d-flex justify-content-between gap-3 py-3 border-top">
+                <div className="d-flex jusify-content-between gap-3 py-3 border-top mt-3">
                   <span>Gesamt</span>
                   <strong>{formatEuro(totalPrice)}</strong>
                 </div>
@@ -421,11 +368,6 @@ function Checkout(){
         <div className='successful_order'>
           <label className='success_label'>Der Durst hat bald ein Ende!</label>
           <label className='success_label_minor'>Ihre Bestellung wird schon bald verschickt.</label>
-          
-          {createdOrder?.orderId && (
-            <label className='success_label_minor'>Bestellnummer: {createdOrder.orderId}</label>
-          )}
-          
           <NavLink to="/home">
             <button className='success_button' >Zurück zu den Produkten</button>
           </NavLink>

@@ -1,4 +1,0 @@
-$kind: collection
-name: Cleanup
-description: This Folder contains all requests to clean up the database deleting all the testing data.
-order: 3973278791106559
