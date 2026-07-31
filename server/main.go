@@ -47,8 +47,9 @@ func main() {
 
 	// the addr is explicitly 0.0.0.0 because if the application is running inside a container,
 	//it must handle requests from outside the container.
-	err = server.Run("0.0.0.0:3001")
+	err := server.Run("0.0.0.0:3001")
 	if err != nil {
 		fmt.Println(err)
 	}
+
 }

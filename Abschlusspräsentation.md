@@ -48,7 +48,6 @@
 	- Diagramm für Modell (Lucas)
 
 - Welche Features müssen für V1.0 umgesetzt werden 
-
 ### Ergebnisse
 
 - Wie Anforderungen umgesetzt wurden
