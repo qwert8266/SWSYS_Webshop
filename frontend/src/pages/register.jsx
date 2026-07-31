@@ -2,15 +2,17 @@
 import { useState } from 'react';
 import { Link, NavLink, useNavigate } from "react-router-dom"
 
+import { EMAIL_REGEX } from "../constants/validation";
+import { ERROR_INVALID_EMAIL } from "../constants/errorMessages";
 import { useAuth } from "../context/authContext";
 import "../App.css";
 
 function Register() {
   const navigate = useNavigate();
   const { register } = useAuth();
+  //const [customerType, setCustomerType] = useState("private");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
-  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   const [formData, setFormData] = useState({
     customerType: "private",
@@ -56,9 +58,16 @@ function Register() {
     setError("");
     setIsSubmitting(true);
 
+    /*const trimmedEmail = formData.email.trim().toLowerCase();
+    if (!EMAIL_REGEX.test(trimmedEmail)) {
+      setError(ERROR_INVALID_EMAIL);
+      setIsSubmitting(false);
+      return;
+    }*/
+
     try {
       await register(formData);
-      navigate("/account-settings");
+      navigate("/account");
     } catch (err) {
       setError(err.message);
     } finally {
@@ -94,6 +103,7 @@ function Register() {
 
       <div className="registerform-body">
         
+        {/*<div className={`priv ${customerType === "private" ? "active" : ""}`}>*/}
         {customerType === "private" && (
           <>
           <div className="registerform-input row g-2">
@@ -301,6 +311,7 @@ function Register() {
           </>
         )}
       
+        {/*<div className={`company ${customerType === "business" ? "active" : ""}`}>*/}
         {customerType === "business" && (
           <>         
           <div className="registerform-input row g-2">
@@ -507,33 +518,6 @@ function Register() {
         )}
       </div>
 
-      <div className="px-3 mb-3">
-        <div className="form-check mb-2">
-          <input
-            className="form-check-input"
-            type="checkbox"
-            id="acceptTerms"
-            checked={acceptedTerms}
-            onChange={(event) => setAcceptedTerms(event.target.checked)}
-            required
-          />
-          <label className="form-check-label" htmlFor="acceptTerms">
-            Ich akzeptiere die{" "}
-            <Link to="/agb" target="_blank" rel="noreferrer">
-              Allgemeinen Geschäftsbedingungen (AGB)
-            </Link>
-          </label>
-        </div>
-        <p className="text-muted small mb-0">
-          Informationen zur Verarbeitung deiner personenbezogenen Daten findest
-          du in unserer{" "}
-          <Link to="/datenschutzerklärung" target="_blank" rel="noreferrer">
-            Datenschutzerklärung
-          </Link>
-          .
-        </p>
-      </div>
-
       <button 
         className="btn btn-primary btn-lg submit-register-btn" 
         type="submit"
@@ -541,7 +525,7 @@ function Register() {
       >
         {isSubmitting ? "Registrierung läuft..." : "Registrieren"}
       </button>
-      <p className="text-center">
+      <p>
         Bereits registriert?  <Link to="/login">Anmelden</Link> 
       </p>
 

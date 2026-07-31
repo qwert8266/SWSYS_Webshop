@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "http://localhost:3001" || "http://127.0.0.1:3001";
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "http://localhost:3001";
 
 
 export class ApiError extends Error {
@@ -44,6 +44,7 @@ export class BaseApi {
         0,
         { originalError: error.message }
       );
+      
     }
 
     const payload = await this.parseJsonResponse(response);
@@ -69,6 +70,7 @@ export class BaseApi {
     if (accessToken) {
       requestHeaders.Authorization = `Bearer ${accessToken}`;
     }
+
     return requestHeaders;
   }
 

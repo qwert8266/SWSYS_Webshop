@@ -1,165 +1,28 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { React, useEffect, useRef, useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from "../context/authContext";
 import { useCart } from "../context/cartContext";
-import productApi from '../api/productApi';
-import categoryApi from '../api/categoryApi';
-import {
-  formatEuro,
-  getOfferPricing,
-  getProductImagePath,
-  normalizeProduct
-} from "../utils/productHelpers";
-import ProductPrice from "./productPrice";
+import { CATEGORY_CONFIGS } from "../utils/categoryConfig";
 import "../custom.scss";
 
 import './navbar.css';
 
 function Navbar() {
   const navigate = useNavigate();
-  const { user, isAuthenticated } = useAuth();
-  const { totalQuantity, items, isCartPreviewOpen, showCartPreview, hideCartPreview } = useCart();
+  const { isAuthenticated, isAuthLoading } = useAuth();
+  const { totalQuantity } = useCart();
 
-  const [searchQuery, setSearchQuery] = useState("");
-  const [suggestions, setSuggestions] = useState([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const [isSuggestionsLoading, setIsSuggestionsLoading] = useState(false);
-  const [categories, setCategories] = useState([]);
-
-  const searchWrapperRef = useRef(null);
-
-
-  useEffect(() => {
-    let ignoreResult = false;
-
-    async function loadCategories() {
-      try {
-        const categoriesFromDatabase = await categoryApi.getCategories();
-        
-        if (!ignoreResult) {
-          setCategories(Array.isArray(categoriesFromDatabase) ? categoriesFromDatabase : []);
-        }
-      } catch (error) {
-        if (!ignoreResult) { 
-          setCategories([]); 
-        }
-      }
-    }
-    loadCategories();
-
-    return () => {
-      ignoreResult = true;
-    };
-  }, []);
-
-  
-  useEffect(() => {
-    const query = searchQuery.trim();
-
-    if (query.length < 2) {
-      setSuggestions([]);
-      setShowSuggestions(false);
-      return;
-    }
-
-    let ignoreResult = false;
-
-    const timeoutId = setTimeout(async () => {
-      setIsSuggestionsLoading(true);
-
-      try {
-        const foundProducts = await productApi.searchProducts(query);
-
-        if (!ignoreResult) {
-          setSuggestions(foundProducts.map(normalizeProduct).slice(0, 5));
-          setShowSuggestions(true);
-        }
-      } catch (error) {
-        if (!ignoreResult) {
-          setSuggestions([]);
-          setShowSuggestions(false);
-        }
-      } finally {
-        if (!ignoreResult) {
-          setIsSuggestionsLoading(false);
-        }
-      }
-    }, 300);
-
-    return () => {
-      ignoreResult = true;
-      clearTimeout(timeoutId);
-    };
-  }, [searchQuery]);
-
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (
-        searchWrapperRef.current &&
-        !searchWrapperRef.current.contains(event.target)
-      ) {
-        setShowSuggestions(false);
-      }
-    }
-
-    document.addEventListener("mousedown", handleClickOutside);
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
-
-
-  function handleSearchSubmit(event) {
-    event.preventDefault();
-
-    const query = searchQuery.trim();
-
-    if (query.length < 2) {
-      return;
-    }
-    
-    setShowSuggestions(false);
-    navigate(`/suche?q=${encodeURIComponent(query)}`);
+  function handleSearchButtonClick(event) {
+   
   }
 
-  function handleSuggestionClick(product) {
-    const productCategories = Array.isArray(product?.categories) ? product.categories : [];
-    const firstProductCategory = productCategories[0]; 
-    const category = categories.find((category) => {
-      return (
-        category.slug === firstProductCategory?.slug ||
-        category.name === firstProductCategory?.name || 
-        ""
-      );
-    });
-    const categorySlug = category?.slug || firstProductCategory?.slug || "";
-
-    setSearchQuery("");
-    setSuggestions([]);
-    setShowSuggestions(false);
-
-    navigate(
-      `/sortiment/${encodeURIComponent(categorySlug)}/${encodeURIComponent(product.id)}`
-    );
-  }
-
-  function handleShowAllResults() {
-    const query = searchQuery.trim();
-
-    if (query.length < 2) {
-      return;
-    }
-
-    setShowSuggestions(false);
-    navigate(`/suche?q=${encodeURIComponent(query)}`);
-  }
+  const categories = CATEGORY_CONFIGS;
 
   return (
     <nav className="navbar navbar-expand-md bg-body-tertiary" fixed="top">
       <div className="container-fluid navbar-container">
         {/* Logo */}
-        <NavLink className="navbar-brand" to="/home">
+        <NavLink className="navbar-brand" to="/">
           <img className="navbar-logo" src="/img/nav_logo.svg" alt="logo" /> 
         </NavLink>
 
@@ -177,81 +40,22 @@ function Navbar() {
         
         <div className="navbar-elements-right">
           {/* Suchleiste */}
-          <div className="navbar-search-shadow" ref={searchWrapperRef}>
+          <div className="navbar-search-shadow">
           <form
             className="navbar-search"
             role="search"
-            onSubmit={handleSearchSubmit}
           >
-            {showSuggestions && searchQuery.trim().length >= 2 && (
-              <div className="search-suggestions">
-                {isSuggestionsLoading && (
-                  <div className="search-suggestion-info">
-                    Suche läuft …
-                  </div>
-                )}
-
-                {!isSuggestionsLoading && suggestions.length === 0 && (
-                  <div className="search-suggestion-info">
-                    Keine Vorschläge gefunden
-                  </div>
-                )}
-
-                {!isSuggestionsLoading &&
-                  suggestions.map((product) => (
-                    <button
-                      key={product.id}
-                      type="button"
-                      className="search-suggestion-item"
-                      onMouseDown={() => handleSuggestionClick(product)}
-                    >
-                      <img
-                        className="search-suggestion-image"
-                        src={getProductImagePath(product)}
-                        alt={product.name}
-                      />
-
-                      <div className="search-suggestion-content">
-                        <span className="search-suggestion-name">
-                          {product.name}
-                        </span>
-
-                        <span className="search-suggestion-meta">
-                          {(product.categories || []).map((category) => category.name).join(", ")}
-                        </span>
-                      </div>
-
-                      <ProductPrice
-                        product={product}
-                        showDiscount={false}
-                        className="search-suggestion-price"
-                      />
-                    </button>
-                  ))}
-
-                {!isSuggestionsLoading && suggestions.length > 0 && (
-                  <button
-                    type="button"
-                    className="search-suggestion-all"
-                    onMouseDown={handleShowAllResults}
-                  >
-                    Alle Ergebnisse für „{searchQuery.trim()}“ anzeigen
-                  </button>
-                )}
-              </div>
-            )}
             <input
               className="navbar-search-input form-control"
               type="search"
               placeholder="Produkt, Artikelnummer, Hersteller, ..."
               aria-label='Suchleiste'
-              value={searchQuery}
-              onChange={(event)=> setSearchQuery(event.target.value)}
             />
 
             <button
               className="btn btn-logoBlue navbar-search-btn"
               type="submit"
+              onClick={handleSearchButtonClick}
               aria-label='Suchen'
             >
               <img
@@ -282,21 +86,21 @@ function Navbar() {
                 </NavLink>
 
                 <div className="nav-dropdown-menu">
-                  {(categories ?? []).map((category) => (
+                  {categories.map((Category) => (
                     <NavLink
-                      key={category.slug}
+                      key={Category.slug}
                       className="nav-dropdown-link"
-                      to={`/sortiment/${category.slug}`}
+                      to={`/sortiment/${Category.slug}`}
                     >
-                      <a>{category.name}</a>
+                      <a>{Category.name}</a>
                     </NavLink>
                   ))}
                 </div>
               </li>
               
               <li className='nav-item'>
-                <NavLink className="nav-link" to="/about">
-                  <a>About</a>
+                <NavLink className="nav-link" to="/placeholder">
+                  <a>placeholder</a>
                 </NavLink>
               </li>
               
@@ -327,88 +131,21 @@ function Navbar() {
               />
             </NavLink>
 
-            {/*location.pathname.startsWith("/employee/") ?():()*/}
             {/* Shopping cart */}
-            <div className="cart-preview-wrapper" onMouseEnter={showCartPreview} onMouseLeave={hideCartPreview}>
-              <NavLink
-                type="button"
-                className="btn btn-light border navbar-icon-button cart-icon-button"
-                title="Warenkorb"
-                aria-label='Warenkorb anzeigen'
-                to="/cart"
-              >
-                <img
-                  className="navbar-icon"
-                  src="/img/cart-icon.png" 
-                  alt="warenkorb icon"
-                />
-                {totalQuantity > 0 && <span className="cart-badge">{totalQuantity}</span>}
-              </NavLink>
-
-              {isCartPreviewOpen && (
-                <div className="cart-preview">
-                  {totalQuantity === 0 ? (
-                    <>
-                      <h4>Dein Warenkorb ist leer</h4>
-                      <p>Lege Produkte in deinen Warenkorb und schließe deinen Einkauf entspannt ab.</p>
-
-                      <NavLink className="cart-preview-button" to="/sortiment">
-                        Zum Sortiment
-                      </NavLink>
-                    </>
-                  ) : (
-                    <>
-                      <h4>Dein Warenkorb</h4>
-                      <div className="cart-preview-items">
-                        {items.slice(0, 3).map((item)=>(
-                          <div className="cart-preview-item" key={item.productId || item.id}>
-                            <img src={getProductImagePath(item)} alt={item.name}/>
-
-                            <div>
-                              <strong>{item.name}</strong>
-                              <span>{item.quantity}x {formatEuro(getOfferPricing(item).currentPrice)}</span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-
-                      {items.length > 3 && (
-                        <p className="cart-preview-more">
-                          + {items.length - 3} weitere Produkte
-                        </p>
-                      )}
-
-                      <NavLink className="cart-preview-button" to="/cart" onClick={hideCartPreview}>
-                        Zum Warenkorb
-                      </NavLink>
-                    </>
-                  )}
-                </div>
-              )}
-            </div>
-
-            { isAuthenticated && (user?.role === "worker" || user?.role === "admin" || user?.role === "owner") &&
-            <div className="dropdown-wrapper">
-              <div
-                className="btn btn-light border navbar-icon-button cart-icon-button"
-                title="Mitarbeiter-Funktionen"
-              >
-                <img
-                  className="navbar-icon "
-                  src="/img/hamburger_icon.png" 
-                  alt="warenkorb icon"
-                />
-              </div>
-
-              <div className="dropdown-menu-custom">
-                <NavLink to="/logistik">Logistik</NavLink>
-                <NavLink to="/product_management">Produktverwaltung</NavLink>
-                <NavLink to="/order_management">Bestellungen</NavLink>
-                <NavLink to="/marketing">Marketing</NavLink>
-                <NavLink to="/statistics">Analyse-Dashboard</NavLink>
-              </div>
-            </div>
-            }
+            <NavLink
+              type="button"
+              className="btn btn-light border navbar-icon-button cart-icon-button"
+              title="Warenkorb"
+              aria-label='Warenkorb anzeigen'
+              to="/cart"
+            >
+              <img
+                className="navbar-icon"
+                src="/img/cart-icon.png" 
+                alt="warenkorb icon"
+              />
+              {totalQuantity > 0 && <span className="cart-badge">{totalQuantity}</span>}
+            </NavLink>
           </div>
 
         </div>

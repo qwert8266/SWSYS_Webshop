@@ -15,7 +15,7 @@ import (
 // DB contains the shared MongoDB client after main() has initialized it.
 var DB *mongo.Client
 
-// LoadEnv loading environment variables from the .env file.
+// LoadEnv loading environment variables from .env file.
 func LoadEnv() {
 	err := godotenv.Load()
 	if err != nil {
@@ -76,29 +76,15 @@ func collection(name string) *mongo.Collection {
 	return DB.Database(Name()).Collection(name)
 }
 
-// ProductCollection returns the product collection of the webshop database
+// ProductCollection returns the products collection of the webshop database
 func ProductCollection() *mongo.Collection { return collection("products") }
 
-// UserCollection returns the user collection of the webshop database
+// UserCollection returns the users collection of the webshop database
 func UserCollection() *mongo.Collection {
 	return collection("users")
 }
 
-// OrderCollection returns the order collection of the webshop database
+// OrderCollection returns the orders collection of the webshop database
 func OrderCollection() *mongo.Collection {
 	return collection("orders")
 }
-
-func SalesCollection() *mongo.Collection { return collection("sales") }
-
-// CategoryCollection returns the category collection of the webshop database
-func CategoryCollection() *mongo.Collection {
-	return collection("categories")
-}
-
-// ContactRequestCollection return the contact-requests collection of the webshop database
-func ContactRequestCollection() *mongo.Collection {
-	return collection("contact_requests")
-}
-
-func CartCollection() *mongo.Collection { return collection("carts") }

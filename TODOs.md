@@ -1,68 +1,47 @@
-### Testing
 
+### Frontend 
+- [ ] Styling für Mobile UI
 
-- [x] baseurl
-- [x] ├── /health [GET]                                   public
-- [ ] │
-- [ ] ├── /user
-- [x] │   ├── /register [POST]                            public
-- [x] │   ├── /login [POST]                               public
-- [x] │   ├── /password-reset
-- [x] │   │   ├── /request [POST]                         public
-- [ ] │   │   └── /confirm [POST]                         public
-- [x] │   ├── /logout [POST]                              user
-- [x] │   ├── /me [GET]                                   user
-- [x] │   │   ├── /lists [GET]                            user
-- [x] │   │   ├── /favorites [GET]                        user
-- [x] │   │   │   └── /:productId [POST]                  user
-- [x] │   │   ├── /wishlist [GET]                         user
-- [x] │   │   │   └── /:productId [POST]                  user
-- [ ] │   │   └── /password [PATCH]                       user
-- [ ] │   ├── / [GET]                                     worker,admin,owner
-- [ ] │   └── /:id
-- [ ] │       ├── [GET]                                   admin,owner
-- [ ] │       ├── [PATCH]                                 admin,owner
-- [ ] │       ├── [DELETE]                                admin,owner
-- [ ] │       └── /role [PUT]                             admin,owner
-- [ ] │
-- [ ] ├── /products
-- [x] │   ├── / [GET]                                     public
-- [x] │   ├── /search [GET]                               public
-- [x] │   ├── /category [GET]                         public
-- [x] │   │   └── /:category [GET]                        public
-- [x] │   ├── /:id [GET]                                  public
-- [ ] │   ├── /:id [PUT]                                  admin,owner
-- [ ] │   ├── /:id [PATCH]                                admin,owner
-- [ ] │   ├── /:id [DELETE]                               admin,owner
-- [ ] │   │   └── /stock [GET]                            worker,admin,owner
-- [ ] │   ├── /product_management [POST]                  admin,owner
-- [ ] │   └── /stock [GET]                                worker,admin,owner
-- [ ] │       └── /low [GET]                              worker,admin,owner
-- [ ] │
-- [ ] ├── /order
-- [ ] │   ├── / [POST]                                    user
-- [ ] │   ├── /me [GET]                                   user
-- [ ] │   ├── /:id [PUT]                                  worker,admin,owner
-- [ ] │   │   └── /return-request [POST]                  user
-- [ ] │   ├── / [GET]                                     worker,admin,owner
-- [ ] │   └── /statistics [GET]                           worker,admin,owner
-- [ ] │
-- [ ] ├── /sales
-- [x] │   ├── / [GET]                                     public
-- [ ] │   ├── / [POST]                                    worker,admin,owner
-- [ ] │   └── /:id [DELETE]                               worker,admin,owner
-- [ ] │
-- [ ] ├── /category
-- [x] │   ├── / [GET]                                     public
-- [ ] │   ├── / [POST]                                    worker,admin,owner
-- [ ] │   ├── /:slug [PUT]                                worker,admin,owner
-- [ ] │   └── /:slug [DELETE]                             worker,admin,owner
-- [ ] │
-- [ ] ├── /cart
-- [ ] │   ├── / [PUT]                                     user
-- [ ] │   ├── / [DELETE]                                  user
-- [ ] │   └── /me [GET]                                   user
-- [ ] │
-- [ ] └── /contact
-	- [ ] ├── [POST]                                      user
-	- [ ] └── [GET]                                       worker,admin,owner
+- [ ] Cross-Selling beim Checkout (Wesley)
+	- [ ] Vorschläge basierend auf Historie und Produkten im Warenkorb
+	- [ ] Frontend schlägt basierend auf Kategorie irgendwas vor
+	- [ ] Unter dem Warenkorb
+
+- [ ] Produktbilder beim Erstellen festlegen (Lucas)
+- [ ] Frontend zeigt mehrere Produktbilder an (Mathis)
+
+- [ ] Lagerbestand noch besser visualisieren (Nico)
+	- [ ] Eigenen Endpunkt für Lagerbestand benutzen
+	- [ ] Warnung bei niedrigem Lagerbestand
+
+### Backend + Frontend
+- [ ] Kategorien flexibel strukturieren
+	- [ ] In Datenbank speichern (Linus)
+	- [ ] hinzufügen (Linus)
+	- [ ] entfernen (Linus)
+	- [ ] Kategorien bekommen (Linus)
+	- [ ] Check beim erstellen von Produkten (Linus)
+	- [ ] In Navigation sollen Kategorien angezeigt werden (Wesley)
+
+- [ ] Rabattaktionen & Promotions 
+	- [ ] Angebot existiert als "Objekt" (Linus)
+	- [ ] Angebot hat: (Linus)
+		- [ ] ein Banner 
+		- [ ] % Reduzierung
+		- [ ] Produkte, für die es gilt
+	- [ ] Produkte im Angebot werden als Im Angebot markiert (Nico)
+	- [ ] Frontend zeigt Reduktion und den alten und neuen Preis an (Nico)
+
+- [ ] Verkaufs-Dashboard mit den KPIs, die zählen (Lucas)
+	- [ ] Meistverkaufte Produkte
+	- [ ] Beliebte Kategorien
+
+- [ ] Beispielprodukte erstellen (Mathis)
+	- [ ] - für jede Kategorie 5-10
+	- [ ] jeweils mit Bild(ern)
+	
+- [ ] Produktvarianten (Linus)
+	- [ ] z.B. Gebindegröße
+	- [ ] Pfand 
+
+- [ ] User Testing für kleine Anpassungen (alle)
