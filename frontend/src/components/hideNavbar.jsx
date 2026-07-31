@@ -1,4 +1,4 @@
-import React, { Children, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 const HideNavbar = ({ children }) => {
@@ -7,7 +7,14 @@ const HideNavbar = ({ children }) => {
   const [showNavbar, setShowNavbar] = useState(false)
 
   useEffect(() => {
-    if (location.pathname === '/login' || location.pathname === '/register') {
+    const pagesWithoutNavbar = [
+      '/login',
+      '/register',
+      '/forgot-password',
+      '/reset-password'
+    ]
+
+    if (pagesWithoutNavbar.includes(location.pathname)) {
         setShowNavbar(false)
     } else {
       setShowNavbar(true)

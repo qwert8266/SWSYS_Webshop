@@ -1,0 +1,38 @@
+$kind: http-request
+name: Update Cart Items
+url: "{{baseUrl}}/cart/"
+method: PUT
+auth:
+  type: bearer
+  credentials:
+    token: "{{UserAccessToken}}"
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "owner_id": "{{userId}}",
+      "items": [
+        {
+          "product_id": "{{productId}}",
+          "quantity": 1,
+          "volume": 500,
+          "pack_size": 1
+        }
+      ]
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Status code is 2xx", function () {
+          pm.expect(pm.response.code).to.be.within(200, 299);
+      });
+      pm.test("Response time is less than 2000ms", function () {
+          pm.expect(pm.response.responseTime).to.be.below(2000);
+      });
+      pm.test("Response body is valid JSON object", function () {
+          pm.expect(pm.response.json()).to.be.an("object");
+      });
+    language: text/javascript
+order: 9939

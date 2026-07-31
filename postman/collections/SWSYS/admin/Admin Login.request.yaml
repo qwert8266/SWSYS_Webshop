@@ -1,0 +1,26 @@
+$kind: http-request
+name: Admin Login
+description: 'Generated from cURL: curl -X POST "{{baseUrl}}/user/login" -H "Content-Type: application/json" -d "{\"email\": \"\", \"password\": \"\"}"'
+url: "{{baseUrl}}/user/login"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "email": "owner@webshop.de",
+      "password": "3_g&pER4nd-5cPD0nM2wPO8VzcddaZtb4fK6HCZV5xQJP3i"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      const json = pm.response.json();
+      if (json.accessToken) {
+          pm.collectionVariables.set("AdminAccessToken", json.accessToken);
+          console.log("Access token saved:", json.accessToken);
+      } else {
+          console.warn("No accessToken found in response");
+      }
+    language: text/javascript
+order: 1258

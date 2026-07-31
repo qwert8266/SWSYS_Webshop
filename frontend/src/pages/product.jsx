@@ -1,56 +1,47 @@
-import { NavLink, useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import './product.css';
 import { useCart } from '../context/cartContext';
 import { useEffect, useState } from 'react';
 
 import productApi from '../api/productApi';
-import { getCategoryConfig } from '../utils/categoryConfig';
-import { formatEuro, normalizeProduct } from '../utils/productHelpers';
-
-/*export const produkte = [
-  { name: "Becks", id: "001", price: "14.99", rating: 3.8, image: "becks.png", category: "bier", quantity: 0},
-  { name: "Corona", id: "002", price: "19.99", rating: 3.4, image: "corona.png", category: "bier"  },
-  { name: "Desperados", id: "003", price: "34.99", rating: 4.5, image: "desperados.png", category: "bier" },
-  { name: "Merlot", id: "004", price: "9.99", rating: 2.8, image: "merlot.png", category: "wein" },
-  { name: "Riesling", id: "005", price: "12.99", rating: 3.6, image: "riesling.png", category: "wein" },
-  { name: "Jägermeister", id: "006", price: "14.99", rating: 1.1, image: "jägermeister.png", category: "schnaps" },
-  { name: "Havana", id: "007", price: "12.99", rating: 3.8, image: "havana.png", category: "schnaps" },
-  { name: "Veterano", id: "008", price: "5.99", rating: 4.9, image: "veterano.png", category: "schnaps" },
-
-];*/
+import StockIndicator from '../components/stockIndicator';
+import FavoriteButton from '../components/favoriteButton';
+import '../components/favoriteButton.css';
+import OfferBadge from '../components/offerBadge';
+import FourOFour from './404';
+import ProductPrice from '../components/productPrice';
+import { formatEuro, getProductImagePath, getVariantLabel, normalizeProduct } from '../utils/productHelpers';
 
 const rezensionen = [
-    {username: "Mathis Gronewold", profilePicture: "profile_picture.png", rating: 5, evaluation: "Da geht mir einer ab!"},
-    {username: "Lucas Mauermann", profilePicture: "profile_picture.png", rating: 1, evaluation: "Könnte kotzen."},
-    {username: "Wesley Pabst", profilePicture: "profile_picture.png", rating: 3, evaluation: "Naja, weiss ja nicht..."},
-    {username: "Mathis Gronewold", profilePicture: "profile_picture.png", rating: 5, evaluation: "Da geht mir einer ab!"},
-    {username: "Lucas Mauermann", profilePicture: "profile_picture.png", rating: 1, evaluation: "Könnte kotzen."},
-    {username: "Wesley Pabst", profilePicture: "profile_picture.png", rating: 3, evaluation: "Naja, weiss ja nicht..."},
-    {username: "Mathis Gronewold", profilePicture: "profile_picture.png", rating: 5, evaluation: "Da geht mir einer ab!"},
-    {username: "Lucas Mauermann", profilePicture: "profile_picture.png", rating: 1, evaluation: "Könnte kotzen."},
-    {username: "Wesley Pabst", profilePicture: "profile_picture.png", rating: 3, evaluation: "Naja, weiss ja nicht..."},
-    {username: "Mathis Gronewold", profilePicture: "profile_picture.png", rating: 5, evaluation: "Da geht mir einer ab!"},
-    {username: "Lucas Mauermann", profilePicture: "profile_picture.png", rating: 1, evaluation: "Könnte kotzen."},
-    {username: "Wesley Pabst", profilePicture: "profile_picture.png", rating: 3, evaluation: "Naja, weiss ja nicht..."},
+    {id: "review-1", username: "Mathis Gronewold", profilePicture: "profile_picture.png", rating: 5, evaluation: "Da geht mir einer ab!"},
+    {id: "review-2", username: "Lucas Mauermann", profilePicture: "profile_picture.png", rating: 1, evaluation: "Könnte kotzen."},
+    {id: "review-3", username: "Wesley Pabst", profilePicture: "profile_picture.png", rating: 3, evaluation: "Naja, weiss ja nicht..."},
+    {id: "review-4", username: "Mathis Gronewold", profilePicture: "profile_picture.png", rating: 5, evaluation: "Da geht mir einer ab!"},
+    {id: "review-5", username: "Lucas Mauermann", profilePicture: "profile_picture.png", rating: 1, evaluation: "Könnte kotzen."},
+    {id: "review-6", username: "Wesley Pabst", profilePicture: "profile_picture.png", rating: 3, evaluation: "Naja, weiss ja nicht..."},
+    {id: "review-7", username: "Mathis Gronewold", profilePicture: "profile_picture.png", rating: 5, evaluation: "Da geht mir einer ab!"},
+    {id: "review-8", username: "Lucas Mauermann", profilePicture: "profile_picture.png", rating: 1, evaluation: "Könnte kotzen."},
+    {id: "review-9", username: "Wesley Pabst", profilePicture: "profile_picture.png", rating: 3, evaluation: "Naja, weiss ja nicht..."},
+    {id: "review-10", username: "Mathis Gronewold", profilePicture: "profile_picture.png", rating: 5, evaluation: "Da geht mir einer ab!"},
+    {id: "review-11", username: "Lucas Mauermann", profilePicture: "profile_picture.png", rating: 1, evaluation: "Könnte kotzen."},
+    {id: "review-12", username: "Wesley Pabst", profilePicture: "profile_picture.png", rating: 3, evaluation: "Naja, weiss ja nicht..."},
 ]
 
 function Product(){
     const { category, productName, categorySlug, productId } = useParams();
-    const selectedCategory = getCategoryConfig(categorySlug || category);
+    const requestedCategorySlug = categorySlug || category;
     const requestedProductId = productId || productName;
 
     const { addItem } = useCart();
     const [quantity, setQuantity] = useState(1);
+    const [selectedVariantKey, setSelectedVariantKey] = useState(null);
     const [product, setProduct] = useState(null);
+    const [stockInfo, setStockInfo] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
     const [loadError, setLoadError] = useState("");
-    const [cartMessage, setCartMessage] = useState("");
+    const [productNotFound, setProductNotFound] = useState(false);
+    const [slideIndex, setSlideIndex] = useState(0);
 
-    /*const product = produkte.find(
-        p =>
-            p.category === category &&
-        p.name.toLowerCase() === productName
-    );*/
 
     useEffect(() => {
         let ignoreResult = false;
@@ -58,18 +49,32 @@ function Product(){
         async function loadProduct() {
             setIsLoading(true);
             setLoadError("");
-            setCartMessage("");
+            setProductNotFound(false);
 
             try {
-                const loadedProduct = await productApi.getProductById(requestedProductId);
-                
+                // Produktdaten und Bestand kommen aus getrennten Endpunkten:
+                // der Stock-Endpunkt liefert den zentral berechneten Status
+                // (ok / low / critical / out_of_stock) gleich mit
+                const [loadedProduct, loadedStock] = await Promise.all([
+                    productApi.getProductById(requestedProductId),
+                    productApi.getProductStock(requestedProductId),
+                ]);
+
                 if (!ignoreResult) {
-                    setProduct(normalizeProduct(loadedProduct));
+                    const normalizedProduct = normalizeProduct(loadedProduct);
+                    setProduct(normalizedProduct);
+                    setStockInfo(loadedStock);
+                    setSelectedVariantKey(normalizedProduct.variants[0]?.key ?? null);
                 }
             } catch (error) {
                 if (!ignoreResult) {
+                    if(error.status === 404){
+                        setProductNotFound(true);
+                    }
+                    
                     setLoadError("Produkt konnte nicht geladen werden.");
                     setProduct(null);
+                    setStockInfo(null);
                 }
             } finally {
                 if (!ignoreResult) {
@@ -87,12 +92,42 @@ function Product(){
         };
     }, [requestedProductId]);
     
+    const productCategories = Array.isArray(product?.categories) ? product.categories : [];
+    const selectedCategory = productCategories.find((productCategory) => {
+        return productCategory?.slug === requestedCategorySlug;
+    }) || productCategories[0] || null;
+    
+
+    const selectedVariant = product?.variants?.find(
+        (variant) => variant.key === selectedVariantKey
+    ) ?? null;
+
+    const selectedVariantStock = stockInfo?.variants?.find((entry) => Number(entry.volume) === selectedVariant?.volume && Number(entry.packSize) === selectedVariant?.packSize);
+
+    const availableStock = selectedVariantStock?.stock ?? selectedVariant?.stock ?? 0;
+    const isOutOfStock = availableStock === 0;
 
     function handleAddToCart(){
-        if (!product) { return; }
-        
-        addItem(product, quantity);
-        setCartMessage(`${product.name} wurde in den Warenkorb gelegt.`);
+        if (!product || isOutOfStock) { return; }
+
+        const result = addItem(product, quantity, availableStock, selectedVariant);
+
+        const variantLabel = selectedVariant ? ` (${getVariantLabel(selectedVariant)})` : "";
+
+        if (result.added === 0) {
+            setLoadError(`Keine weitere Menge verfügbar – es sind bereits ${availableStock ?? 0} Stück in deinem Warenkorb.`);
+        }
+    }
+
+    
+    function changeSlide(direction) {
+    setSlideIndex((currentIndex) =>
+        (currentIndex + direction + product.images.length) % product.images.length
+        );
+    }
+
+    if (productNotFound || !selectedCategory) {
+        return <FourOFour />;
     }
 
     if (isLoading) {
@@ -100,38 +135,124 @@ function Product(){
     }
     if (!product?.name) {
         return (
-            <div className="product-page">
-                {loadError && <p className="text-danger">{loadError}</p>}
-                <p>Das Produkt wurde nicht gefunden</p>
-            </div>
+            <FourOFour/>
         );
     }
-
 
     return(
         <div className='product-page'>
             {loadError && <p className='text-danger'>{loadError}</p>}
-            {cartMessage && <p className='text-success'>{cartMessage}</p>}
             
             <div className='product-page-top'>
-                <div >
-                    <img className='product-picture' src={`/img/product_images/${product.image}` }alt={product.name} />
-                </div>
+                <div className='d-flex flex-column'>
+                    <div className="slideshow-container">
+                        
 
+                        {!product.images || product.images?.length === 0 ? (
+                            <img src={getProductImagePath(product)} alt={product.name} style={{ width: "600px", height: "600px" }}/>
+                        ) : (
+                        product.images?.map((image, index) => (
+                            <div
+                                key={image}
+                                className={`mySlides slide-fade ${
+                                    index === slideIndex ? "active-slide" : ""
+                                }`}
+                            >
+                                <img
+                                    src={getProductImagePath({ images: [image] })}
+                                    alt={product.name}
+                                    style={{ width: "600px", height: "600px" }}
+                                />
+                            </div>
+                        )))}
+                    </div>
+
+                    <div style={{ textAlign: "center"}}>
+                        {(product.images && product.images?.length > 0) &&
+                        <span className="arrow left" onClick={() => changeSlide(-1)}> ❮ </span>}
+                        {product.images?.map((image, index) => (
+                            <span
+                                key={image}
+                                className={`dotProductPage ${
+                                    index === slideIndex ? "active-dot" : ""
+                                }`}
+                                onClick={() => setSlideIndex(index)}
+                            />
+                        ))}
+                        {(product.images && product.images?.length > 0) &&
+                        <span className="arrow right" onClick={() => changeSlide(1)}> ❯ </span>}
+                    </div>
+                </div>
                 <div className='product-information'> 
                     <div className='blue-header'>
-                        <strong>{product.name}</strong><p> -- {selectedCategory.name} (Kategorie)</p>
+                        <strong>{product.name}</strong>
+                        <p className='fs-6'>
+                            Kategorie: {" "}
+                            {(selectedCategory?.slug) ? (
+                                <Link to={`/sortiment/${selectedCategory.slug}`}>{selectedCategory.name}</Link>
+                            ) : (
+                                selectedCategory.name
+                            )} 
+                        </p>     
                     </div>
                     <div className='other-information'>
+                        <OfferBadge product={product} />
                         <p>{product.description || "Keine Beschreibung zu diesem Produkt vorhanden."}</p>
                         <p>{"★".repeat(Math.round(product.rating))}{"☆".repeat(5 - Math.round(product.rating))}{`(${product.rating})`}</p>
-                        <p>{formatEuro(product.price)}</p>
-                        {product.stock !== null && product.stock <= 15 && <p className='text-danger'>Nur noch {product.stock} verfügbar</p>}
+                    
+                        {/* Variantenauswahl */}
+                        {product.variants.length > 0 && (
+                            <div className='variant-selection'>
+                                <p className='variant-selection-title'>Gebindegröße wählen:</p>
+                                <div className='variant-options'>
+                                    {product.variants.map((variant) => (
+                                        <button
+                                            key={variant.key}
+                                            type='button'
+                                            className={
+                                                "variant-option" +
+                                                (variant.key === selectedVariantKey ? " variant-option-selected" : "") +
+                                                (variant.stock === 0 ? " variant-option-sold-out" : "")
+                                            }
+                                            onClick={() => setSelectedVariantKey(variant.key)}
+                                        >
+                                            <span className='variant-option-label'>{getVariantLabel(variant)}</span>
+                                            <ProductPrice product={variant} showDiscount={false} className='variant-optional-price' />
+                                            
+                                            {variant.depositPerPack > 0 && (
+                                                <span className='variant-option-deposit'>
+                                                    zzgl. {formatEuro(variant.depositPerPack)} Pfand
+                                                </span>
+                                            )}
+                                            {variant.stock === 0 && (
+                                                <span className='variant-option-stock text-danger'>Ausverkauft</span>
+                                            )}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="mb-2">
+                            <ProductPrice
+                                product={selectedVariant || product}
+                            />
+                        </div>
+                        {selectedVariant && (
+                            <p className='text-muted mb-3'>
+                                zzgl. {formatEuro(selectedVariant.depositPerPack)} Pfand
+                            </p>
+                        )}
+                        <StockIndicator 
+                            stockInfo={selectedVariantStock || {stock: availableStock, status: availableStock === 0 ? "out_of_stock": availableStock <= 5 ? "critical" : availableStock <= 15 ? "low" : "ok"}} showInStock
+                        />
+
                     </div>
                     <div className='cart-input'>
                         <input 
                             type="number" 
                             min="1" 
+                            max={availableStock}
                             value={quantity} 
                             onChange={(e)=> {
                                 setQuantity(parseInt(e.target.value))
@@ -141,10 +262,25 @@ function Product(){
                             className='cart-button' 
                             type="button"
                             onClick={handleAddToCart}
-                            disabled={product.stock === 0}
+                            disabled={isOutOfStock}
+                            title={isOutOfStock ? "Dieses Produkt ist ausverkauft" : "In den Warenkorb"}
                         >
                             <img className="cart-at-product" src={`/img/cart-icon_white.png`} alt="In den Warenkorb" />
                         </button>
+                    </div>
+                    <div className="product-page-actions">
+                        <FavoriteButton
+                            productId={product.id}
+                            listType="favorite"
+                            className="with-label"
+                            showLabel
+                        />
+                        <FavoriteButton
+                            productId={product.id}
+                            listType="wishlist"
+                            className="with-label"
+                            showLabel
+                        />
                     </div>
                 </div>
             </div>
@@ -156,7 +292,7 @@ function Product(){
 
                 <div className='review-section'>
                     {rezensionen.map((rezension) => (
-                        <div className='review-card'>
+                        <div className='review-card' key={rezension.id}>
                             <div className='picture_and_name'>
                                 <img className='profile-picture' src={`/img/${rezension.profilePicture}`} alt={rezension.username}></img>
                                 <p>{rezension.username}</p>

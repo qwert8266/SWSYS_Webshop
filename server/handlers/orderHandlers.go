@@ -48,7 +48,6 @@ func CreateOrder(c *gin.Context) {
 
 		// checks if the productID is valid
 		if err != nil {
-			//rollbackReservedStock(c, reservedItems)
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Ungültige ProduktID im Warenkorb."})
 			return
 		}
@@ -60,16 +59,35 @@ func CreateOrder(c *gin.Context) {
 			return
 		}
 
+		// volume and pack size identify the exact variant
+		if requestedItem.Volume == 0 || requestedItem.PackSize == 0 {
+			rollbackReservedStock(c, reservedItems)
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error":     "Die gewählte Produktvariante ist unvollständig.",
+				"productId": requestedItem.ProductID,
+				"volume":    requestedItem.Volume,
+				"packSize":  requestedItem.PackSize,
+			})
+			return
+		}
+
 		var product models.Product
 		// selects product where stock value is >= quantity of the requested item
 		filter := bson.M{
 			"product_id": productID,
-			"stock": bson.M{
-				"$gte": requestedItem.Quantity,
+			"product_variants": bson.M{
+				"$elemMatch": bson.M{
+					"volume":    requestedItem.Volume,
+					"pack_size": requestedItem.PackSize,
+					"stock": bson.M{
+						"$gte": requestedItem.Quantity,
+					},
+				},
 			},
 		}
+		// writing update to reduce the stock by the ordered number of products
 		update := bson.M{
-			"$inc": bson.M{"stock": -int32(requestedItem.Quantity)},
+			"$inc": bson.M{"product_variants.$.stock": -int32(requestedItem.Quantity)},
 			"$set": bson.M{"updated_at": now},
 		}
 
@@ -88,7 +106,9 @@ func CreateOrder(c *gin.Context) {
 			// checks if no suitable product with enough stock was found
 			if errors.Is(err, mongo.ErrNoDocuments) {
 				var existingProduct models.Product
-				findErr := database.ProductCollection().FindOne(c.Request.Context(), bson.M{"product_id": productID}).Decode(&existingProduct)
+				findErr := database.ProductCollection().FindOne(
+					c.Request.Context(),
+					bson.M{"product_id": productID}).Decode(&existingProduct)
 
 				// checks if the product does not exist at all
 				if errors.Is(findErr, mongo.ErrNoDocuments) {
@@ -101,10 +121,33 @@ func CreateOrder(c *gin.Context) {
 					c.JSON(http.StatusInternalServerError, gin.H{"error": findErr.Error()})
 					return
 				}
+
+				var matchingVariant *models.ProductVariant
+				for i := range existingProduct.ProductVariants {
+					candidate := &existingProduct.ProductVariants[i]
+					if candidate.Volume == requestedItem.Volume && candidate.PackSize == requestedItem.PackSize {
+						matchingVariant = candidate
+						break
+					}
+				}
+
+				if matchingVariant == nil {
+					c.JSON(http.StatusBadRequest, gin.H{
+						"error":     fmt.Sprintf("Die gewählte Produktvariante von %s wurde nicht gefunden.", existingProduct.Name),
+						"productId": productID,
+						"volume":    requestedItem.Volume,
+						"packSize":  requestedItem.PackSize,
+					})
+					return
+				}
+
 				c.JSON(http.StatusBadRequest, gin.H{
-					"error":     fmt.Sprintf("Nicht genug Bestand für %s.", existingProduct.Name),
+					"error":     fmt.Sprintf("Nicht genug Bestand für die gewählte Produktvariante von %s.", existingProduct.Name),
 					"productId": productID,
-					"available": existingProduct.Stock,
+					"requested": requestedItem.Quantity,
+					"available": matchingVariant.Stock,
+					"volume":    matchingVariant.Volume,
+					"packSize":  matchingVariant.PackSize,
 				})
 				return
 			}
@@ -113,16 +156,48 @@ func CreateOrder(c *gin.Context) {
 			return
 		}
 
-		reservedItems = append(reservedItems, reservedStock{ProductID: productID, Quantity: requestedItem.Quantity})
+		var variant *models.ProductVariant
+		for i := range product.ProductVariants {
+			v := &product.ProductVariants[i]
+			if v.Volume == requestedItem.Volume && v.PackSize == requestedItem.PackSize {
+				variant = v
+				break
+			}
+		}
 
-		lineTotal := uint32(product.Price) * uint32(requestedItem.Quantity)
+		reservedItems = append(reservedItems, reservedStock{
+			ProductID: productID,
+			PackSize:  requestedItem.PackSize,
+			Volume:    requestedItem.Volume,
+			Quantity:  requestedItem.Quantity,
+		})
+
+		// Ein Sale reduziert ausschließlich den Warenpreis. Nicht den Pfand
+		productPrice := variant.Price
+		if variant.Discount != nil && *variant.Discount > 0 {
+			discount := uint32(*variant.Discount)
+			if discount > 100 {
+				discount = 100
+			}
+			productPrice = (variant.Price * (100 - discount)) / 100
+		}
+
+		// Berechnet Preis & Pfand eines Produktes und Gesamtpreis einer Variante und alle Produkte
+		deposit := variant.PackSize*variant.Deposit + variant.CrateDeposit
+		unitPrice := productPrice + uint32(deposit)
+		lineTotal := unitPrice * requestedItem.Quantity
 		totalPrice += lineTotal
+
 		orderItems = append(orderItems, models.OrderItem{
 			ProductID:      product.ProductID,
 			Name:           product.Name,
 			Quantity:       requestedItem.Quantity,
-			UnitPrice:      product.Price,
+			UnitPrice:      unitPrice,
 			LineTotalPrice: lineTotal,
+			Volume:         requestedItem.Volume,
+			PackSize:       requestedItem.PackSize,
+			VariantLabel:   variant.VariantLabel,
+			DepositPerUnit: uint32(deposit),
 		})
 	}
 
@@ -181,19 +256,211 @@ func GetMyOrders(c *gin.Context) {
 	c.JSON(http.StatusOK, orders)
 }
 
+func GetStatistics(c *gin.Context) {
+
+	orderCollection := database.OrderCollection()
+	orderCount, err := orderCollection.CountDocuments(c.Request.Context(), bson.D{})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	cursor, err := orderCollection.Find(c.Request.Context(), bson.D{})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	defer cursor.Close(c.Request.Context())
+
+	var totalRevenue uint32
+	var productsSold uint32
+	var canceledOrders uint32
+
+	for cursor.Next(c.Request.Context()) {
+		var order models.Order
+
+		if err := cursor.Decode(&order); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		totalRevenue += order.TotalPrice
+
+		if order.Status == "Storniert" {
+			canceledOrders++
+		}
+
+		for _, item := range order.Items {
+			productsSold += item.Quantity
+		}
+	}
+
+	if err := cursor.Err(); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	var averageOrderValue uint32
+
+	if orderCount > 0 {
+		averageOrderValue = totalRevenue / uint32(orderCount)
+	}
+
+	userCollection := database.UserCollection()
+	userCount, err := userCollection.CountDocuments(c.Request.Context(), bson.D{})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	productCollection := database.ProductCollection()
+	cursor2, err2 := productCollection.Find(c.Request.Context(), bson.D{})
+	if err2 != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err2.Error()})
+		return
+	}
+	defer cursor2.Close(c.Request.Context())
+
+	var totalStock uint32
+	var lowStockCount uint32
+	for cursor2.Next(c.Request.Context()) {
+		var product models.Product
+
+		if err := cursor2.Decode(&product); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		stock := product.TotalStock()
+		totalStock += stock
+
+		if stock <= models.LowStockThreshold {
+			lowStockCount++
+		}
+	}
+
+	if err := cursor2.Err(); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	averageUserRevenue := totalRevenue / uint32(userCount)
+
+	statistics := models.Statistics{
+		TotalOrders:        orderCount,
+		TotalRevenue:       totalRevenue,
+		AverageOrderValue:  averageOrderValue,
+		RegisteredUsers:    userCount,
+		ProductsSold:       productsSold,
+		ProductsInStock:    totalStock,
+		LowStockProducts:   lowStockCount,
+		CanceledOrders:     canceledOrders,
+		AverageUserRevenue: averageUserRevenue,
+	}
+
+	c.JSON(http.StatusOK, statistics)
+}
+
+// GetOrders returns all Orders from MongoDB
+func GetOrders(c *gin.Context) {
+	orderCollection := database.OrderCollection()
+
+	cursor, err := orderCollection.Find(c.Request.Context(), bson.M{})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	var orders []models.Order
+
+	if err = cursor.All(c.Request.Context(), &orders); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Make sure that no orders return an empty array
+	if orders == nil {
+		orders = []models.Order{}
+	}
+
+	c.JSON(http.StatusOK, orders)
+
+}
+
+// UpdateOrderStatus UpdateProduct allows modification of existing products values
+func UpdateOrderStatus(c *gin.Context) {
+	orderID, err := uuid.Parse(c.Param("id"))
+	fmt.Println("OrderID aus URL:", orderID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error parsing order id": err.Error()})
+		return
+	}
+	var updatedOrderData models.Order
+
+	//parsing all incoming data
+	if err := c.BindJSON(&updatedOrderData); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error parsing order data": err.Error()})
+		return
+	}
+
+	//trimming strings:
+	status := strings.TrimSpace(updatedOrderData.Status)
+
+	orderCollection := database.OrderCollection()
+
+	result, err := orderCollection.UpdateOne(
+		c.Request.Context(),
+		bson.M{"order_id": orderID},
+		bson.M{
+			"$set": bson.M{
+				"status":     status,
+				"updated_at": time.Now(),
+			},
+		},
+	)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error updating order": err.Error(),
+		})
+		return
+	}
+
+	if result.MatchedCount == 0 {
+		c.JSON(http.StatusNotFound, gin.H{
+			"message": "order not found",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "order updated successfully",
+	})
+
+}
+
 type reservedStock struct {
 	ProductID uuid.UUID
+	PackSize  uint16
+	Volume    uint16
 	Quantity  uint32
 }
 
 func rollbackReservedStock(c *gin.Context, reservedItems []reservedStock) {
-	// restores all items that have already been reserved
 	for _, item := range reservedItems {
 		_, _ = database.ProductCollection().UpdateOne(
 			c.Request.Context(),
-			bson.M{"product_id": item.ProductID},
 			bson.M{
-				"$inc": bson.M{"stock": uint32(item.Quantity)},
+				"product_id": item.ProductID,
+				"product_variants": bson.M{
+					"$elemMatch": bson.M{
+						"volume":    item.Volume,
+						"pack_size": item.PackSize,
+					},
+				},
+			},
+			bson.M{
+				"$inc": bson.M{"product_variants.$.stock": item.Quantity},
 				"$set": bson.M{"updated_at": time.Now().UTC()},
 			},
 		)
@@ -208,4 +475,136 @@ func normalizeOrderAddress(address models.Address) models.Address {
 		City:        strings.TrimSpace(address.City),
 		Country:     strings.TrimSpace(address.Country),
 	}
+}
+
+func RequestOrderReturn(c *gin.Context) {
+	claims, ok := middleware.ClaimsFromContext(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Nicht angemeldet."})
+		return
+	}
+
+	orderID, err := uuid.Parse(strings.TrimSpace(c.Param("id")))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Ungültige Bestellnummer."})
+		return
+	}
+
+	var request models.ReturnOrderRequest
+	if err := c.BindJSON(&request); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Rücksendedaten konnten nicht gelesen werden."})
+		return
+	}
+
+	reason := strings.TrimSpace(request.Reason)
+	message := strings.TrimSpace(request.Message)
+
+	if reason == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Bitte gib einen Rücksendegrund an."})
+		return
+	}
+
+	if len(request.Items) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Bitte wähle mindestens einen Artikel aus."})
+		return
+	}
+
+	filter := bson.M{
+		"order_id": orderID,
+		"user_id":  claims.UserID,
+	}
+
+	var order models.Order
+	if err := database.OrderCollection().FindOne(c.Request.Context(), filter).Decode(&order); err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Bestellung wurde nicht gefunden."})
+			return
+		}
+
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	if order.Status == "Rücksendung beantragt" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Für diese Bestellung wurde bereits eine Rücksendung beantragt."})
+		return
+	}
+
+	orderedQuantities := make(map[string]uint32)
+	orderedNames := make(map[string]string)
+
+	for _, item := range order.Items {
+		productID := item.ProductID.String()
+		orderedQuantities[productID] = item.Quantity
+		orderedNames[productID] = item.Name
+	}
+
+	returnItems := make([]models.ReturnRequestItem, 0, len(request.Items))
+
+	for _, item := range request.Items {
+		productID := strings.TrimSpace(item.ProductID)
+
+		if productID == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Ein Rücksendeartikel enthält keine Produkt-ID."})
+			return
+		}
+
+		maxQuantity, exists := orderedQuantities[productID]
+		if !exists {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Ein Rücksendeartikel gehört nicht zu dieser Bestellung."})
+			return
+		}
+
+		if item.Quantity == 0 || item.Quantity > maxQuantity {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Ungültige Rücksendemenge."})
+			return
+		}
+
+		name := strings.TrimSpace(item.Name)
+		if name == "" {
+			name = orderedNames[productID]
+		}
+
+		returnItems = append(returnItems, models.ReturnRequestItem{
+			ProductID: productID,
+			Name:      name,
+			Quantity:  item.Quantity,
+		})
+	}
+
+	now := time.Now().UTC()
+
+	returnRequest := models.ReturnRequest{
+		ReturnID:  uuid.New(),
+		Items:     returnItems,
+		Reason:    reason,
+		Message:   message,
+		Status:    "beantragt",
+		CreatedAt: now,
+	}
+
+	update := bson.M{
+		"$set": bson.M{
+			"status":     "Rücksendung beantragt",
+			"updated_at": now,
+		},
+		"$push": bson.M{
+			"return_requests": returnRequest,
+		},
+	}
+
+	var updatedOrder models.Order
+	err = database.OrderCollection().FindOneAndUpdate(
+		c.Request.Context(),
+		filter,
+		update,
+		options.FindOneAndUpdate().SetReturnDocument(options.After),
+	).Decode(&updatedOrder)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Rücksendung konnte nicht gespeichert werden."})
+		return
+	}
+
+	c.JSON(http.StatusOK, updatedOrder)
 }

@@ -20,7 +20,7 @@ const (
 	// RefreshTokenType marks a long-lived token that can be used to requerst a new access token later.
 	RefreshTokenType = "refresh"
 
-	// AcessTokenTTL is the validity period of an access token.
+	// AccessTokenTTL is the validity period of an access token.
 	AccessTokenTTL = 24 * time.Hour
 
 	// RefreshTokenTTL is the validity period of an refresh token.

@@ -1,9 +1,17 @@
 package handlers
 
 import (
+	"context"
+	"crypto/rand"
+	"crypto/sha256"
+	"encoding/base64"
+	"encoding/hex"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/mail"
+	"net/url"
+	"os"
 	"strings"
 	"time"
 
@@ -13,47 +21,69 @@ import (
 	"github.com/qwert8266/SWSYS_Webshop/server/helpers"
 	"github.com/qwert8266/SWSYS_Webshop/server/middleware"
 	"github.com/qwert8266/SWSYS_Webshop/server/models"
+	"github.com/qwert8266/SWSYS_Webshop/server/services"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 	"golang.org/x/crypto/bcrypt"
 )
 
+func AddOwnerIfNotExist() (string, error) {
+	result := database.UserCollection().FindOne(context.TODO(), bson.M{"role": "owner"})
+	if result.Err() != nil {
+		if !errors.Is(result.Err(), mongo.ErrNoDocuments) {
+			// return the error
+			return "", result.Err()
+		}
+		// if no owner exists, add one
+		owner := models.CreateOwner(os.Getenv("OWNER_PASSWORD"))
+		_, err := database.UserCollection().InsertOne(context.TODO(), owner)
+		if err != nil {
+			return "", err
+		}
+
+		return "owner created successfully", nil
+	}
+
+	// if the owner already exists, return nothing
+	return "", nil
+}
+
 func GetUsers(c *gin.Context) {
 	users := database.UserCollection()
 
 	cursor, err := users.Find(c.Request.Context(), bson.M{})
 	if err != nil {
-		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
 	var user []models.User
 
 	if err = cursor.All(c.Request.Context(), &user); err != nil {
-		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.IndentedJSON(http.StatusOK, user)
+	c.JSON(http.StatusOK, user)
 }
 
 func GetUserByID(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "the requested uuid is not a valid uuid"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "the requested uuid is not a valid uuid"})
 		return
 	}
 
 	user, err := findUserByID(c, id)
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			c.IndentedJSON(http.StatusNotFound, gin.H{"message": "requested user not found"})
+			c.JSON(http.StatusNotFound, gin.H{"message": "requested user not found"})
 		} else {
-			c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		}
 		return
 	}
-	c.IndentedJSON(http.StatusOK, user)
+	c.JSON(http.StatusOK, user)
 }
 
 func GetCurrentUser(c *gin.Context) {
@@ -101,7 +131,7 @@ func AddNewUser(c *gin.Context) {
 	}
 
 	now := time.Now().UTC()
-	// a new UUID is created for the new user
+	// a new SaleId is created for the new user
 	newUser := models.User{
 		ID: uuid.New(),
 
@@ -126,7 +156,7 @@ func AddNewUser(c *gin.Context) {
 
 	// the new user is added to the list of users
 	if _, err := database.UserCollection().InsertOne(c.Request.Context(), newUser); err != nil {
-		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -142,13 +172,13 @@ func AddNewUser(c *gin.Context) {
 func ModifyUser(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "the requested uuid is not a valid uuid"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "the requested uuid is not a valid uuid"})
 		return
 	}
 
 	var incomingUserData models.RegisterRequest
 	if err := c.BindJSON(&incomingUserData); err != nil {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error parsing user data": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error parsing user data": err.Error()})
 		return
 	}
 
@@ -210,27 +240,27 @@ func ModifyUser(c *gin.Context) {
 	).Decode(&updatedUser)
 
 	if errors.Is(err, mongo.ErrNoDocuments) {
-		c.IndentedJSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 		return
 	} else if err != nil {
-		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 	}
-	c.IndentedJSON(http.StatusOK, models.ToPublicUser(updatedUser))
+	c.JSON(http.StatusOK, models.ToPublicUser(updatedUser))
 }
 
 func DeleteUser(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error parsing user id": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error parsing user id": err.Error()})
 	}
 
 	result, err := database.UserCollection().DeleteOne(c.Request.Context(), bson.M{"id": id})
 	if err != nil {
-		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 	} else if result.DeletedCount == 0 {
-		c.IndentedJSON(http.StatusNotFound, gin.H{"message": "user not found"})
+		c.JSON(http.StatusNotFound, gin.H{"message": "user not found"})
 	} else {
-		c.IndentedJSON(http.StatusNoContent, nil)
+		c.JSON(http.StatusNoContent, nil)
 	}
 }
 
@@ -319,7 +349,6 @@ func buildAuthResponse(message string, user models.User) (models.AuthResponse, e
 
 func buildAddress(rr models.RegisterRequest) models.Address {
 
-	//TODO: verify address data
 	return models.Address{
 		Street:      strings.TrimSpace(rr.Street),
 		HouseNumber: strings.TrimSpace(rr.HouseNumber),
@@ -332,7 +361,7 @@ func buildAddress(rr models.RegisterRequest) models.Address {
 func generateHash(c *gin.Context, password string) (string, error) {
 	passwordHash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
-		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": "Password konnte nicht verarbeitet werden."})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Password konnte nicht verarbeitet werden."})
 		return "", err
 	}
 	return string(passwordHash), nil
@@ -373,20 +402,20 @@ func checkIncomingData(c *gin.Context, rr models.RegisterRequest) (models.Regist
 	// check email
 	normalizedEmail := strings.ToLower(strings.TrimSpace(rr.Email))
 	if !isEmailValid(normalizedEmail) {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Email ungültig"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Email ungültig"})
 		return rr, errors.New("email invalid")
 	}
 
 	// check password length
 	if len(rr.Password) < 8 {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Passwort mit mindestens 8 Zeichen erforderlich."})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Passwort mit mindestens 8 Zeichen erforderlich."})
 		return rr, errors.New("e-Mail und Passwort mit mindestens 8 Zeichen sind erforderlich")
 	}
 
 	// check customer type
 	rr.CustomerType = strings.TrimSpace(rr.CustomerType)
 	if rr.CustomerType != "private" && rr.CustomerType != "business" {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Ungüliger Kundentyp."})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Ungüliger Kundentyp."})
 		return rr, errors.New("invalid customer type")
 	}
 
@@ -394,14 +423,14 @@ func checkIncomingData(c *gin.Context, rr models.RegisterRequest) (models.Regist
 	rr.FirstName = strings.TrimSpace(rr.FirstName)
 	rr.LastName = strings.TrimSpace(rr.LastName)
 	if rr.FirstName == "" || rr.LastName == "" {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Vorname und Nachname sind erforderlich."})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Vorname und Nachname sind erforderlich."})
 		return rr, errors.New("no name given")
 	}
 
 	// check company name
 	rr.CompanyName = strings.TrimSpace(rr.CompanyName)
 	if rr.CustomerType == "business" && rr.CompanyName == "" {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Für ein Geschäftskonto ist der Unternehmensname erforderlich."})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Für ein Geschäftskonto ist der Unternehmensname erforderlich."})
 		return rr, errors.New("no company name given")
 	}
 	return rr, nil
@@ -410,7 +439,7 @@ func checkIncomingData(c *gin.Context, rr models.RegisterRequest) (models.Regist
 func UpdateUserRoleHandler(c *gin.Context) {
 	userID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "the requested uuid is not a valid uuid"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "the requested uuid is not a valid uuid"})
 		return
 	}
 
@@ -443,10 +472,245 @@ func UpdateUserRoleHandler(c *gin.Context) {
 	update := bson.M{"$set": bson.M{"role": roleUpdate.Role}}
 
 	if result, err := userCollection.UpdateOne(c.Request.Context(), bson.M{"id": userID}, update); err != nil {
-		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error updating product": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error updating user": err.Error()})
 	} else if result.MatchedCount == 0 {
-		c.IndentedJSON(http.StatusNotFound, gin.H{"message": "user not found"})
+		c.JSON(http.StatusNotFound, gin.H{"message": "user not found"})
 	} else {
 		c.JSON(http.StatusOK, gin.H{"message": "Role updated successfully"})
 	}
+}
+
+func ChangeOwnPassword(c *gin.Context) {
+	claims, ok := middleware.ClaimsFromContext(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Nicht angemeldet."})
+		return
+	}
+
+	var request models.ChangePasswordRequest
+	if err := c.BindJSON(&request); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Ungültige Eingabe"})
+		return
+	}
+
+	if request.CurrentPassword == "" || request.NewPassword == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Aktuelles Passwort und neues Passwort sind erforderlich."})
+		return
+	}
+
+	if len(request.NewPassword) < 8 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Das neue Passwort muss mindestens 8 Zeichen lang sein."})
+		return
+	}
+
+	if request.CurrentPassword == request.NewPassword {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Das neue Passwort muss sich vom aktuellen Passwort unterscheiden."})
+		return
+	}
+
+	user, err := findUserByID(c, claims.UserID)
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Benutzer konnte nicht gefunden werden."})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Benutzer konnte nicht geladen werden."})
+		}
+		return
+	}
+
+	if !helpers.VerifyPassword(user.PasswordHash, request.CurrentPassword) {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Das aktuelle Password ist falsch."})
+		return
+	}
+	newPasswordHash, err := generateHash(c, request.NewPassword)
+	if err != nil {
+		return
+	}
+
+	result, err := database.UserCollection().UpdateOne(
+		c.Request.Context(),
+		bson.M{"id": claims.UserID},
+		bson.M{
+			"$set": bson.M{
+				"password_hash": newPasswordHash,
+				"updated_at":    time.Now().UTC(),
+			}},
+	)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Passwort konnte nicht geändert werden."})
+		return
+	}
+	if result.MatchedCount == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Benutzer wurde nicht gefunden"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Passwort wurde erfolgreich geändert."})
+}
+
+func RequestPasswordReset(c *gin.Context) {
+	var request models.PasswordResetRequest
+	if err := c.BindJSON(&request); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "E-Mail-Adresse ist erforderlich"}) //err.Error()
+		return
+	}
+
+	email := strings.TrimSpace(strings.ToLower(request.Email))
+	if email == "" || !isEmailValid(email) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Gültige E-Mail-Adresse ist erforderlich."})
+		return
+	}
+
+	genericResponse := gin.H{"message": fmt.Sprintf("Wir haben Ihnen eine E-Mail an %s mit weiteren Anweisungen gesendet. Die Zustellung kann bis zu 3 Minuten dauern. Bitte überprüfen Sie auch ihren Spam-Ordner.", request.Email)}
+
+	user, err := findUserByEmail(c, email)
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			c.JSON(http.StatusOK, genericResponse)
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Passwort zurücksetzen ist zurzeit nicht verfügbar."}) //err.Error()
+		return
+	}
+
+	resetToken, resetTokenHash, err := generatePasswordResetToken()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Reset-Token konnte nicht erzeugt werden."})
+		return
+	}
+
+	now := time.Now().UTC()
+	passwordResetTokenTTL := 30 * time.Minute
+	resetTokenExpiresAt := now.Add(passwordResetTokenTTL)
+
+	_, err = database.UserCollection().UpdateOne(
+		c.Request.Context(),
+		bson.M{"id": user.ID},
+		bson.M{"$set": bson.M{
+			"password_reset_token_hash":       resetTokenHash,
+			"password_reset_token_expires_at": resetTokenExpiresAt,
+			"updated_at":                      now,
+		}},
+	)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Reset-Token konnte nicht gespeichert werden."})
+		return
+	}
+	passwordResetBaseURL := os.Getenv("PASSWORD_RESET_BASE_URL")
+	resetURL := buildPasswordResetURL(passwordResetBaseURL, resetToken)
+	//resetURL := passwordResetBaseURL + "?token=" + resetToken
+	fmt.Printf(
+		"[Password Reset]\nUser: %s\nToken: %s\nURL: %s\nExpiresAt: %s\n",
+		user.Email,
+		resetToken,
+		resetURL,
+		resetTokenExpiresAt.Format(time.RFC3339),
+	)
+
+	// Password-Reset-Link per Email senden
+	if err := services.SendPasswordResetEmail(user.FirstName, user.Email, resetURL); err != nil {
+		fmt.Printf("[Password Reset Mail Error] %v\n", err)
+
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Reset-Mail konnte nicht gesendet werden"})
+		return
+	}
+
+	c.JSON(http.StatusOK, genericResponse)
+}
+
+func ConfirmPasswordReset(c *gin.Context) {
+	var request models.PasswordResetConfirmRequest
+	if err := c.BindJSON(&request); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	resetToken := strings.TrimSpace(request.Token)
+	if resetToken == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Reset-Token erforderlich."})
+		return
+	}
+
+	if len(request.Password) < 8 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Passwort mit mindestens 8 Zeichen erforderlich."})
+		return
+	}
+
+	var user models.User
+	now := time.Now().UTC()
+	resetTokenHash := hashPasswordResetToken(resetToken)
+
+	err := database.UserCollection().FindOne(
+		c.Request.Context(),
+		bson.M{
+			"password_reset_token_hash":       resetTokenHash,
+			"password_reset_token_expires_at": bson.M{"$gt": now},
+		},
+	).Decode(&user)
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Reset-Token ist ungültig oder abgelaufen."})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	passwordHash, err := generateHash(c, request.Password)
+	if err != nil {
+		return
+	}
+
+	result, err := database.UserCollection().UpdateOne(
+		c.Request.Context(),
+		bson.M{
+			"id":                        user.ID,
+			"password_reset_token_hash": resetTokenHash,
+		},
+		bson.M{
+			"$set": bson.M{
+				"password_hash": passwordHash,
+				"updated_at":    now,
+			},
+			"$unset": bson.M{
+				"password_reset_token_hash":       "",
+				"password_reset_token_expires_at": "",
+			},
+		},
+	)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Passwort konnte nicht aktualisiert werden."})
+		return
+	}
+	if result.MatchedCount == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Reset-Token wurde bereits verwendet oder ist ungültig."})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Passwort wurde erfolgreich zurückgesetzt."})
+}
+
+func generatePasswordResetToken() (string, string, error) {
+	randomBytes := make([]byte, 32)
+	if _, err := rand.Read(randomBytes); err != nil {
+		return "", "", err
+	}
+
+	resetToken := base64.RawURLEncoding.EncodeToString(randomBytes)
+	return resetToken, hashPasswordResetToken(resetToken), nil
+}
+
+func hashPasswordResetToken(resetToken string) string {
+	hash := sha256.Sum256([]byte(resetToken))
+	return hex.EncodeToString(hash[:])
+}
+
+func buildPasswordResetURL(baseURL string, resetToken string) string {
+	baseURL = strings.TrimSpace(baseURL)
+	separator := "?"
+	if strings.Contains(baseURL, "?") {
+		separator = "&"
+	}
+
+	return strings.TrimRight(baseURL, "/") + separator + "token=" + url.QueryEscape(resetToken)
 }

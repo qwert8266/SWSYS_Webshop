@@ -95,12 +95,27 @@
 
 .added_product{
     display: flex;
-    flex-direction: row;
+    align-items: center;
     background-color: white;
     border: 1px solid #ccc;
     border-radius: 6px;
-    padding: 8px;
-    gap: 200px;
+    padding: 8px 12px;
+    margin-bottom: 6px;
+}
+
+.added_product_name {
+    flex: 1;
+}
+
+.added_product_single {
+    width: 170px;
+    text-align: right;
+}
+
+.added_product_total {
+    width: 170px;
+    text-align: right;
+    font-weight: 600;
 }
 
 .search_container{
@@ -135,7 +150,7 @@
 }
 
 .suggestions {
-    position: relative;
+    position: absolute;
     top: 100%;
     left: 0;
     width: 300px;

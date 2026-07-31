@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // RegisterRequest matches the form fields sent by frontend/src/pages/register.jsx
@@ -11,7 +12,7 @@ type RegisterRequest struct {
 	CustomerType string `json:"customerType"`
 	Salutation   string `json:"salutation"`
 	FirstName    string `json:"firstName"`
-	LastName     string `json:"lastname"`
+	LastName     string `json:"lastName"`
 	BirthDate    string `json:"birthDate"`
 	Phone        string `json:"phone"`
 	CompanyName  string `json:"companyName"`
@@ -31,6 +32,22 @@ type LoginCredentials struct {
 	Password string `json:"password"`
 }
 
+type ChangePasswordRequest struct {
+	CurrentPassword string `json:"currentPassword"`
+	NewPassword     string `json:"newPassword"`
+}
+
+// PasswordResetRequest is sent when a user requests a password reset link
+type PasswordResetRequest struct {
+	Email string `json:"email"`
+}
+
+// PasswordResetConfirmRequest is sent from the password reset page
+type PasswordResetConfirmRequest struct {
+	Token    string `json:"token"`
+	Password string `json:"password"`
+}
+
 type Address struct {
 	Street      string `bson:"street" json:"street"`
 	HouseNumber string `bson:"house_number" json:"houseNumber"`
@@ -45,7 +62,7 @@ type User struct {
 	CustomerType string `bson:"customer_type" json:"customerType"`
 	Salutation   string `bson:"salutation" json:"salutation"`
 	FirstName    string `bson:"first_name" json:"firstName"`
-	LastName     string `bson:"last__name" json:"lastname"`
+	LastName     string `bson:"last__name" json:"lastName"`
 	BirthDate    string `bson:"birth_date,omitempty" json:"birthDate,omitempty"`
 	Phone        string `bson:"phone,omitempty" json:"phone,omitempty"`
 
@@ -57,24 +74,30 @@ type User struct {
 
 	Role string `bson:"role" json:"role"`
 
+	FavoriteProductIDs []uuid.UUID `bson:"favorite_product_ids,omitempty" json:"favoriteProductIds"`
+	WishlistProductIDs []uuid.UUID `bson:"wishlist_product_ids,omitempty" json:"wishlistProductIds"`
+
 	CreatedAt time.Time `bson:"created_at" json:"createdAt"`
 	UpdatedAt time.Time `bson:"updated_at" json:"updatedAt"`
 }
 
 // PublicUser is the safe account representation returned to the frontend
 type PublicUser struct {
-	ID           uuid.UUID `json:"id"`
-	CustomerType string    `json:"customerType"`
-	Salutation   string    `json:"salutation"`
-	FirstName    string    `json:"firstName"`
-	LastName     string    `json:"lastname"`
-	BirthDate    string    `json:"birthDate,omitempty"`
-	Phone        string    `json:"phone,omitempty"`
-	CompanyName  string    `json:"companyName,omitempty"`
-	Address      Address   `json:"address"`
-	Email        string    `json:"email"`
-	CreatedAt    time.Time `json:"createdAt"`
-	UpdatedAt    time.Time `json:"updatedAt"`
+	ID                 uuid.UUID   `json:"id"`
+	CustomerType       string      `json:"customerType"`
+	Salutation         string      `json:"salutation"`
+	FirstName          string      `json:"firstName"`
+	LastName           string      `json:"lastName"`
+	BirthDate          string      `json:"birthDate,omitempty"`
+	Phone              string      `json:"phone,omitempty"`
+	CompanyName        string      `json:"companyName,omitempty"`
+	Address            Address     `json:"address"`
+	Email              string      `json:"email"`
+	Role               string      `json:"role"`
+	FavoriteProductIDs []uuid.UUID `json:"favoriteProductIds"`
+	WishlistProductIDs []uuid.UUID `json:"wishlistProductIds"`
+	CreatedAt          time.Time   `json:"createdAt"`
+	UpdatedAt          time.Time   `json:"updatedAt"`
 }
 
 // AuthResponse is returned after registration and login
@@ -87,22 +110,37 @@ type AuthResponse struct {
 	ExpiresIn    int64      `json:"expiresIn"`
 }
 
-// ToPublicUser converts the persisted User into the safe API representation
 func ToPublicUser(user User) PublicUser {
 	return PublicUser{
-		ID:           user.ID,
-		CustomerType: user.CustomerType,
-		Salutation:   user.Salutation,
-		FirstName:    user.FirstName,
-		LastName:     user.LastName,
-		BirthDate:    user.BirthDate,
-		Phone:        user.Phone,
-		CompanyName:  user.CompanyName,
-		Address:      user.Address,
-		Email:        user.Email,
-		CreatedAt:    user.CreatedAt,
-		UpdatedAt:    user.UpdatedAt,
+		ID:                 user.ID,
+		CustomerType:       user.CustomerType,
+		Salutation:         user.Salutation,
+		FirstName:          user.FirstName,
+		LastName:           user.LastName,
+		BirthDate:          user.BirthDate,
+		Phone:              user.Phone,
+		CompanyName:        user.CompanyName,
+		Address:            user.Address,
+		Email:              user.Email,
+		Role:               user.Role,
+		FavoriteProductIDs: NormalizeProductIDs(user.FavoriteProductIDs),
+		WishlistProductIDs: NormalizeProductIDs(user.WishlistProductIDs),
+		CreatedAt:          user.CreatedAt,
+		UpdatedAt:          user.UpdatedAt,
 	}
 }
 
-var AllowedRoles = []string{"admin", "customer", "worker", "user"}
+var AllowedRoles = []string{"customer", "worker", "admin", "owner"}
+
+func CreateOwner(password string) User {
+
+	passwordHash, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+
+	return User{
+		ID:   uuid.New(),
+		Role: "owner",
+
+		Email:        "owner@webshop.de",
+		PasswordHash: string(passwordHash),
+	}
+}
