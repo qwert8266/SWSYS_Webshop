@@ -51,7 +51,7 @@ docker volume create mongo-config | Out-Null; docker run --rm -v mongo-config:/v
 #### Anwendung starten
 
 ```powershell
-docker compose up -d
+docker compose up --build -d
 ```
 
 ---
