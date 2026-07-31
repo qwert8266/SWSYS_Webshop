@@ -3,40 +3,76 @@ Webshop eines Getränkegroßhändlers für das Modul Software System Engineering
 
 Entwickelt von Ctrl+Alt+Deluxe✨.
 
+## Testdaten-Volumes aus Backup-Dateien erstellen
 
-## structure
+Für lokale Entwicklung und Tests können vorbereitete Docker-Volumes mit Testdaten aus den bereitgestellten `.tar.gz`-Dateien erstellt werden.
 
-	SWSYS_Webshop
-    ├── frontend                # Web Frontend 
-    ├── server                  # Go Backend
-    │   ├── database
-	│   │   └── database.go     # database configuration 
-    │   ├── handlers            # central logic
-    │   ├── helpers             # token generation and password validation
-    │   ├── middleware          # authentication and role based access
-    │   ├── models              # data structures
-    │   ├── routes              # api routing 
-    │   ├── services            # mailing
-    │   ├── .env                # enviroment variables
-    │   ├── Dockerfile          # Dockerfile for Backend 
-    │   ├── go.mod              # go modules 
-    │   └── main.go             # Main server file
-    └── docker-compose.yaml     # docker compose to build everything
+Die Backups enthalten bereits Beispielprodukte, Produktbilder und MongoDB-Testdaten.
 
-### Server
+### Enthaltene Dateien
 
-- Go
-- Gin  
+* `product-images-backup.tar.gz`
+* `mongo-data-backup.tar.gz`
+* `mongo-config-backup.tar.gz`
 
-### Web 
+### Voraussetzungen
 
-- React 
-  - NodeJS
-  - bootstrap
+* Docker Desktop oder Docker Engine ist installiert.
+* Die Backup-Dateien befinden sich im aktuellen Arbeitsverzeichnis.
+* Die Volumes `product-images`, `mongo-data` und `mongo-config` existieren noch nicht oder dürfen überschrieben werden.
+* Es wird **PowerShell** verwendet.
 
-### DB
+---
 
-- MongoDB 
+#### Produktbilder-Volume erstellen
+
+```powershell
+docker volume create product-images | Out-Null; docker run --rm -v product-images:/volume -v ${PWD}:/backup alpine sh -c 'cd /volume && tar xzf /backup/product-images-backup.tar.gz'
+```
+
+---
+
+#### MongoDB-Daten-Volume erstellen
+
+```powershell
+docker volume create mongo-data | Out-Null; docker run --rm -v mongo-data:/volume -v ${PWD}:/backup alpine sh -c 'cd /volume && tar xzf /backup/mongo-data-backup.tar.gz'
+```
+
+---
+
+#### MongoDB-Konfigurations-Volume erstellen
+
+```powershell
+docker volume create mongo-config | Out-Null; docker run --rm -v mongo-config:/volume -v ${PWD}:/backup alpine sh -c 'cd /volume && tar xzf /backup/mongo-config-backup.tar.gz'
+```
+
+---
+
+### Erstellung prüfen
+
+Beispiel für das Produktbilder-Volume:
+
+```powershell
+docker run --rm -v product-images:/data alpine sh -c 'find /data -type f | head'
+```
+
+Werden Dateien angezeigt, wurde das Volume erfolgreich erstellt.
+
+---
+
+### Anwendung starten
+
+Nach dem Erstellen aller Volumes können die Container gestartet werden:
+
+```powershell
+docker compose up -d
+```
+
+Die Anwendung startet mit den enthaltenen Testdaten. 
+
+Sobald alle Container gestartet sind, ist das Frontend über **Port 3000** erreichbar.
+Das Backend läuft auf **Port 3001** 
+---
 
 
 ## API: 
@@ -109,36 +145,4 @@ Die API hat folgende Endpunkte:
 	    ├── [POST]                                      user
 	    └── [GET]                                       worker,admin,owner
 
-#### Bestand (Stock)
 
-Dedizierte Endpunkte für Bestandsabfragen. Die Schwellwerte sind zentral im Backend
-definiert (`server/models/product.go`: `LowStockThreshold = 15`, `CriticalStockThreshold = 5`)
-und werden vom Frontend nicht dupliziert.
-
-| Methode | Pfad                   | Auth                 | Beschreibung |
-|---------|------------------------|----------------------|--------------|
-| GET     | `/products/stock`      | öffentlich           | Bestand aller Produkte inkl. Schwellwerte |
-| GET     | `/products/:id/stock`  | öffentlich           | Bestand eines einzelnen Produkts |
-| GET     | `/products/stock/low`  | worker, admin, owner | Alle Produkte mit Bestand ≤ 15, aufsteigend sortiert (Logistikpanel) |
-
-Antwortmodell `StockInfo`:
-
-```json
-{
-  "product_id": "8b6c9f9e-...",
-  "name": "Becks",
-  "category": "bier",
-  "stock": 3,
-  "status": "critical"
-}
-```
-
-`status` wird serverseitig berechnet:
-
-- `ok` – Bestand über 15
-- `low` – Bestand ≤ 15
-- `critical` – Bestand ≤ 5
-- `out_of_stock` – Bestand 0 (Kauf im Frontend nicht möglich)
-
-`/products/stock` und `/products/stock/low` liefern zusätzlich ein `thresholds`-Objekt
-(`{ "low": 15, "critical": 5 }`) sowie die Liste unter `stocks`.

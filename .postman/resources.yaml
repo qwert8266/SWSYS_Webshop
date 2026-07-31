@@ -8,8 +8,6 @@ cloudResources:
   collections:
     ../postman/collections/SWSYS: 1e382733-612d-43e5-953f-eff267d114a6
 
-# All resources in the `postman/` folder are automatically registered in Local View.
-# Point to additional files outside the `postman/` folder to register them individually. Example:
-#localResources:
-#  collections:
-#    - ../tests/E2E Test Collection/
+localResources:
+  documents:
+    - ../README.md
