@@ -80,9 +80,12 @@ services:
 
 volumes:
   mongo-data:
+    external: true
   mongo-config:
+    external: true
   mailpit-data:
   product-images:
+    external: true
 
 networks:
   internal:
