@@ -258,9 +258,14 @@ function AccountSettings() {
   }, [accessToken, activeSection, orders, ordersLoading]);
 
 
-  function handleLogout() {
-    logout();
-    navigate("/home");
+  async function handleLogout() {
+    navigate("/home", { replace: true});
+    
+    try {
+      await logout();
+    } catch (error) {
+      console.warn("Die serverseitige Abmeldung ist fehlgeschlagen", error);
+    }
   }
 
   function handlePasswordInputChange(event) {

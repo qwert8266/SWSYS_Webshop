@@ -15,6 +15,7 @@ description: |-
 variables:
   baseUrl: ""
   UserAccessToken: ""
+  UserRefreshToken: ""
   jsonData: ""
   productId: ""
   category: ""

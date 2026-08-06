@@ -1,4 +1,39 @@
 $kind: http-request
+name: Get Categories
 url: "{{baseUrl}}/category/"
 method: GET
+scripts:
+  - type: afterResponse
+    code: "const json = pm.response.json();\r
+
+      \r
+
+      pm.test(\"Status code is 2xx\", function () {\r
+
+      \    pm.expect(pm.response.code).to.be.within(200, 299);\r
+
+      });\r
+
+      \r
+
+      pm.test(\"Response body is an array\", function() {\r
+
+      \    pm.expect(json).to.be.an(\"array\");\r
+
+      })\r
+
+      \r
+
+      if (Array.isArray(json) && json.length > 0 && json[0].slug) {\r
+
+      \    pm.collectionVariables.set(\"category\", json[0].slug);\r
+
+      \    console.log(\"Category saved:\", json[0].slug);\r
+
+      } else {\r
+
+      \    console.warn(\"No category found in response\");\r
+
+      }"
+    language: text/javascript
 order: 5000

@@ -7,11 +7,11 @@ scripts:
   - type: afterResponse
     code: "const json = pm.response.json();\r
 
-      if (json.product_id) {\r
+      if (Array.isArray(json) && json.length > 0 && json[0].product_id) {\r
 
-      \    pm.collectionVariables.set(\"productID\", json.product_id);\r
+      \    pm.collectionVariables.set(\"productId\", json[0].product_id);\r
 
-      \    console.log(\"ProductId saved:\", json.product_id);\r
+      \    console.log(\"ProductId saved:\", json[0].product_id);\r
 
       } else {\r
 

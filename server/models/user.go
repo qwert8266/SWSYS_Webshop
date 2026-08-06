@@ -32,6 +32,11 @@ type LoginCredentials struct {
 	Password string `json:"password"`
 }
 
+// RefreshTokenRequest contains the long-lived token used to renew or end a session
+type RefreshTokenRequest struct {
+	RefreshToken string `json:"refreshToken"`
+}
+
 type ChangePasswordRequest struct {
 	CurrentPassword string `json:"currentPassword"`
 	NewPassword     string `json:"newPassword"`
@@ -56,6 +61,15 @@ type Address struct {
 	Country     string `bson:"country" json:"country"`
 }
 
+// RefreshSession identifies one browser or device session without storing the raw refresh token
+type RefreshSession struct {
+	SessionID  uuid.UUID `bson:"session_id" json:"sessionId"`
+	TokenHash  string    `bson:"token_hash" json:"-"`
+	ExpiresAt  time.Time `bson:"expires_at" json:"expiresAt"`
+	CreatedAt  time.Time `bosn:"created_at" json:"createdAt"`
+	LastUsedAt time.Time `bson:"last_used_at" json:"lastUsedAt"`
+}
+
 type User struct {
 	ID uuid.UUID `bson:"id" json:"id"`
 
@@ -73,6 +87,8 @@ type User struct {
 	PasswordHash string `bson:"password_hash" json:"-"`
 
 	Role string `bson:"role" json:"role"`
+
+	RefreshSessions []RefreshSession `bson:"refresh_sessions,omitempty" json:"-"`
 
 	FavoriteProductIDs []uuid.UUID `bson:"favorite_product_ids,omitempty" json:"favoriteProductIds"`
 	WishlistProductIDs []uuid.UUID `bson:"wishlist_product_ids,omitempty" json:"wishlistProductIds"`
@@ -108,6 +124,15 @@ type AuthResponse struct {
 	RefreshToken string     `json:"refreshToken"`
 	TokenType    string     `json:"tokenType"`
 	ExpiresIn    int64      `json:"expiresIn"`
+}
+
+// RefreshResponse is returned when an existing refresh token creates a new access token
+type RefreshResponse struct {
+	Message     string     `json:"message"`
+	User        PublicUser `json:"user"`
+	AccessToken string     `json:"accessToken"`
+	TokenType   string     `json:"tokenType"`
+	ExpiresIn   int64      `json:"expiresIn"`
 }
 
 func ToPublicUser(user User) PublicUser {
