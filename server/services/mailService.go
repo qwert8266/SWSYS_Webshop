@@ -22,6 +22,7 @@ import (
 //go:embed templates/password-reset-email.tmpl templates/password-reset-email.css templates/contact-confirmation-email.tmpl templates/contact-email.css templates/contact-employee-email.tmpl
 var emailTemplateFiles embed.FS
 
+// MailConfig bündelt die SMTP- und Absenderdaten des Mailservices
 type MailConfig struct {
 	Host                 string
 	Port                 string
@@ -33,6 +34,7 @@ type MailConfig struct {
 	CompanyLogoPath      string
 }
 
+// PasswortResetTemplateData enthält die Platzhalter für die Passwort-Reset-Mail
 type PasswortResetTemplateData struct {
 	Username string
 	ResetURL string
@@ -40,6 +42,7 @@ type PasswortResetTemplateData struct {
 	CSS      template.CSS
 }
 
+// ContactConfirmationTemplateData enthält die Daten für die Eingangsbestätigung an den Kunden
 type ContactConfirmationTemplateData struct {
 	Username        string
 	ReferenceNumber string
@@ -49,6 +52,7 @@ type ContactConfirmationTemplateData struct {
 	CompanyLogo     template.URL
 }
 
+// ContactEmployeeTemplateData enthält die vollständigen Kontaktdaten für die Mitarbeiterbenachrichtigung
 type ContactEmployeeTemplateData struct {
 	ReferenceNumber string
 	Reason          string
@@ -62,6 +66,7 @@ type ContactEmployeeTemplateData struct {
 	CompanyLogo     template.URL
 }
 
+// LoadMailConfig liest die SMTP-Zugangsdaten aus der Umgebung und ergänzt feste Absenderangaben
 func LoadMailConfig() MailConfig {
 	return MailConfig{
 		Host:                 os.Getenv("SMTP_HOST"),
@@ -75,6 +80,7 @@ func LoadMailConfig() MailConfig {
 	}
 }
 
+// sendHTMLMail validiert die Mailadressen, erstellt die MIME-Nachricht und versendet sie über SMTP
 func sendHTMLMail(config MailConfig, to string, subject string, htmlBody string) error {
 	if config.Host == "" {
 		return fmt.Errorf("SMTP_HOST ist nicht gesetzt")
@@ -106,6 +112,7 @@ func sendHTMLMail(config MailConfig, to string, subject string, htmlBody string)
 	return nil
 }
 
+// SendPasswordResetEmail rendert und versendet den persönlichen Link zum Zurücksetzen des Passworts
 func SendPasswordResetEmail(recipientName, recipientAddress, resetURL string) error {
 	config := LoadMailConfig()
 
@@ -118,6 +125,7 @@ func SendPasswordResetEmail(recipientName, recipientAddress, resetURL string) er
 	return sendHTMLMail(config, recipientAddress, subject, htmlBody)
 }
 
+// SendContactRequestConfirmationEmail bestätigt dem Absender den EIngang seiner Kontaktanfrage
 func SendContactRequestConfirmationEmail(contactRequest models.ContactRequest) error {
 	config := LoadMailConfig()
 
@@ -130,6 +138,7 @@ func SendContactRequestConfirmationEmail(contactRequest models.ContactRequest) e
 	return sendHTMLMail(config, contactRequest.Email, subject, htmlBody)
 }
 
+// SendContactRequestEmployeeEmail informiert die hinterlegte Mitarbeiteradresse über eine neue Kontaktanfrage
 func SendContactRequestEmployeeEmail(contactRequest models.ContactRequest) error {
 	config := LoadMailConfig()
 
@@ -142,6 +151,7 @@ func SendContactRequestEmployeeEmail(contactRequest models.ContactRequest) error
 	return sendHTMLMail(config, config.ContactEmployeeEmail, subject, htmlBody)
 }
 
+// buildHTMLMessage setzt Header und HTML-Inhalt zu einer SMTP-kompatibilen MIME-Nachricht zusammen
 func buildHTMLMessage(from, to, subject, htmlBody string) string {
 	encodedSubject := mime.QEncoding.Encode("UTF-8", subject)
 
@@ -157,6 +167,7 @@ func buildHTMLMessage(from, to, subject, htmlBody string) string {
 
 }
 
+// buildPasswordResetHTML lädt CSS und Template, setzt die Platzhalter und liefert den gerenderten HTML-Body
 func buildPasswordResetHTML(recipientName, resetURL string) (string, error) {
 	cssBytes, err := emailTemplateFiles.ReadFile("templates/password-reset-email.css")
 	if err != nil {
@@ -183,6 +194,7 @@ func buildPasswordResetHTML(recipientName, resetURL string) (string, error) {
 	return body.String(), nil
 }
 
+// buildContactConfirmationHTML erstellt die Eingangsbestätigung und verwendet bei fehlendem Namen eine neutrale Anrede
 func buildContactConfirmationHTML(config MailConfig, contactRequest models.ContactRequest) (string, error) {
 	cssBytes, err := emailTemplateFiles.ReadFile("templates/contact-email.css")
 	if err != nil {
@@ -217,6 +229,7 @@ func buildContactConfirmationHTML(config MailConfig, contactRequest models.Conta
 
 }
 
+// buildContactEmployeeHTML bereitet alle Angaben der Kontaktanfrage für die Mitarbeiter-Mail auf
 func buildContactEmployeeHTML(config MailConfig, contactRequest models.ContactRequest) (string, error) {
 	cssBytes, err := emailTemplateFiles.ReadFile("templates/contact-email.css")
 	if err != nil {
