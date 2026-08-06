@@ -21,6 +21,7 @@ Die Backups enthalten bereits Beispielprodukte, Produktbilder und MongoDB-Testda
 * Die Backup-Dateien befinden sich im aktuellen Arbeitsverzeichnis.
 * Die Volumes `product-images`, `mongo-data` und `mongo-config` existieren noch nicht oder dürfen überschrieben werden.
 * Es wird **PowerShell** verwendet.
+* Folgende Befehle müssen über **PowerShell** im lokalen Projektordner ausgeführt werden.
 
 ---
 
@@ -73,7 +74,7 @@ Werden Dateien angezeigt, wurde das Volume erfolgreich erstellt.
 Nach dem Erstellen aller Volumes können die Container gestartet werden:
 
 ```powershell
-docker compose up -d
+docker compose up --build -d 
 ```
 
 Die Anwendung startet mit den enthaltenen Testdaten. 
