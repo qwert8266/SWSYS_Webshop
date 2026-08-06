@@ -59,11 +59,22 @@ class AuthApi extends BaseApi {
     });
   }
 
+  // Exchanges a valid refresh token 
+  async refresh(refreshToken) {
+    return this.request("/user/refresh", {
+      method: "POST",
+      body: { refreshToken },
+      allowTokenRefresh: false,
+      errorMessage: "Sitzung konnte nicht erneuert werden.",
+    });
+  }
+
   // Sends a logout request to the backend
-  async logout(accessToken) {
+  async logout(refreshToken) {
     return this.request("/user/logout", {
       method: "POST",
-      accessToken,
+      body: { refreshToken },
+      allowTokenRefresh: false,
       errorMessage: "Abmeldung fehlgeschlagen.",
     });
   } 

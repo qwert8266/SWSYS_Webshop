@@ -26,10 +26,44 @@ body:
     }
 scripts:
   - type: afterResponse
-    code: "pm.test(\"Status code is 201\", function () {\r
+    code: "const json = pm.response.json();\r
+
+      \r
+
+      pm.test(\"Status code is 201\", function () {\r
 
       \    pm.response.to.have.status(201);\r
 
-      \    });"
+      \    });\r
+
+      \r
+      
+      pm.test(\"Access- und Refresh-Token wurden zurückgegeben\", function() {\register
+      
+      \   pm.expect(json.accessToken).to.be.a(\"string\").and.not.empty;\r
+
+      \   pm.expect(json.refreshToken).to.be.a(\"string\").and.not.empty;\r
+
+      });\r
+
+      \r
+
+      if (json.accessToken) {\r 
+      
+      \   pm.collectionVariables.set(\"UserAccessToken\", json.accessToken);\r
+
+      }\r
+
+      if (json.refreshToken) {\r 
+      
+      \   pm.collectionVariables.set(\"UserRefreshToken\", json.refreshToken);\r
+
+      }\r
+
+      if (json.user?.id) {\r 
+      
+      \   pm.collectionVariables.set(\"userId\", json.user.id);\r
+
+      }"
     language: text/javascript
 order: 2366629709089566

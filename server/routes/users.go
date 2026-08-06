@@ -14,6 +14,8 @@ func RegisterUserRoutes(userRoutes *gin.RouterGroup) {
 		// Authentication endpoints
 		public.POST("/register", handlers.AddNewUser)
 		public.POST("/login", handlers.LoginUser)
+		public.POST("/logout", handlers.LogoutUser)
+		public.POST("/refresh", handlers.RefreshUserToken)
 		public.POST("/password-reset/request", handlers.RequestPasswordReset)
 		public.POST("/password-reset/confirm", handlers.ConfirmPasswordReset)
 	}
@@ -23,7 +25,6 @@ func RegisterUserRoutes(userRoutes *gin.RouterGroup) {
 	protected.Use(middleware.Authenticate())
 	{
 		// Protected so the backend can validate the submitted Bearer token before the frontend removes it from localStorage
-		protected.POST("/logout", handlers.LogoutUser)
 		protected.GET("/me", handlers.GetCurrentUser)
 		protected.GET("/me/lists", handlers.GetUserLists)
 		protected.GET("/me/favorites", handlers.GetFavoriteProducts)

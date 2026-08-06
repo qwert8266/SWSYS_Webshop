@@ -42,12 +42,12 @@ services:
           "http://0.0.0.0:3001/health",
         ]
       interval: 10s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
 
   db:
-    image: docker.io/mongodb/mongodb-community-server:latest
+    image: docker.io/mongodb/mongodb-community-server:latest    #:8.0
     volumes:
       - mongo-data:/data/db
       - mongo-config:/data/configdb

@@ -1,9 +1,9 @@
 import { createContext, useContext, useState, useCallback, useMemo, useEffect } from 'react';
 import authApi from "../api/authApi";
+import {ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY, AUTH_SESSION_EXPIRED_EVENT, AUTH_TOKENS_UPDATED_EVENT } from '../api/baseApi';
+
 
 const AuthContext = createContext(null);
-const ACCESS_TOKEN_KEY = "Schmidt-Soehne_AT";
-const REFRESH_TOKEN_KEY = "Schmidt-Soehne_RT";
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -11,16 +11,18 @@ export function AuthProvider({ children }) {
     localStorage.getItem(ACCESS_TOKEN_KEY)
   );
   const [isAuthLoading, setIsAuthLoading] = useState(() =>
-    Boolean(localStorage.getItem(ACCESS_TOKEN_KEY))
+    Boolean(localStorage.getItem(ACCESS_TOKEN_KEY) || localStorage.getItem(REFRESH_TOKEN_KEY))
   );
 
-  // Stores the backend authResponse after login or registration
+  // synchronizes the token pair and public user data after authentication
   const saveAuthResponse = useCallback((authResponse) => {
     setUser(authResponse.user);
     setAccessToken(authResponse.accessToken);
     setIsAuthLoading(false);
     localStorage.setItem(ACCESS_TOKEN_KEY, authResponse.accessToken);
-    localStorage.setItem(REFRESH_TOKEN_KEY, authResponse.refreshToken);
+    if (authResponse.refreshToken) {
+      localStorage.setItem(REFRESH_TOKEN_KEY, authResponse.refreshToken);
+    }
     return authResponse;
   }, []);
 
@@ -48,33 +50,57 @@ export function AuthProvider({ children }) {
   );
 
   const logout = useCallback(async () => { 
-    const tokenForLogout = accessToken;
+    const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
 
     try {
-      if (tokenForLogout) {
-        await authApi.logout(tokenForLogout);
+      if (refreshToken) {
+        await authApi.logout(refreshToken);
       }
     } finally {
       // always remove the token locally, 
       // even if the backend is temporarily unreachable or token has already expired
       clearAuthState();
     }
-  }, [accessToken, clearAuthState]);
+  }, [clearAuthState]);
 
 
-  // When page is reloaded, the user is loaded using the token stored in loaclStorage
-  // via the protected backend endpoint  
+  // Keep React state synchronized when BaseApi rotates tokens during an automatic retry
   useEffect(() => {
-    if (!accessToken || user) {
+    const handleTokensUpdated = (event) => saveAuthResponse(event.detail);
+    const handleSessionExpired = () => clearAuthState();
+
+    window.addEventListener(AUTH_TOKENS_UPDATED_EVENT, handleTokensUpdated);
+    window.addEventListener(AUTH_SESSION_EXPIRED_EVENT, handleSessionExpired);
+    return () => {
+      window.removeEventListener(AUTH_TOKENS_UPDATED_EVENT, handleTokensUpdated);
+      window.removeEventListener(AUTH_SESSION_EXPIRED_EVENT, handleSessionExpired);
+    };
+  }, [saveAuthResponse, clearAuthState])
+
+  // When page is reloaded, the user is restored using the access or refresh token stored in loaclStorage
+  useEffect(() => {
+    if (user) {
       setIsAuthLoading(false);
       return;
     }
 
-    async function loadCurrentUser() {
+    async function restoreSession() {
       setIsAuthLoading(true);
 
       try {
-        const currentUser = await authApi.getCurrentUser(accessToken);
+        let token = accessToken;
+        if (!token) {
+          const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
+          if (!refreshToken) {
+            clearAuthState();
+            return;
+          }
+          const authResponse = await authApi.refresh(refreshToken);
+          saveAuthResponse(authResponse);
+          token = authResponse.accessToken;
+        }
+
+        const currentUser = await authApi.getCurrentUser(token);
         setUser(currentUser);
       } catch (error) {
         // only delete tokens when error is serious enough  
@@ -88,8 +114,8 @@ export function AuthProvider({ children }) {
       }
     }
 
-    loadCurrentUser().then()
-  }, [accessToken, user, clearAuthState]);
+    restoreSession();
+  }, [accessToken, user, saveAuthResponse, clearAuthState]);
 
   const value = useMemo(
     () => ({

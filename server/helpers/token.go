@@ -17,21 +17,21 @@ const (
 	// AccessTokenType marks a short-lived token for normal API request.
 	AccessTokenType = "access"
 
-	// RefreshTokenType marks a long-lived token that can be used to requerst a new access token later.
+	// RefreshTokenType marks a long-lived token that can be used to request a new access token later.
 	RefreshTokenType = "refresh"
 
 	// AccessTokenTTL is the validity period of an access token.
-	AccessTokenTTL = 24 * time.Hour
+	AccessTokenTTL = 15 * time.Minute
 
 	// RefreshTokenTTL is the validity period of an refresh token.
 	RefreshTokenTTL = 7 * 24 * time.Hour
 )
 
-// Claims the signed payload stored inside a token
+// Claims contains the signed payload stored inside a token
 type Claims struct {
+	TokenID   uuid.UUID `json:"tokenId"`
 	UserID    uuid.UUID `json:"userId"`
 	Email     string    `json:"email"`
-	Role      string    `json:"role"`
 	TokenType string    `json:"tokenType"`
 	ExpiresAt int64     `json:"expiresAt"`
 	IssuedAt  int64     `json:"issuedAt"`
@@ -46,8 +46,14 @@ var base64URL = base64.RawURLEncoding
 
 // GenerateToken creates a signed JWT-like HMAC token without an additional JWT dependency
 func GenerateToken(userID uuid.UUID, email, tokenType, secret string, ttl time.Duration) (string, error) {
+	return GenerateTokenWithID(userID, email, tokenType, secret, ttl, uuid.New())
+}
+
+// GenerateTokenWithID creates a token with an ID provided by the caller, which also identifies a refresh session
+func GenerateTokenWithID(userID uuid.UUID, email, tokenType, secret string, ttl time.Duration, tokenID uuid.UUID) (string, error) {
 	now := time.Now().UTC()
 	claims := Claims{
+		TokenID:   tokenID,
 		UserID:    userID,
 		Email:     email,
 		TokenType: tokenType,
@@ -94,6 +100,14 @@ func ValidateToken(token, secret, expectedTokenType string) (*Claims, error) {
 		return nil, fmt.Errorf("invalid token claims: %w", err)
 	}
 
+	if claims.UserID == uuid.Nil {
+		return nil, errors.New("missing user id")
+	}
+
+	if claims.TokenID == uuid.Nil {
+		return nil, errors.New("missing token id")
+	}
+
 	if claims.TokenType != expectedTokenType {
 		return nil, errors.New("invalid token type")
 	}
@@ -103,6 +117,12 @@ func ValidateToken(token, secret, expectedTokenType string) (*Claims, error) {
 	}
 
 	return &claims, nil
+}
+
+// HashToken creates a stable, non-reversible fingerprint for server-side token storage
+func HashToken(token string) string {
+	hash := sha256.Sum256([]byte(token))
+	return base64URL.EncodeToString(hash[:])
 }
 
 func encodeJSON(value any) (string, error) {

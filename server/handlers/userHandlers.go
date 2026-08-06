@@ -154,19 +154,21 @@ func AddNewUser(c *gin.Context) {
 		UpdatedAt: now,
 	}
 
-	// the new user is added to the list of users
+	// create tokens and the first session
+	tokenPair, session, err := createTokenPair(newUser)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Token konnte nicht erzeugt werden"})
+		return
+	}
+	newUser.RefreshSessions = []models.RefreshSession{session}
+
+	// user data and its initial refresh session added to the list of users
 	if _, err := database.UserCollection().InsertOne(c.Request.Context(), newUser); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	response, err := buildAuthResponse("Registrierung erfolgreich", newUser)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"err": "Token konnte nicht erzeugt werden."})
-		return
-	}
-
-	c.JSON(http.StatusCreated, response)
+	c.JSON(http.StatusCreated, buildAuthResponse("Registrierung erfolgreich", newUser, tokenPair))
 }
 
 func ModifyUser(c *gin.Context) {
@@ -303,48 +305,211 @@ func LoginUser(c *gin.Context) {
 		return
 	}
 
-	// generiert einen Token
-	response, err := buildAuthResponse("login erfolgreich", user)
+	// Each login creates an independent session without invalidating sessions on other devices
+	tokenPair, session, err := createTokenPair(user)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Token konnte nicht erzeugt werden."})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Token konnte nicht erzeugt werden"})
+		return
+	}
+	if err := storeRefreshSession(c.Request.Context(), user.ID, session); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Sitzung konnte nicht gespeichert werden"})
 		return
 	}
 
-	c.JSON(http.StatusOK, response)
+	c.JSON(http.StatusOK, buildAuthResponse("Login erfolgreich", user, tokenPair))
 }
 
 func LogoutUser(c *gin.Context) {
-	claims, ok := middleware.ClaimsFromContext(c)
-	if !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Nicht angemeldet."})
+	var request models.RefreshTokenRequest
+	if err := c.ShouldBindJSON(&request); err != nil || strings.TrimSpace(request.RefreshToken) == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Refresh-Token ist erforderlich"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Abmeldung erfolgreich.",
-		"userId":  claims.UserID,
-	})
+	refreshToken := strings.TrimSpace(request.RefreshToken)
+	claims, err := helpers.ValidateToken(refreshToken, helpers.JWTSecret(), helpers.RefreshTokenType)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Refresh-Token ist ungültig oder abgelaufen", "details": err.Error()})
+		return
+	}
+
+	// only the session identified by this refresh token is removed
+	// other devices stay logged in
+	_, err = database.UserCollection().UpdateOne(
+		c.Request.Context(),
+		bson.M{"id": claims.UserID},
+		bson.M{
+			"$pull": bson.M{"refresh_sessions": bson.M{
+				"session_id": claims.TokenID,
+				"token:hash": helpers.HashToken(refreshToken),
+			}},
+			"$set": bson.M{"updated_at": time.Now().UTC()},
+		},
+	)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Abmeldung konnte nicht abgeschlossen werden"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Abmeldung erfolgreich"})
 }
 
-func buildAuthResponse(message string, user models.User) (models.AuthResponse, error) {
-	accessToken, err := helpers.GenerateToken(user.ID, user.Email, helpers.AccessTokenType, helpers.JWTSecret(), helpers.AccessTokenTTL)
-	if err != nil {
-		return models.AuthResponse{}, err
+func RefreshUserToken(c *gin.Context) {
+	var request models.RefreshTokenRequest
+	if err := c.ShouldBindJSON(&request); err != nil || strings.TrimSpace(request.RefreshToken) == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Refresh-Token ist erforderlich"})
+		return
 	}
 
-	refreshToken, err := helpers.GenerateToken(user.ID, user.Email, helpers.RefreshTokenType, helpers.JWTSecret(), helpers.RefreshTokenTTL)
+	refreshToken := strings.TrimSpace(request.RefreshToken)
+	claims, err := helpers.ValidateToken(refreshToken, helpers.JWTSecret(), helpers.RefreshTokenType)
 	if err != nil {
-		return models.AuthResponse{}, err
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Refresh-Token ist erforderlich"})
+		return
 	}
 
+	user, err := findUserByID(c, claims.UserID)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Sitzung ist nicht mehr gültig"})
+		return
+	}
+
+	refreshTokenHash := helpers.HashToken(refreshToken)
+
+	sessionIsValid := false
+	for _, session := range user.RefreshSessions {
+		if session.SessionID == claims.TokenID &&
+			session.TokenHash == refreshTokenHash &&
+			time.Now().UTC().Before(session.ExpiresAt) {
+			sessionIsValid = true
+			break
+		}
+	}
+	if !sessionIsValid {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Refresh-Token wurde widerrufen oder ist nicht mehr gültig"})
+		return
+	}
+
+	// Refreshing creates only a new access token
+	accessToken, err := createAccessToken(user)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Access-Token konnte nicht erneuert werden"})
+		return
+	}
+
+	// LastUsedAt records session activity without rotating or replacing the refresh token
+	_, _ = database.UserCollection().UpdateOne(
+		c.Request.Context(),
+		bson.M{"id": user.ID, "refresh_sessions.session_id": claims.TokenID},
+		bson.M{"$set": bson.M{
+			"refresh_session.$.last_used_at": time.Now().UTC(),
+			"updated_at":                     time.Now().UTC(),
+		}},
+	)
+
+	c.JSON(http.StatusOK, buildRefreshResponse("access-Token erfolgreich erneuert", user, accessToken))
+}
+
+// createAccessToken creates only the short-lived token used for protected API requests
+func createAccessToken(user models.User) (string, error) {
+	return helpers.GenerateToken(
+		user.ID,
+		user.Email,
+		helpers.AccessTokenType,
+		helpers.JWTSecret(),
+		helpers.AccessTokenTTL,
+	)
+}
+
+type tokenPair struct {
+	AccessToken  string
+	RefreshToken string
+}
+
+// createTokenPaor creates a new device session for registration or login
+func createTokenPair(user models.User) (tokenPair, models.RefreshSession, error) {
+	accessToken, err := createAccessToken(user)
+	if err != nil {
+		return tokenPair{}, models.RefreshSession{}, err
+	}
+
+	sessionID := uuid.New()
+	refreshToken, err := helpers.GenerateTokenWithID(
+		user.ID,
+		user.Email,
+		helpers.RefreshTokenType,
+		helpers.JWTSecret(),
+		helpers.AccessTokenTTL,
+		sessionID,
+	)
+	if err != nil {
+		return tokenPair{}, models.RefreshSession{}, err
+	}
+
+	now := time.Now().UTC()
+	session := models.RefreshSession{
+		SessionID:  sessionID,
+		TokenHash:  helpers.HashToken(refreshToken),
+		ExpiresAt:  now.Add(helpers.RefreshTokenTTL),
+		CreatedAt:  now,
+		LastUsedAt: now,
+	}
+
+	return tokenPair{AccessToken: accessToken, RefreshToken: refreshToken}, session, nil
+}
+
+// storeRefreshSession removes expired sessions and appends the new device session
+func storeRefreshSession(ctx context.Context, userID uuid.UUID, session models.RefreshSession) error {
+	collection := database.UserCollection()
+	now := time.Now().UTC()
+
+	if _, err := collection.UpdateOne(
+		ctx,
+		bson.M{"id": userID},
+		bson.M{"$pull": bson.M{"refresh_sessions": bson.M{"expires_aut": bson.M{"$lte": now}}}},
+	); err != nil {
+		return err
+	}
+
+	result, err := collection.UpdateOne(
+		ctx,
+		bson.M{"id": userID},
+		bson.M{
+			"$push": bson.M{"refresh_sessions": session},
+			"$set":  bson.M{"updated_at": now},
+		},
+	)
+	if err != nil {
+		return err
+	}
+	if result.MatchedCount == 0 {
+		return errors.New("user not found while storing refresh session")
+	}
+	return nil
+}
+
+// buildAuthResponse formats the login or registration response
+func buildAuthResponse(message string, user models.User, tokens tokenPair) models.AuthResponse {
 	return models.AuthResponse{
 		Message:      message,
 		User:         models.ToPublicUser(user),
-		AccessToken:  accessToken,
-		RefreshToken: refreshToken,
+		AccessToken:  tokens.AccessToken,
+		RefreshToken: tokens.RefreshToken,
 		TokenType:    "Bearer",
 		ExpiresIn:    int64(helpers.AccessTokenTTL.Seconds()),
-	}, nil
+	}
+}
+
+// buildRefreshResponse returns only the renewed access token
+func buildRefreshResponse(message string, user models.User, accessToken string) models.RefreshResponse {
+	return models.RefreshResponse{
+		Message:     message,
+		User:        models.ToPublicUser(user),
+		AccessToken: accessToken,
+		TokenType:   "Bearer",
+		ExpiresIn:   int64(helpers.AccessTokenTTL.Seconds()),
+	}
 }
 
 func buildAddress(rr models.RegisterRequest) models.Address {
@@ -534,7 +699,9 @@ func ChangeOwnPassword(c *gin.Context) {
 			"$set": bson.M{
 				"password_hash": newPasswordHash,
 				"updated_at":    time.Now().UTC(),
-			}},
+			},
+			"$unset": bson.M{"refresh_sessions": ""},
+		},
 	)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Passwort konnte nicht geändert werden."})
@@ -675,6 +842,7 @@ func ConfirmPasswordReset(c *gin.Context) {
 			"$unset": bson.M{
 				"password_reset_token_hash":       "",
 				"password_reset_token_expires_at": "",
+				"refresh_sessions":                "",
 			},
 		},
 	)

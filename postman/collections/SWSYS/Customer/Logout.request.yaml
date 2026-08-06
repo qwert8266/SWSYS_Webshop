@@ -3,10 +3,14 @@ name: Logout
 description: 'Generated from cURL: curl -X POST "{{baseUrl}}/user/logout"'
 url: "{{baseUrl}}/user/logout"
 method: POST
-auth:
-  type: bearer
-  credentials:
-    token: "{{UserAccessToken}}"
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "refreshToken": "{{UserRefreshToken}}"
+    }
 scripts:
   - type: beforeRequest
     code: ""
@@ -23,6 +27,8 @@ scripts:
       \    var json = pm.response.json();\r
 
       \    pm.expect(json).to.be.an(\"object\");\r
+
+      \    pm.expect(json.message).to.eql(\"Abmeldung erfolgreich\");\r
 
       });\r
 
